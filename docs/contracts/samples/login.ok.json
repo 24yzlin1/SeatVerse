@@ -1,0 +1,13 @@
+{
+  "code": 200,
+  "message": "ok",
+  "payload": {
+    "token": "sv_2b7f4c9e1a6d8f3c5e0b9a7d2c4f6e81",
+    "user": {
+      "id": 2,
+      "name": "演示用户",
+      "email": "user@seatverse.local",
+      "role": "user"
+    }
+  }
+}
