@@ -191,7 +191,7 @@ idle ──bootstrap()──► loading ──me 成功────────�
 | 事项 | 归属 | 最晚 | 本契约的接口点 |
 |---|---|---|---|
 | 请求头名称、是否带 `Bearer ` 前缀、登录响应 `payload` 字段名 | 已定稿（见 §14） | — | `Authorization: Bearer <token>`、`payload = { token, user }`；改口径只动 `AUTH_HEADER` / `AUTH_SCHEME` 两个常量，令牌存储格式不变 |
-| 票号不属于当前用户时返回 403 还是 404 | F | 11/16 | 与本契约无关；401 处理仍按本文档 |
+| 票号不属于当前用户时返回 403 还是 404 | 已定稿：**404**（防枚举，见 `ticket-qr.md` §4） | — | 与本契约无关；401 处理仍按本文档 |
 | 本契约的实现（store、状态机、降级） | A | S2 | 实现必须逐条满足 §3—§10 |
 | 统一请求客户端（注入令牌、401 分支） | A | S2 | 只读 store，不直接读写 `localStorage` |
 
@@ -199,7 +199,7 @@ idle ──bootstrap()──► loading ──me 成功────────�
 
 ## 12. 命名口径说明
 
-04 号《开发路线图》§0.3 规定“鉴权命名一律 `authentication` 全名、禁止 `auth` 缩写”，该条约束的是 **HTTP 路径段与后端模块名**（如 `/authentication/login`、后端 `authentication.py`）。
+04 号《开发路线图》§0.3 规定“鉴权命名一律 `authentication` 全名、禁止 `auth` 缩写”，该条约束的是 **HTTP 路径段与后端模块名**（如 `/authentication/login`、后端 `authentication.py`；§3.2“鉴权模块用 `authentication`”同此范围）。
 
 本文件与 storage 键名沿用既有写法 `seatverse.auth.*` 与文件名 `auth.md`，不视为冲突：
 
@@ -262,7 +262,7 @@ idle ──bootstrap()──► loading ──me 成功────────�
 | `user.id` | `integer` | 是 | 正整数；仅用于展示与本地关联，**权限以后端为准** |
 | `user.name` | `string` | 是 | 非空；界面显示名（对应 `users.姓名`） |
 | `user.email` | `string` | 是 | 注册邮箱，登录账号 |
-| `user.role` | `"user" \| "organizer"` | 是 | 只有两个值；中文标签由前端映射 |
+| `user.role` | `"user" \| "organizer"` | 是 | 只有两个值，定义见 `enums.md`；中文标签由前端映射 |
 
 **五条硬约束**
 
@@ -305,7 +305,7 @@ const AUTH_EXEMPT_PATHS = [
 | 头格式错 / 令牌非法 / 已过期 | 同上；`message` 为"登录已失效，请重新登录" | 按 §7.2 |
 | 登录邮箱或密码错 | 同上 `code = 401`；`message` 为"邮箱或密码错误" | 按 §7.1 白名单，只显示、不清不跳 |
 | 令牌有效但角色不足 | `code = 403` | 显示 `message`，**不跳登录** |
-| 后端未接管的 404/422 | HTTP 404/422 + `{"detail": ...}` | 按请求客户端兜底分支显示中文，不白屏 |
+| 后端未接管的 404/422 | HTTP 404/422 + `{"detail": ...}` | 先按信封解析；失败一律 `ApiError(-1, MALFORMED_RESPONSE_MESSAGE)`，**不读状态码、不按 404/422 分支**，展示固定中文、不白屏（02 §三、03 §六） |
 
 ### 14.5 样例与验证
 
@@ -329,3 +329,5 @@ const AUTH_EXEMPT_PATHS = [
 |---|---|---|
 | 2026-11-05 | 首版确定：令牌存储与启动回源、401 白名单例外与跳转去重 | A |
 | 2026-11-05 | 补充令牌传输契约：`Authorization: Bearer`、登录 `payload = { token, user }`、失效表现（§14） | A |
+| 2026-11-06 | 复核：令牌头、登录 `payload` 与 `samples/login.ok.json` 一致，无字段变更 | A |
+| 2026-11-06 | 对齐 02/03：非信封响应统一格式异常文案，不按 HTTP 状态码分支 | A |

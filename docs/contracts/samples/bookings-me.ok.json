@@ -1,0 +1,65 @@
+{
+  "code": 200,
+  "message": "ok",
+  "payload": {
+    "items": [
+      {
+        "id": 9001,
+        "status": "reserved",
+        "createdAt": "2026-11-06T19:30:00+08:00",
+        "cancelledAt": null,
+        "ticketCode": "SV7F3K9Q2M4T8X6B5N2P",
+        "event": {
+          "id": 12,
+          "title": "校园技术分享会：从零构建 3D 选座",
+          "status": "published",
+          "startTime": "2026-11-20T19:00:00+08:00",
+          "endTime": "2026-11-20T21:00:00+08:00",
+          "venue": {
+            "id": 1,
+            "name": "学生活动中心·主报告厅"
+          }
+        },
+        "seats": [
+          {
+            "id": 308,
+            "row": 3,
+            "number": 12,
+            "label": "3排12号",
+            "seatType": "standard"
+          }
+        ]
+      },
+      {
+        "id": 9000,
+        "status": "cancelled",
+        "createdAt": "2026-11-04T09:12:00+08:00",
+        "cancelledAt": "2026-11-05T10:05:00+08:00",
+        "ticketCode": "SV3N8R6T2W9Y4K7J5M1C",
+        "event": {
+          "id": 11,
+          "title": "校园音乐夜",
+          "status": "published",
+          "startTime": "2026-11-15T19:30:00+08:00",
+          "endTime": "2026-11-15T21:30:00+08:00",
+          "venue": {
+            "id": 1,
+            "name": "学生活动中心·主报告厅"
+          }
+        },
+        "seats": [
+          {
+            "id": 412,
+            "row": 5,
+            "number": 8,
+            "label": "5排8号",
+            "seatType": "standard"
+          }
+        ]
+      }
+    ],
+    "total": 2,
+    "page": 1,
+    "pageSize": 20
+  }
+}

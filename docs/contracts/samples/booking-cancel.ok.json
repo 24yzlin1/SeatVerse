@@ -1,0 +1,9 @@
+{
+  "code": 200,
+  "message": "ok",
+  "payload": {
+    "id": 9001,
+    "status": "cancelled",
+    "cancelledAt": "2026-11-07T10:15:00+08:00"
+  }
+}

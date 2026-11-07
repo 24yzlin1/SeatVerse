@@ -1,0 +1,33 @@
+{
+  "code": 200,
+  "message": "ok",
+  "payload": {
+    "id": 501,
+    "bookingId": 9001,
+    "ticketCode": "SV7F3K9Q2M4T8X6B5N2P",
+    "status": "reserved",
+    "issuedAt": "2026-11-06T19:30:00+08:00",
+    "verifiedAt": null,
+    "verifiedBy": null,
+    "event": {
+      "id": 12,
+      "title": "校园技术分享会：从零构建 3D 选座",
+      "status": "published",
+      "startTime": "2026-11-20T19:00:00+08:00",
+      "endTime": "2026-11-20T21:00:00+08:00",
+      "venue": {
+        "id": 1,
+        "name": "学生活动中心·主报告厅"
+      }
+    },
+    "seats": [
+      {
+        "id": 308,
+        "row": 3,
+        "number": 12,
+        "label": "3排12号",
+        "seatType": "standard"
+      }
+    ]
+  }
+}
