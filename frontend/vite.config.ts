@@ -11,10 +11,10 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      // 后端源码路由统一带 /api 前缀，代理原样转发、不剥前缀
       "^/api/": {
         target: "http://localhost:8000",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
       },
     },
   },

@@ -25,8 +25,8 @@ warn_return_any = true
 warn_unused_ignores = true
 
 [tool.poe.tasks]
-dev = "uvicorn main:app --reload --root-path=/api"
-start = "uvicorn main:app --root-path=/api"
+dev = "uvicorn main:app --reload"
+start = "uvicorn main:app"
 check = "mypy app"
 test = "pytest"
 seed = "python -m scripts.seed"

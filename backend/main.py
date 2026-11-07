@@ -13,7 +13,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-router = APIRouter()
+# 所有模块路由统一挂到 /api 下；装饰器内 path 不重复写 /api（02 §八）
+router = APIRouter(prefix="/api")
 
 
 @router.get("/")
