@@ -61,21 +61,30 @@ def fetch_all_rows(
     return result
 
 
-def read_text(row: sqlite3.Row, column: str) -> str:
+def read_text(
+    row: sqlite3.Row,
+    column: str,
+) -> str:
     value: object = row[column]
     if not isinstance(value, str):
         raise TypeError(f"Column {column} is not text")
     return value
 
 
-def read_integer(row: sqlite3.Row, column: str) -> int:
+def read_integer(
+    row: sqlite3.Row,
+    column: str,
+) -> int:
     value: object = row[column]
     if not isinstance(value, int) or isinstance(value, bool):
         raise TypeError(f"Column {column} is not an integer")
     return value
 
 
-def read_optional_text(row: sqlite3.Row, column: str) -> str | None:
+def read_optional_text(
+    row: sqlite3.Row,
+    column: str,
+) -> str | None:
     value: object = row[column]
     if value is None:
         return None

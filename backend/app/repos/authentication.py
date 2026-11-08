@@ -27,7 +27,10 @@ def _row_to_user(row: sqlite3.Row) -> UserRow:
     )
 
 
-def find_user_by_email(connection: DatabaseConnection, email: str) -> UserRow | None:
+def find_user_by_email(
+    connection: DatabaseConnection,
+    email: str,
+) -> UserRow | None:
     row = fetch_one_row(
         connection,
         "SELECT id, name, email, password_hash, role, created_at "
@@ -37,7 +40,10 @@ def find_user_by_email(connection: DatabaseConnection, email: str) -> UserRow | 
     return None if row is None else _row_to_user(row)
 
 
-def find_user_by_id(connection: DatabaseConnection, user_id: int) -> UserRow | None:
+def find_user_by_id(
+    connection: DatabaseConnection,
+    user_id: int,
+) -> UserRow | None:
     row = fetch_one_row(
         connection,
         "SELECT id, name, email, password_hash, role, created_at "

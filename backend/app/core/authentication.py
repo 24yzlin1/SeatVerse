@@ -38,8 +38,14 @@ def login(
     )
 
 
-def me(connection: DatabaseConnection, identity: Identity) -> MePayload:
-    user = find_user_by_id(connection, identity.user_id)
+def me(
+    connection: DatabaseConnection,
+    identity: Identity,
+) -> MePayload:
+    user = find_user_by_id(
+        connection,
+        identity.user_id,
+    )
     if user is None:
         raise AppError(401, "Session expired, please log in again")
     return MePayload(user=_to_public(user))

@@ -15,7 +15,7 @@ from app.types.authentication import (
 )
 from app.types.common import ResponsePayload
 
-router = APIRouter(prefix="/api/authentication", tags=["authentication"])
+router = APIRouter(prefix="/authentication", tags=["authentication"])
 
 
 def _normalize_email(value: str) -> str:
