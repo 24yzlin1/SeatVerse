@@ -4,10 +4,14 @@ from collections.abc import Generator, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 
-from app.types.database import DatabaseConnection
+DatabaseConnection = sqlite3.Connection
 
 _DEFAULT_DATABASE_PATH = Path(__file__).resolve().parents[2] / "var" / "seatverse.db"
 _BUSY_TIMEOUT_MILLISECONDS = 15000
+
+
+class UniqueConstraintViolationError(Exception):
+    pass
 
 
 def get_database_path() -> Path:
@@ -21,8 +25,7 @@ def get_connection() -> DatabaseConnection:
     database_path = get_database_path()
     database_path.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(
-        database_path,
-        timeout=_BUSY_TIMEOUT_MILLISECONDS / 1000,
+        database_path, timeout=_BUSY_TIMEOUT_MILLISECONDS / 1000
     )
     connection.isolation_level = None
     connection.row_factory = sqlite3.Row
@@ -33,9 +36,7 @@ def get_connection() -> DatabaseConnection:
 
 
 def fetch_one_row(
-    connection: DatabaseConnection,
-    sql: str,
-    parameters: Sequence[object] = (),
+    connection: DatabaseConnection, sql: str, parameters: Sequence[object] = ()
 ) -> sqlite3.Row | None:
     cursor = connection.execute(sql, parameters)
     raw_row: object = cursor.fetchone()
@@ -47,9 +48,7 @@ def fetch_one_row(
 
 
 def fetch_all_rows(
-    connection: DatabaseConnection,
-    sql: str,
-    parameters: Sequence[object] = (),
+    connection: DatabaseConnection, sql: str, parameters: Sequence[object] = ()
 ) -> list[sqlite3.Row]:
     cursor = connection.execute(sql, parameters)
     raw_rows: list[object] = cursor.fetchall()
@@ -61,30 +60,21 @@ def fetch_all_rows(
     return result
 
 
-def read_text(
-    row: sqlite3.Row,
-    column: str,
-) -> str:
+def read_text(row: sqlite3.Row, column: str) -> str:
     value: object = row[column]
     if not isinstance(value, str):
         raise TypeError(f"Column {column} is not text")
     return value
 
 
-def read_integer(
-    row: sqlite3.Row,
-    column: str,
-) -> int:
+def read_integer(row: sqlite3.Row, column: str) -> int:
     value: object = row[column]
     if not isinstance(value, int) or isinstance(value, bool):
         raise TypeError(f"Column {column} is not an integer")
     return value
 
 
-def read_optional_text(
-    row: sqlite3.Row,
-    column: str,
-) -> str | None:
+def read_optional_text(row: sqlite3.Row, column: str) -> str | None:
     value: object = row[column]
     if value is None:
         return None

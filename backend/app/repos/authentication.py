@@ -1,12 +1,13 @@
 import sqlite3
 
 from app.repos.database import (
+    UniqueConstraintViolationError,
     fetch_one_row,
+    get_connection,
     read_integer,
     read_text,
 )
 from app.types.authentication import UserRole, UserRow
-from app.types.database import DatabaseConnection
 
 
 def _read_role(row: sqlite3.Row) -> UserRole:
@@ -27,27 +28,61 @@ def _row_to_user(row: sqlite3.Row) -> UserRow:
     )
 
 
-def find_user_by_email(
-    connection: DatabaseConnection,
-    email: str,
-) -> UserRow | None:
-    row = fetch_one_row(
-        connection,
-        "SELECT id, name, email, password_hash, role, created_at "
-        "FROM users WHERE email = ?",
-        (email,),
-    )
+def find_user_by_email(email: str) -> UserRow | None:
+    connection = get_connection()
+    try:
+        row = fetch_one_row(
+            connection,
+            "SELECT id, name, email, password_hash, role, created_at "
+            "FROM users WHERE email = ?",
+            (email,),
+        )
+    finally:
+        connection.close()
     return None if row is None else _row_to_user(row)
 
 
-def find_user_by_id(
-    connection: DatabaseConnection,
-    user_id: int,
-) -> UserRow | None:
-    row = fetch_one_row(
-        connection,
-        "SELECT id, name, email, password_hash, role, created_at "
-        "FROM users WHERE id = ?",
-        (user_id,),
-    )
+def find_user_by_id(user_id: int) -> UserRow | None:
+    connection = get_connection()
+    try:
+        row = fetch_one_row(
+            connection,
+            "SELECT id, name, email, password_hash, role, created_at "
+            "FROM users WHERE id = ?",
+            (user_id,),
+        )
+    finally:
+        connection.close()
     return None if row is None else _row_to_user(row)
+
+
+def insert_user(
+    name: str, email: str, password_hash: str, role: UserRole, created_at: str
+) -> UserRow:
+    connection = get_connection()
+    try:
+        try:
+            cursor = connection.execute(
+                "INSERT INTO users (name, email, password_hash, role, created_at) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (name, email, password_hash, role, created_at),
+            )
+        except sqlite3.IntegrityError as error:
+            if "UNIQUE" in str(error):
+                raise UniqueConstraintViolationError(str(error)) from error
+            raise
+        connection.commit()
+        last_row_id = cursor.lastrowid
+        if last_row_id is None:
+            raise RuntimeError("Failed to obtain inserted user id")
+        row = fetch_one_row(
+            connection,
+            "SELECT id, name, email, password_hash, role, created_at "
+            "FROM users WHERE id = ?",
+            (last_row_id,),
+        )
+    finally:
+        connection.close()
+    if row is None:
+        raise RuntimeError("Inserted user row not found")
+    return _row_to_user(row)

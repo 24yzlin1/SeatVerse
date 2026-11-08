@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 UserRole = Literal["user", "organizer"]
 
@@ -26,6 +26,14 @@ class UserPublic(BaseModel):
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+
+class RegisterRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str
+    email: str
+    password: str
+    role: UserRole
 
 
 class AuthenticationPayload(BaseModel):

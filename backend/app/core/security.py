@@ -76,49 +76,25 @@ def issue_token(
         "iat": issued_at,
         "exp": issued_at + time_to_live_seconds,
     }
-    return jwt.encode(  # type: ignore
-        payload,
-        _get_jwt_secret_key(),
-        _JWT_ALGORITHM,
-    )
+    return jwt.encode(payload, _get_jwt_secret_key(), _JWT_ALGORITHM)  # type: ignore
 
 
 def parse_token(token: str) -> TokenClaims | None:
     try:
-        claims = jwt.decode(  # type: ignore
-            token,
-            _get_jwt_secret_key(),
-            [_JWT_ALGORITHM],
-        )
+        claims = jwt.decode(token)  # type: ignore
     except jwt.InvalidTokenError:
         return None
     subject = claims.get("sub")
     role = claims.get("role")
     expiration = claims.get("exp")
-    if not isinstance(
-        subject,
-        str,
-    ):
+    if not isinstance(subject, str):
         return None
     try:
         user_id = int(subject)
     except ValueError:
         return None
-    if not isinstance(
-        role,
-        str,
-    ):
+    if not isinstance(role, str):
         return None
-    if not isinstance(
-        expiration,
-        int,
-    ) or isinstance(
-        expiration,
-        bool,
-    ):
+    if not isinstance(expiration, int) or isinstance(expiration, bool):
         return None
-    return TokenClaims(
-        user_id=user_id,
-        role=role,
-        expiration=expiration,
-    )
+    return TokenClaims(user_id=user_id, role=role, expiration=expiration)
