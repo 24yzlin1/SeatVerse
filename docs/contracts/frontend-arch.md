@@ -1,6 +1,6 @@
 # 前端路由与目录契约
 
-> 状态：已冻结 ｜ 负责人：A ｜ 日期：2026-11-06
+> 状态：已冻结 ｜ 负责人：A ｜ 日期：2026-11-08
 > 适用：路由、应用壳，以及 B / C / F 的全部页面
 > 依据：03 号《前端开发规范》§一 / §五
 > 说明：本文确定“路由怎么组织、代码放哪里”，以及取消预约后的跨页一致性；不涉及具体页面实现
@@ -79,7 +79,7 @@
 | 情况 | 行为 |
 |---|---|
 | 命中 `redirect` | 改写到目标路径（`/` → `/events`），使用 `replace` |
-| 未登录访问受保护路由 | 跳 `#/login?next=<encodeURIComponent(当前完整 hash)>`，`replace` |
+| 未登录访问受保护路由 | 跳 `#/login?next=<encodeURIComponent(hash 的路径与查询串，不含 #)>`，`replace` |
 | 已登录但角色不符 | 回各自首页：普通用户 `/events`，主办方 `/organizer/events` |
 | 登录成功后的落点 | 有 `next` 回 `next`；否则普通用户 `/events`，主办方 `/organizer/events` |
 | `status === "idle"` | 先 `await auth.bootstrap()` 再判断（见 `auth.md` §5） |
@@ -125,7 +125,7 @@ frontend/src/
 ├── assets/
 ├── common/
 │   ├── api/          client.ts  codes.ts  messages.ts  types.ts  endpoints.ts  index.ts
-│   ├── components/   AppShell  NavBar  RoleNav  NotFound  LoadingBlock  EmptyBlock  ErrorBlock  QrCode
+│   ├── components/   AppShell  NavBar  RoleNav  NotFound  LoadingBlock  EmptyBlock  ErrorBlock  QrCode  form/
 │   ├── router/       routes.ts  router.svelte.ts  RouteView.svelte  index.ts
 │   ├── stores/       auth.svelte.ts
 │   └── utils/
@@ -290,4 +290,4 @@ window.dispatchEvent(
 | 日期 | 变更 | 负责人 |
 |---|---|---|
 | 2026-11-05 | 首版确定：hash 路由形态与 `pages/` 目录范式 | A |
-| 2026-11-06 | 冻结：取消预约后的跨页事件与选座页刷新规则（§7） | A |
+| 2026-11-08 | 冻结：取消预约后的跨页事件与选座页刷新规则（§7）；澄清 `next` 取值口径（不含 `#`，与 `auth.md` §7.3 对齐），并在目录树补 `common/components/form/` | A |

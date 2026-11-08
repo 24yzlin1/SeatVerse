@@ -1,6 +1,6 @@
 # 登录令牌存储契约
 
-> 状态：已定稿 ｜ 负责人：A ｜ 日期：2026-11-05
+> 状态：已定稿 ｜ 负责人：A ｜ 日期：2026-11-08
 > 适用：路由守卫、登录态 store、统一请求客户端
 > 依据：02 号《后端开发规范》§三、03 号《前端开发规范》§五/§六、04 号《开发路线图》§3.3
 > 实现位置：`frontend/src/common/stores/auth.svelte.ts`（登录态 store 建立时创建）；本文件是唯一口径来源
@@ -123,7 +123,7 @@ idle ──bootstrap()──► loading ──me 成功────────�
 ### 7.2 其余接口的 401
 
 1. `auth.clear()`：删除两个存储键（见 §6）。
-2. 跳转 `#/login?next=<encodeURIComponent(当前完整 hash 路径)>`，使用 `replace`，避免历史堆栈堆积。
+2. 跳转 `#/login?next=<encodeURIComponent(hash 中的路径与查询串，不含 # 与 origin)>`，使用 `replace`，避免历史堆栈堆积。
 3. **并发去重**：模块级 `let redirecting = false`；同一次“过期风暴”只跳一次，跳转完成后用 `setTimeout(() => { redirecting = false; }, 0)` 复位。
 4. 仍然向调用方抛 `ApiError(401, message)`；页面只负责展示文案，**不得再跳一次**，避免二次跳转覆盖 `next`。
 
@@ -327,7 +327,4 @@ const AUTH_EXEMPT_PATHS = [
 
 | 日期 | 变更 | 负责人 |
 |---|---|---|
-| 2026-11-05 | 首版确定：令牌存储与启动回源、401 白名单例外与跳转去重 | A |
-| 2026-11-05 | 补充令牌传输契约：`Authorization: Bearer`、登录 `payload = { token, user }`、失效表现（§14） | A |
-| 2026-11-06 | 复核：令牌头、登录 `payload` 与 `samples/login.ok.json` 一致，无字段变更 | A |
-| 2026-11-06 | 对齐 02/03：非信封响应统一格式异常文案，不按 HTTP 状态码分支 | A |
+| 2026-11-08 | 定稿：令牌存储与启动回源、401 白名单例外与跳转去重；补充令牌传输契约：`Authorization: Bearer`、登录 `payload = { token, user }`、失效表现（§14）；复核：令牌头、登录 `payload` 与 `samples/login.ok.json` 一致，无字段变更；对齐 02/03：非信封响应统一格式异常文案，不按 HTTP 状态码分支；澄清：`next` 只取 hash 的路径与查询串（不含 `#` 与 origin），与 §7.3 一致 | A |
