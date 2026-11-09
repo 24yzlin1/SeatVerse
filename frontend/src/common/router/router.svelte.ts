@@ -13,15 +13,12 @@
  * 身份来源做成接缝：本步（S2-09）默认 guest，S2-12 的 auth store 落地后调用
  * `setAuthSource` 一次即可接上，路由逻辑不需要再改。
  */
+import type { AuthSnapshot, AuthStatus } from "@/common/stores/auth.svelte";
 import { HOME_BY_ROLE, routes } from "./routes";
-import type { Role, RouteDef } from "./routes";
+import type { RouteDef } from "./routes";
 
-export type AuthStatus = "idle" | "loading" | "authed" | "guest";
-
-export interface AuthSnapshot {
-  status: AuthStatus;
-  role: Role | null;
-}
+// 会话类型唯一定义在 auth store（S2-12），这里只转出，避免两处漂移。
+export type { AuthSnapshot, AuthStatus };
 
 export interface AuthSource {
   /** 当前身份快照；必须是同步读取。 */
