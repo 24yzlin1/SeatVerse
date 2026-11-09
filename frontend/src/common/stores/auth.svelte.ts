@@ -6,11 +6,11 @@
  *   - 权威性（§4）：token 是唯一权威，user 只是缓存；启动有 token 必回源 `me`；
  *   - 状态机（§5）：idle → loading → authed / guest；网络失败保留 token 不跳转；并发共享 in-flight；
  *   - 写入与清除（§6）：setSession 先 token 后 user；clear 先 user 后 token、用 removeItem、幂等；
- *   - 401（§7）：本 store 只负责 clear()，跳转去重与白名单在请求客户端（S2-13）；
+ *   - 401（§7）：本 store 只负责 clear()，跳转去重与白名单在请求客户端；
  *   - 跨标签页（§8）：只听 storage，不信 event.key，一律重读 token；
  *   - 降级（§9）：localStorage 不可用则内存态 + 一次 warn；非法 JSON 删键；迟到响应丢弃。
  *
- * 网络不进本文件：HTTP（含 Authorization 注入与信封解析）由 S2-13 的 client 负责，
+ * 网络不进本文件：HTTP（含 Authorization 注入与信封解析）由 `client.ts` 负责，
  * 通过 `setAuthApi()` 注入。auth.md §14.3 规定令牌注入只发生在 client.ts 一处。
  */
 import { ApiError } from "@/common/api/types";
@@ -30,7 +30,7 @@ export interface AuthSnapshot {
 }
 
 /**
- * S2-13 注入点：实现方负责全部 HTTP，包括 `Authorization: Bearer <token>` 注入、
+ * 请求客户端注入点：实现方负责全部 HTTP，包括 `Authorization: Bearer <token>` 注入、
  * `/api` 前缀、信封解析与 401 的跳转去重。
  */
 export interface AuthApi {
@@ -267,7 +267,7 @@ class AuthStore {
   /** 登录：成功后写会话，失败原样抛出（401 白名单由 client 负责，store 不重复判断）。 */
   async login(payload: LoginPayload): Promise<void> {
     if (authApi === null) {
-      throw new ApiError(0, "请求客户端尚未接入（S2-13）");
+      throw new ApiError(0, "请求客户端尚未接入");
     }
 
     const epoch = this.epoch;
@@ -300,8 +300,8 @@ class AuthStore {
     }
 
     if (authApi === null) {
-      // S2-13 之前没有请求客户端：保留 token，按未登录处理，只提示一次。
-      warnOnce("[auth] 请求客户端尚未接入（S2-13），已有令牌但无法回源 me");
+      // 请求客户端尚未注入：保留 token，按未登录处理，只提示一次。
+      warnOnce("[auth] 请求客户端尚未接入，已有令牌但无法回源 me");
       this.status = "guest";
       return;
     }

@@ -1,12 +1,20 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
+  import { endpoints, request } from "@/common/api";
+  import type { LoginResponse, User } from "@/common/api/types";
   import { router, setAuthSource } from "@/common/router";
   import RouteView from "@/common/router/RouteView.svelte";
-  import { auth } from "@/common/stores/auth.svelte";
+  import { auth, setAuthApi } from "@/common/stores/auth.svelte";
 
-  // S2-09 的最小接线 + S2-12 的会话接线。S2-10 会在此基础上加 AppShell。
+  // 路由、会话与请求层在此接线；应用壳后续在此基础上接入。
   onMount(() => {
-    // 守卫通过这个接缝读会话，不直接依赖 store（S2-09 预留的 setAuthSource）。
+    // 认证的两个调用统一走 client（令牌注入与 401 处理只在 client 里发生）。
+    setAuthApi({
+      me: () => request<User>(endpoints.authMe()),
+      login: (payload) =>
+        request<LoginResponse>(endpoints.authLogin(), { method: "POST", body: payload }),
+    });
+    // 守卫通过这个接缝读会话，不直接依赖 store（setAuthSource 由路由层提供）。
     setAuthSource({
       snapshot: () => auth.snapshot(),
       bootstrap: () => auth.bootstrap(),
