@@ -7,6 +7,7 @@
  */
 import type { Component } from "svelte";
 
+import type { Role } from "@/common/api/types";
 import LoginPage from "@/pages/authentication/LoginPage.svelte";
 import RegisterPage from "@/pages/authentication/RegisterPage.svelte";
 import BookingsPage from "@/pages/bookings/BookingsPage.svelte";
@@ -19,8 +20,8 @@ import SeatMapPage from "@/pages/seatmap/SeatMapPage.svelte";
 import TicketByCodePage from "@/pages/tickets/TicketByCodePage.svelte";
 import TicketPage from "@/pages/tickets/TicketPage.svelte";
 
-/** 角色字面量与 docs/contracts/enums.md §2.1 一致；只用于界面显隐，权限以后端为准。 */
-export type Role = "user" | "organizer";
+/** 角色字面量与 docs/contracts/enums.md §2.1 一致；唯一定义在 `@/common/api/types`，此处转出以便路由层自洽。 */
+export type { Role };
 
 export interface RouteDef {
   /** 路由名，仅用于调试与 404 判定，不参与匹配。 */

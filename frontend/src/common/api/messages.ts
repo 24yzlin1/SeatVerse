@@ -11,14 +11,19 @@
  */
 import { CODE } from "./codes";
 
-/** 后端未给出可展示 message 时，按错误码兜底的中文文案。 */
+/**
+ * 后端未给出可展示 message 时，按错误码兜底的中文文案。
+ *
+ * 只覆盖 02 §三 / 03 §六 / 04 §3.8 定义的六个业务码。后端异常处理器的 500
+ * 目前不在契约错误码表内（且回的是英文文案），由 D 统一为中文并决定是否入表；
+ * 在那之前前端不自行补码，未命中一律走 `FALLBACK_MESSAGE`。
+ */
 export const CODE_MESSAGE: Readonly<Record<number, string>> = {
   [CODE.BAD_REQUEST]: "请求有误，请检查后重试",
   [CODE.UNAUTHORIZED]: "登录已失效，请重新登录",
   [CODE.FORBIDDEN]: "没有权限执行该操作",
   [CODE.NOT_FOUND]: "请求的资源不存在",
   [CODE.CONFLICT]: "操作与当前状态冲突，请刷新后重试",
-  500: "服务内部异常，请稍后重试",
 };
 
 /** 传输层失败（断网、后端未启动、超时、被中断）。 */
