@@ -1,6 +1,6 @@
 <script lang="ts">
   // 允许外部传入提示文字和额外 class
-  let {
+  const {
     message = "暂无数据",
     class: className = ""
   }: { message?: string; class?: string } = $props();

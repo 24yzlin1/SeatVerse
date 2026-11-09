@@ -1,6 +1,6 @@
 <script lang="ts">
   // 允许外部传入额外的 class，方便在外层调整边距或大小
-  let { class: className = "" }: { class?: string } = $props();
+  const { class: className = "" }: { class?: string } = $props();
 </script>
 
 <div

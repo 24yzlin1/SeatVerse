@@ -1,5 +1,5 @@
 <script lang="ts">
-  let {
+  const {
     message = "加载失败，请稍后重试",
     class: className = ""
   }: { message?: string; class?: string } = $props();
