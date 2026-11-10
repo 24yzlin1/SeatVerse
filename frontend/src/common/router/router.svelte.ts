@@ -1,7 +1,7 @@
 /**
  * 自写 hash 路由（零依赖）。
  *
- * 依据 docs/contracts/frontend-arch.md §1—§3 与 08 号计划 §8.1 的七条实现约束：
+ * 依据 docs/contracts/frontend-arch.md §1—§3 的七条实现约束：
  *   1. 单例 + 模块级 `$state`，不用 context；
  *   2. 同时监听 `hashchange` 与 `popstate`，`init()` 先手动解析一次；
  *   3. 空 hash、`#`、`#/` 归一为 `/`，去掉末尾多余斜杠；
@@ -10,20 +10,20 @@
  *   6. `navigate` 用 `location.hash`；`replace` 走 `history.replaceState` 后手动解析一次；
  *   7. 同一路径重复 `navigate` 直接 return。
  *
- * 身份来源做成接缝：本步（S2-09）默认 guest，S2-12 的 auth store 落地后调用
- * `setAuthSource` 一次即可接上，路由逻辑不需要再改。
+ * 身份来源做成接缝：默认 guest；auth store 接入后调用 `setAuthSource` 一次即可接上，
+ * 路由逻辑不需要再改。
  */
 import type { AuthSnapshot, AuthStatus } from "@/common/stores/auth.svelte";
 import { HOME_BY_ROLE, routes } from "./routes";
 import type { RouteDef } from "./routes";
 
-// 会话类型唯一定义在 auth store（S2-12），这里只转出，避免两处漂移。
+// 会话类型唯一定义在 auth store，这里只转出，避免两处漂移。
 export type { AuthSnapshot, AuthStatus };
 
 export interface AuthSource {
   /** 当前身份快照；必须是同步读取。 */
   snapshot: () => AuthSnapshot;
-  /** `status === "idle"` 时守卫会先 await 它（frontend-arch.md §3.2）。 */
+  /** `status` 未定（idle / loading）时守卫会先 await 它（frontend-arch.md §3.2）。 */
   bootstrap?: () => Promise<void>;
 }
 
@@ -39,7 +39,7 @@ interface MatchResult {
   params: Record<string, string>;
 }
 
-/** 默认身份：未登录。S2-12 会用真实 store 覆盖它。 */
+/** 默认身份：未登录；接入 auth store 后由 `setAuthSource` 覆盖。 */
 const GUEST_SNAPSHOT: AuthSnapshot = { status: "guest", role: null };
 
 let authSource: AuthSource = { snapshot: () => GUEST_SNAPSHOT };
@@ -285,10 +285,17 @@ class Router {
     }
   }
 
-  /** 读身份；`idle` 且提供了 bootstrap 时先启动一次（auth.md §5 的网络失败不清令牌）。 */
+  /**
+   * 读身份。`idle` 与 `loading` 都要等回源落定后再判断：
+   * 启动回源是异步的，若在 `loading` 阶段就按「未登录」处理，带有效令牌直接打开
+   * 受保护地址（如刷新 `#/bookings`）会被守卫误踢回登录页。
+   * `bootstrap()` 复用同一个 in-flight Promise，因此这里不会重复请求；
+   * 等不到（网络失败）时按未登录处理，不清令牌。
+   */
   private async readAuth(): Promise<AuthSnapshot> {
     const snapshot = authSource.snapshot();
-    if (snapshot.status !== "idle" || authSource.bootstrap === undefined) {
+    const pending = snapshot.status === "idle" || snapshot.status === "loading";
+    if (!pending || authSource.bootstrap === undefined) {
       return snapshot;
     }
 
