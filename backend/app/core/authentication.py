@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-
 from app.core.common import AppError
 from app.core.security import hash_password, issue_token, verify_password
 from app.repos.authentication import find_user_by_email, find_user_by_id, insert_user
@@ -11,7 +10,7 @@ from app.types.authentication import (
     UserRole,
     UserRow,
 )
-from backend.app.repos.database import UniqueConstraintViolationError
+from app.repos.database import UniqueConstraintViolationError
 
 
 def _to_public(row: UserRow) -> UserPublic:

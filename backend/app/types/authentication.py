@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from typing import Literal
-
 from pydantic import BaseModel, ConfigDict
 
 UserRole = Literal["user", "organizer"]

@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, Header
-
 from app.core.authentication import register as register_core
 from app.core.authentication import login as login_core
 from app.core.authentication import me as me_core

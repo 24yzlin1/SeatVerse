@@ -2,6 +2,8 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.scope.common import error_handler, ok
 from app.types.common import ResponsePayload
+from app.scope.authentication import router as authentication_router
+from app.scope.events import router as events_router
 
 app = FastAPI(title="SeatVerse")
 app.add_exception_handler(Exception, error_handler)
@@ -23,6 +25,8 @@ def health() -> ResponsePayload[str]:
 
 
 app.include_router(router)
+app.include_router(authentication_router)
+app.include_router(events_router)
 
 
 def main():

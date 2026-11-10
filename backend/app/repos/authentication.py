@@ -1,5 +1,4 @@
 import sqlite3
-
 from app.repos.database import (
     UniqueConstraintViolationError,
     fetch_one_row,
