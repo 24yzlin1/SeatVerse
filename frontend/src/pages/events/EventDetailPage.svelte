@@ -8,9 +8,7 @@
 
   import { Button } from "$lib/components/ui/button";
 
-  // 从路由接收活动 ID (A 的 router 会把 :id 传进来)
-  let { id }: { id: string } = $props();
-  console.log(id)
+  const id = $derived(router.params.id ?? "");
 
   let pageState = $state<"loading" | "error" | "empty" | "success">("loading");
   let event = $state<EventSummary | null>(null);
@@ -21,7 +19,7 @@
     errorMessage = "";
 
     try {
-      const res = await request<EventSummary>(`/events/${id}`, {
+      const res = await request<EventSummary>(`/events/${encodeURIComponent(id)}`, {
         method: "GET"
       });
 
