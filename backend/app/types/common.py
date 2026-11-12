@@ -1,6 +1,5 @@
-from dataclasses import Field
 from typing import Generic, TypeVar
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 T = TypeVar("T")
 
@@ -16,4 +15,4 @@ class PaginatedPayload(BaseModel, Generic[T]):
     items: list[T]
     total: int
     page: int
-    page_size: int = Field(..., alias="pageSize")  # type: ignore
+    page_size: int = Field(..., alias="pageSize")

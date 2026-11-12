@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 DatabaseConnection = sqlite3.Connection
-_DEFAULT_DATABASE_PATH = Path(__file__).resolve().parents[2] / "var" / "seatverse.db"
+_DEFAULT_DATABASE_PATH = Path(__file__).resolve().parents[2] / ".db" / "data.db"
 _BUSY_TIMEOUT_MILLISECONDS = 15000
 
 
