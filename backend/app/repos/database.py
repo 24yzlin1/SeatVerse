@@ -7,6 +7,7 @@ from pathlib import Path
 DatabaseConnection = sqlite3.Connection
 _DEFAULT_DATABASE_PATH = Path(__file__).resolve().parents[2] / ".db" / "data.db"
 _BUSY_TIMEOUT_MILLISECONDS = 15000
+_MIGRATIONS_DIRECTORY = Path(__file__).resolve().parent / "migrations"
 
 
 class UniqueConstraintViolationError(Exception):
@@ -23,8 +24,9 @@ def get_database_path() -> Path:
 def get_connection() -> DatabaseConnection:
     database_path = get_database_path()
     database_path.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(
-        database_path, timeout=_BUSY_TIMEOUT_MILLISECONDS / 1000
+    connection = connection = sqlite3.connect(
+        database_path,
+        check_same_thread=False,
     )
     connection.isolation_level = None
     connection.row_factory = sqlite3.Row
@@ -110,3 +112,12 @@ def immediate_transaction(
         raise
     else:
         connection.execute("COMMIT")
+
+
+def run_migrations() -> None:
+    connection = get_connection()
+    try:
+        for migration_path in sorted(_MIGRATIONS_DIRECTORY.glob("*.sql")):
+            connection.executescript(migration_path.read_text(encoding="utf-8"))
+    finally:
+        connection.close()

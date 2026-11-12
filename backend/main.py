@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 import dotenv
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -5,9 +6,18 @@ from app.scope.common import error_handler, ok
 from app.types.common import ResponsePayload
 from app.scope.authentication import router as authentication_router
 from app.scope.events import router as events_router
+from app.repos.database import run_migrations
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    run_migrations()
+    yield
+
 
 dotenv.load_dotenv()
-app = FastAPI(title="SeatVerse")
+router = APIRouter()
+app = FastAPI(title="SeatVerse", lifespan=lifespan)
 app.add_exception_handler(Exception, error_handler)
 app.add_middleware(
     CORSMiddleware,
@@ -16,8 +26,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-router = APIRouter()
 
 
 @router.get("/")
