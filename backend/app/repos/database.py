@@ -59,6 +59,14 @@ def fetch_all_rows(
     return result
 
 
+def execute_update(
+    connection: DatabaseConnection, sql: str, parameters: Sequence[object] = ()
+) -> int:
+    """执行一条写语句并返回受影响行数，供 core 层判断条件更新是否命中。"""
+    cursor = connection.execute(sql, parameters)
+    return cursor.rowcount
+
+
 def read_text(row: sqlite3.Row, column: str) -> str:
     value: object = row[column]
     if not isinstance(value, str):
@@ -71,6 +79,14 @@ def read_integer(row: sqlite3.Row, column: str) -> int:
     if not isinstance(value, int) or isinstance(value, bool):
         raise TypeError(f"Column {column} is not an integer")
     return value
+
+
+def read_real(row: sqlite3.Row, column: str) -> float:
+    """读取 REAL 列；SQLite 对整值（如 0）可能返回 int，这里统一转成 float。"""
+    value: object = row[column]
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise TypeError(f"Column {column} is not a real number")
+    return float(value)
 
 
 def read_optional_text(row: sqlite3.Row, column: str) -> str | None:

@@ -18,8 +18,14 @@ _EVENT_SELECT_COLUMNS = (
 
 def _read_status(row: sqlite3.Row) -> ActivityStatus:
     value = read_text(row, "status")
-    if value == "draft" or value == "published" or value == "cancelled":
-        return value
+    if value == "draft":
+        return "draft"
+    if value == "published":
+        return "published"
+    if value == "closed":
+        return "closed"
+    if value == "cancelled":
+        return "cancelled"
     raise ValueError(f"Unknown event status: {value!r}")
 
 

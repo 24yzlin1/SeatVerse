@@ -26,6 +26,7 @@ def health() -> ResponsePayload[str]:
 
 
 api_router = APIRouter(prefix="/api")
+api_router.include_router(router, tags=["health"])
 api_router.include_router(authentication_router, tags=["authentication"])
 api_router.include_router(events_router, tags=["events"])
 app.include_router(api_router)

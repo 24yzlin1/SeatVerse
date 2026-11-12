@@ -22,7 +22,8 @@ from app.types.authentication import Identity
 
 _ALLOWED_STATUS_TRANSITIONS: dict[ActivityStatus, frozenset[ActivityStatus]] = {
     "draft": frozenset({"published", "cancelled"}),
-    "published": frozenset({"cancelled"}),
+    "published": frozenset({"closed", "cancelled"}),
+    "closed": frozenset({"cancelled"}),
     "cancelled": frozenset(),
 }
 
@@ -67,7 +68,7 @@ def list_events(query: EventListQuery) -> PaginatedPayload[EventPublic]:
         items=items,
         total=total,
         page=query.page,
-        pageSize=query.page_size,
+        page_size=query.page_size,
     )
 
 

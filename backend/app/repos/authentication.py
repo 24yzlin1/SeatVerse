@@ -11,8 +11,10 @@ from app.types.authentication import UserRole, UserRow
 
 def _read_role(row: sqlite3.Row) -> UserRole:
     value = read_text(row, "role")
-    if value == "user" or value == "organizer":
-        return value
+    if value == "user":
+        return "user"
+    if value == "organizer":
+        return "organizer"
     raise ValueError(f"Unknown role: {value!r}")
 
 
