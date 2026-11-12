@@ -104,6 +104,15 @@ def read_optional_text(row: sqlite3.Row, column: str) -> str | None:
     return value
 
 
+def read_optional_integer(row: sqlite3.Row, column: str) -> int | None:
+    value: object = row[column]
+    if value is None:
+        return None
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise TypeError(f"Column {column} is neither an integer nor null")
+    return value
+
+
 @contextmanager
 def immediate_transaction(
     connection: DatabaseConnection,

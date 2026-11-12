@@ -9,6 +9,7 @@ import sqlite3
 
 from app.repos.database import (
     DatabaseConnection,
+    execute_update,
     fetch_all_rows,
     fetch_one_row,
     get_connection,
@@ -17,6 +18,7 @@ from app.repos.database import (
     read_text,
 )
 from app.types.seats import (
+    EventSeatRow,
     EventSeatStateRow,
     EventSeatStatus,
     SeatRow,
@@ -89,6 +91,54 @@ def list_event_seats(event_id: int) -> list[EventSeatStateRow]:
         )
         for row in rows
     ]
+
+
+def _row_to_event_seat(row: sqlite3.Row) -> EventSeatRow:
+    return EventSeatRow(
+        id=read_integer(row, "id"),
+        event_id=read_integer(row, "event_id"),
+        seat_id=read_integer(row, "seat_id"),
+        status=_read_event_seat_status(read_text(row, "status")),
+        version=read_integer(row, "version"),
+    )
+
+
+def find_event_seat_in_transaction(
+    connection: DatabaseConnection, event_id: int, seat_id: int
+) -> EventSeatRow | None:
+    row = fetch_one_row(
+        connection,
+        "SELECT id, event_id, seat_id, status, version "
+        "FROM event_seats WHERE event_id = ? AND seat_id = ?",
+        (event_id, seat_id),
+    )
+    return None if row is None else _row_to_event_seat(row)
+
+
+def mark_event_seat_sold(
+    connection: DatabaseConnection, event_id: int, seat_id: int
+) -> bool:
+    """条件更新：只有当前仍是 available 才改成 sold，返回是否命中。"""
+    updated = execute_update(
+        connection,
+        "UPDATE event_seats SET status = 'sold', version = version + 1 "
+        "WHERE event_id = ? AND seat_id = ? AND status = 'available'",
+        (event_id, seat_id),
+    )
+    return updated == 1
+
+
+def release_event_seat(
+    connection: DatabaseConnection, event_id: int, seat_id: int
+) -> bool:
+    """取消预约时把已售座位放回 available；条件更新防止释放错座位。"""
+    updated = execute_update(
+        connection,
+        "UPDATE event_seats SET status = 'available', version = version + 1 "
+        "WHERE event_id = ? AND seat_id = ? AND status = 'sold'",
+        (event_id, seat_id),
+    )
+    return updated == 1
 
 
 def count_seats_by_venue(venue_id: int) -> int:
