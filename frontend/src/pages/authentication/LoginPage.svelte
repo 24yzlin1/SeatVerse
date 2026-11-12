@@ -8,7 +8,7 @@
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label";
 
-  let username = $state("");
+  let email = $state("");
   let password = $state("");
   let isLoading = $state(false);
   let errorMessage = $state("");
@@ -17,14 +17,14 @@
     e.preventDefault();
     errorMessage = "";
 
-    if (!username.trim() || !password.trim()) {
-      errorMessage = "请输入用户名和密码";
+    if (!email.trim() || !password.trim()) {
+      errorMessage = "请输入邮箱和密码";
       return;
     }
 
     isLoading = true;
     try {
-      await auth.login({ username, password });
+      await auth.login({ email, password });
       const role = auth.role;
       router.navigate(role ? HOME_BY_ROLE[role] : "/events");
     } catch (error: unknown) {
@@ -44,8 +44,8 @@
 
     <form onsubmit={handleLogin} class={["flex", "flex-col", "gap-4"]}>
       <div class={["flex", "flex-col", "gap-2"]}>
-        <Label for="username">用户名 / 邮箱</Label>
-        <Input id="username" bind:value={username} disabled={isLoading} placeholder="请输入用户名/邮箱" />
+        <Label for="email">邮箱</Label>
+        <Input id="email" bind:value={email} disabled={isLoading} placeholder="请输入邮箱" />
       </div>
 
       <div class={["flex", "flex-col", "gap-2"]}>

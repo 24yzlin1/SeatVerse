@@ -10,6 +10,7 @@
 
   // 从路由接收活动 ID (A 的 router 会把 :id 传进来)
   let { id }: { id: string } = $props();
+  console.log(id)
 
   let pageState = $state<"loading" | "error" | "empty" | "success">("loading");
   let event = $state<EventSummary | null>(null);
