@@ -43,6 +43,43 @@ def find_only_venue() -> VenueRow | None:
     return None if row is None else _row_to_venue(row)
 
 
+def find_venue_by_name(name: str) -> VenueRow | None:
+    connection = get_connection()
+    try:
+        row = fetch_one_row(
+            connection,
+            "SELECT id, name, layout_config, capacity FROM venues "
+            "WHERE name = ? ORDER BY id ASC LIMIT 1",
+            (name,),
+        )
+    finally:
+        connection.close()
+    return None if row is None else _row_to_venue(row)
+
+
+def insert_venue(name: str, layout_config: str, capacity: int) -> VenueRow:
+    connection = get_connection()
+    try:
+        cursor = connection.execute(
+            "INSERT INTO venues (name, layout_config, capacity) VALUES (?, ?, ?)",
+            (name, layout_config, capacity),
+        )
+        connection.commit()
+        last_row_id = cursor.lastrowid
+        if last_row_id is None:
+            raise RuntimeError("Failed to obtain inserted venue id")
+        row = fetch_one_row(
+            connection,
+            "SELECT id, name, layout_config, capacity FROM venues WHERE id = ?",
+            (last_row_id,),
+        )
+    finally:
+        connection.close()
+    if row is None:
+        raise RuntimeError("Inserted venue row not found")
+    return _row_to_venue(row)
+
+
 def list_venues() -> list[VenueRow]:
     connection = get_connection()
     try:

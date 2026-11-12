@@ -132,6 +132,21 @@ def find_event_by_id(event_id: int) -> EventWithVenueRow | None:
     return None if row is None else _row_to_event_with_venue(row)
 
 
+def find_event_by_title(title: str) -> EventRow | None:
+    connection = get_connection()
+    try:
+        row = fetch_one_row(
+            connection,
+            "SELECT id, title, description, start_time, end_time, organizer_id, "
+            "venue_id, status, created_at FROM events "
+            "WHERE title = ? ORDER BY id ASC LIMIT 1",
+            (title,),
+        )
+    finally:
+        connection.close()
+    return None if row is None else _row_to_event(row)
+
+
 def insert_event(
     title: str,
     description: str,
