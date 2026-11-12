@@ -32,6 +32,7 @@ dev = "uvicorn main:app --reload"
 start = "uvicorn main:app"
 check = "mypy app"
 test = "pytest"
+migrate = "python -m scripts.migrate"
 seed = "python -m scripts.seed"
 
 [tool.pytest.ini_options]

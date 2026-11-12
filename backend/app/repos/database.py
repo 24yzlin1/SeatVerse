@@ -5,7 +5,8 @@ from contextlib import contextmanager
 from pathlib import Path
 
 DatabaseConnection = sqlite3.Connection
-_DEFAULT_DATABASE_PATH = Path(__file__).resolve().parents[2] / ".db" / "data.db"
+_BACKEND_ROOT = Path(__file__).resolve().parents[2]
+_DEFAULT_DATABASE_PATH = _BACKEND_ROOT / ".db" / "data.db"
 _BUSY_TIMEOUT_MILLISECONDS = 15000
 _MIGRATIONS_DIRECTORY = Path(__file__).resolve().parent / "migrations"
 
@@ -16,15 +17,18 @@ class UniqueConstraintViolationError(Exception):
 
 def get_database_path() -> Path:
     configured_path = os.environ.get("SEATVERSE_DATABASE_PATH")
-    if configured_path:
-        return Path(configured_path)
-    return _DEFAULT_DATABASE_PATH
+    if not configured_path:
+        return _DEFAULT_DATABASE_PATH
+    path = Path(configured_path).expanduser()
+    if path.is_absolute():
+        return path
+    return _BACKEND_ROOT / path
 
 
 def get_connection() -> DatabaseConnection:
     database_path = get_database_path()
     database_path.parent.mkdir(parents=True, exist_ok=True)
-    connection = connection = sqlite3.connect(
+    connection = sqlite3.connect(
         database_path,
         check_same_thread=False,
     )
