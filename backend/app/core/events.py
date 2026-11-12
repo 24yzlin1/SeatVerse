@@ -17,12 +17,13 @@ from app.types.events import (
     EventWithVenueRow,
 )
 from app.types.venues import VenuePublic
-from backend.app.repos.venues import find_only_venue
-from backend.app.types.authentication import Identity
+from app.repos.venues import find_only_venue
+from app.types.authentication import Identity
 
 _ALLOWED_STATUS_TRANSITIONS: dict[ActivityStatus, frozenset[ActivityStatus]] = {
     "draft": frozenset({"published", "cancelled"}),
-    "published": frozenset({"cancelled"}),
+    "published": frozenset({"closed", "cancelled"}),
+    "closed": frozenset({"cancelled"}),
     "cancelled": frozenset(),
 }
 

@@ -5,8 +5,10 @@ from contextlib import contextmanager
 from pathlib import Path
 
 DatabaseConnection = sqlite3.Connection
-_DEFAULT_DATABASE_PATH = Path(__file__).resolve().parents[2] / "var" / "seatverse.db"
+_BACKEND_ROOT = Path(__file__).resolve().parents[2]
+_DEFAULT_DATABASE_PATH = _BACKEND_ROOT / ".db" / "data.db"
 _BUSY_TIMEOUT_MILLISECONDS = 15000
+_MIGRATIONS_DIRECTORY = Path(__file__).resolve().parent / "migrations"
 
 
 class UniqueConstraintViolationError(Exception):
@@ -15,16 +17,20 @@ class UniqueConstraintViolationError(Exception):
 
 def get_database_path() -> Path:
     configured_path = os.environ.get("SEATVERSE_DATABASE_PATH")
-    if configured_path:
-        return Path(configured_path)
-    return _DEFAULT_DATABASE_PATH
+    if not configured_path:
+        return _DEFAULT_DATABASE_PATH
+    path = Path(configured_path).expanduser()
+    if path.is_absolute():
+        return path
+    return _BACKEND_ROOT / path
 
 
 def get_connection() -> DatabaseConnection:
     database_path = get_database_path()
     database_path.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(
-        database_path, timeout=_BUSY_TIMEOUT_MILLISECONDS / 1000
+        database_path,
+        check_same_thread=False,
     )
     connection.isolation_level = None
     connection.row_factory = sqlite3.Row
@@ -59,6 +65,14 @@ def fetch_all_rows(
     return result
 
 
+def execute_update(
+    connection: DatabaseConnection, sql: str, parameters: Sequence[object] = ()
+) -> int:
+    """执行一条写语句并返回受影响行数，供 core 层判断条件更新是否命中。"""
+    cursor = connection.execute(sql, parameters)
+    return cursor.rowcount
+
+
 def read_text(row: sqlite3.Row, column: str) -> str:
     value: object = row[column]
     if not isinstance(value, str):
@@ -71,6 +85,14 @@ def read_integer(row: sqlite3.Row, column: str) -> int:
     if not isinstance(value, int) or isinstance(value, bool):
         raise TypeError(f"Column {column} is not an integer")
     return value
+
+
+def read_real(row: sqlite3.Row, column: str) -> float:
+    """读取 REAL 列；SQLite 对整值（如 0）可能返回 int，这里统一转成 float。"""
+    value: object = row[column]
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise TypeError(f"Column {column} is not a real number")
+    return float(value)
 
 
 def read_optional_text(row: sqlite3.Row, column: str) -> str | None:
@@ -94,3 +116,12 @@ def immediate_transaction(
         raise
     else:
         connection.execute("COMMIT")
+
+
+def run_migrations() -> None:
+    connection = get_connection()
+    try:
+        for migration_path in sorted(_MIGRATIONS_DIRECTORY.glob("*.sql")):
+            connection.executescript(migration_path.read_text(encoding="utf-8"))
+    finally:
+        connection.close()

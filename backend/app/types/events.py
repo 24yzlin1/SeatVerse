@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict
 from app.types.venues import VenuePublic
 
-ActivityStatus = Literal["draft", "published", "cancelled"]
+ActivityStatus = Literal["draft", "published", "closed", "cancelled"]
 
 
 @dataclass(frozen=True)
@@ -61,4 +61,4 @@ class CreateEventRequest(BaseModel):
 
 class UpdateEventStatusRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    status: Literal["published", "cancelled"]
+    status: Literal["published", "closed", "cancelled"]

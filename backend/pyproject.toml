@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "dotenv>=0.9.9",
     "fastapi>=0.162.0",
     "pydantic-settings>=2.16.2",
     "pyjwt>=2.15.1",
@@ -24,12 +25,14 @@ disallow_any_explicit = true
 disallow_any_generics = true
 warn_return_any = true
 warn_unused_ignores = true
+plugins = ["pydantic.mypy"]
 
 [tool.poe.tasks]
-dev = "uvicorn main:app --reload --root-path=/api"
-start = "uvicorn main:app --root-path=/api"
-check = "mypy app"
+dev = "uvicorn main:app --reload"
+start = "uvicorn main:app"
+check = "mypy app scripts"
 test = "pytest"
+migrate = "python -m scripts.migrate"
 seed = "python -m scripts.seed"
 
 [tool.pytest.ini_options]

@@ -8,3 +8,14 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Tool caches
+.mypy_cache/
+.pytest_cache/
+
+# Local SQLite database and WAL side files
+var/
+.db/
+*.db
+*.db-wal
+*.db-shm

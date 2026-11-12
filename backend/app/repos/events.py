@@ -18,8 +18,14 @@ _EVENT_SELECT_COLUMNS = (
 
 def _read_status(row: sqlite3.Row) -> ActivityStatus:
     value = read_text(row, "status")
-    if value == "draft" or value == "published" or value == "cancelled":
-        return value
+    if value == "draft":
+        return "draft"
+    if value == "published":
+        return "published"
+    if value == "closed":
+        return "closed"
+    if value == "cancelled":
+        return "cancelled"
     raise ValueError(f"Unknown event status: {value!r}")
 
 
@@ -124,6 +130,21 @@ def find_event_by_id(event_id: int) -> EventWithVenueRow | None:
     finally:
         connection.close()
     return None if row is None else _row_to_event_with_venue(row)
+
+
+def find_event_by_title(title: str) -> EventRow | None:
+    connection = get_connection()
+    try:
+        row = fetch_one_row(
+            connection,
+            "SELECT id, title, description, start_time, end_time, organizer_id, "
+            "venue_id, status, created_at FROM events "
+            "WHERE title = ? ORDER BY id ASC LIMIT 1",
+            (title,),
+        )
+    finally:
+        connection.close()
+    return None if row is None else _row_to_event(row)
 
 
 def insert_event(

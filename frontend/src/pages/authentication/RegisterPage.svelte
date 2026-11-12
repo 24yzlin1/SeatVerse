@@ -1,13 +1,17 @@
 <script lang="ts">
-  import { request, endpoints, ApiError } from "@/common/api";
+  import { request, ApiError } from "@/common/api";
   import type { LoginResponse } from "@/common/api/types";
   import { auth } from "@/common/stores/auth.svelte";
   import { router } from "@/common/router";
   import { HOME_BY_ROLE } from "@/common/router/routes";
 
-  let username = $state("");
+  import { Button } from "$lib/components/ui/button";
+  import { Input } from "$lib/components/ui/input";
+  import { Label } from "$lib/components/ui/label";
+
+  let name = $state("");
+  let email = $state("");
   let password = $state("");
-  let confirmPassword = $state("");
   let isLoading = $state(false);
   let errorMessage = $state("");
 
@@ -15,13 +19,8 @@
     e.preventDefault();
     errorMessage = "";
 
-    if (!username.trim() || !password.trim()) {
-      errorMessage = "请输入用户名和密码";
-      return;
-    }
-    
-    if (password !== confirmPassword) {
-      errorMessage = "两次输入的密码不一致";
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      errorMessage = "请填写所有必填项";
       return;
     }
 
@@ -29,23 +28,14 @@
     try {
       const res = await request<LoginResponse>("/authentication/register", {
         method: "POST",
-        body: { username, password }
+        body: { name, email, password }
       });
 
       auth.setSession(res.token, res.user);
-      
       const role = auth.role;
-      if (role) {
-        router.navigate(HOME_BY_ROLE[role]);
-      } else {
-        router.navigate("/events");
-      }
+      router.navigate(role ? HOME_BY_ROLE[role] : "/events");
     } catch (error: unknown) {
-      if (error instanceof ApiError) {
-        errorMessage = error.message;
-      } else {
-        errorMessage = "网络异常，请稍后重试";
-      }
+      errorMessage = error instanceof ApiError ? error.message : "网络异常，请稍后重试";
     } finally {
       isLoading = false;
     }
@@ -54,88 +44,39 @@
 
 <div class={["min-h-[70vh]", "flex", "items-center", "justify-center"]}>
   <div class={["w-full", "max-w-md", "p-8", "bg-card", "rounded-xl", "border", "border-border", "shadow-sm"]}>
-    
     <div class={["text-center", "mb-8"]}>
       <h1 class={["text-2xl", "font-bold", "text-foreground", "mb-2"]}>注册 SeatVerse</h1>
       <p class={["text-sm", "text-muted-foreground"]}>创建账号，开始预约</p>
     </div>
 
-    <form on:submit={handleRegister} class={["flex", "flex-col", "gap-4"]}>
+    <form onsubmit={handleRegister} class={["flex", "flex-col", "gap-4"]}>
       <div class={["flex", "flex-col", "gap-2"]}>
-        <label for="username" class={["text-sm", "font-medium", "text-foreground"]}>用户名</label>
-        <input
-          id="username"
-          type="text"
-          bind:value={username}
-          disabled={isLoading}
-          placeholder="请输入用户名"
-          class={[
-            "flex", "h-10", "w-full", "rounded-md", "border", "border-input",
-            "bg-transparent", "px-3", "py-2", "text-sm", "text-foreground",
-            "focus-visible:outline-none", "focus-visible:ring-2", "focus-visible:ring-ring",
-            "disabled:cursor-not-allowed", "disabled:opacity-50"
-          ]}
-        />
+        <Label for="name">用户名</Label>
+        <Input id="name" bind:value={name} disabled={isLoading} placeholder="请输入用户名" />
       </div>
 
       <div class={["flex", "flex-col", "gap-2"]}>
-        <label for="password" class={["text-sm", "font-medium", "text-foreground"]}>密码</label>
-        <input
-          id="password"
-          type="password"
-          bind:value={password}
-          disabled={isLoading}
-          placeholder="请输入密码"
-          class={[
-            "flex", "h-10", "w-full", "rounded-md", "border", "border-input",
-            "bg-transparent", "px-3", "py-2", "text-sm", "text-foreground",
-            "focus-visible:outline-none", "focus-visible:ring-2", "focus-visible:ring-ring",
-            "disabled:cursor-not-allowed", "disabled:opacity-50"
-          ]}
-        />
+        <Label for="email">邮箱</Label>
+        <Input id="email" type="email" bind:value={email} disabled={isLoading} placeholder="请输入邮箱" />
       </div>
 
       <div class={["flex", "flex-col", "gap-2"]}>
-        <label for="confirmPassword" class={["text-sm", "font-medium", "text-foreground"]}>确认密码</label>
-        <input
-          id="confirmPassword"
-          type="password"
-          bind:value={confirmPassword}
-          disabled={isLoading}
-          placeholder="请再次输入密码"
-          class={[
-            "flex", "h-10", "w-full", "rounded-md", "border", "border-input",
-            "bg-transparent", "px-3", "py-2", "text-sm", "text-foreground",
-            "focus-visible:outline-none", "focus-visible:ring-2", "focus-visible:ring-ring",
-            "disabled:cursor-not-allowed", "disabled:opacity-50"
-          ]}
-        />
+        <Label for="password">密码</Label>
+        <Input id="password" type="password" bind:value={password} disabled={isLoading} placeholder="请输入密码" />
       </div>
 
       {#if errorMessage}
-        <div class={["text-sm", "text-destructive", "font-medium", "mt-1"]}>
-          {errorMessage}
-        </div>
+        <div class={["text-sm", "text-destructive", "font-medium", "mt-1"]}>{errorMessage}</div>
       {/if}
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        class={[
-          "inline-flex", "items-center", "justify-center", "rounded-md",
-          "text-sm", "font-medium", "h-10", "px-4", "py-2", "w-full", "mt-4",
-          "bg-primary", "text-primary-foreground", "hover:bg-primary/90",
-          "disabled:pointer-events-none", "disabled:opacity-50"
-        ]}
-      >
+      <Button type="submit" disabled={isLoading} class={["w-full", "mt-4"]}>
         {isLoading ? "注册中..." : "注册"}
-      </button>
+      </Button>
     </form>
     
     <div class={["mt-6", "text-center", "text-sm", "text-muted-foreground"]}>
       已有账号？
       <a href="#/login" class={["text-primary", "hover:underline"]}>返回登录</a>
     </div>
-
   </div>
 </div>

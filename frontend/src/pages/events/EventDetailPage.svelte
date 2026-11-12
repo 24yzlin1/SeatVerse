@@ -6,7 +6,11 @@
   import ErrorState from "@/common/components/ErrorState.svelte";
   import { router } from "@/common/router";
 
+  import { Button } from "$lib/components/ui/button";
+
+  // 从路由接收活动 ID (A 的 router 会把 :id 传进来)
   let { id }: { id: string } = $props();
+  console.log(id)
 
   let pageState = $state<"loading" | "error" | "empty" | "success">("loading");
   let event = $state<EventSummary | null>(null);
@@ -52,12 +56,13 @@
 <div class={["min-h-screen", "bg-background", "p-8"]}>
   <div class={["max-w-3xl", "mx-auto"]}>
     
-    <button 
+    <Button 
+      variant="ghost" 
       onclick={() => router.navigate("/events")}
-      class={["text-sm", "text-muted-foreground", "hover:text-primary", "transition-colors", "mb-8", "inline-flex", "items-center", "gap-1"]}
+      class={["mb-8"]}
     >
       ← 返回活动列表
-    </button>
+    </Button>
 
     {#if pageState === "loading"}
       <Loading />
@@ -97,18 +102,13 @@
         </div>
 
         <div class={["flex", "justify-end", "border-t", "border-border", "pt-6"]}>
-          <button
+          <Button
             onclick={goToSeatMap}
             disabled={event.status !== "published"}
-            class={[
-              "inline-flex", "items-center", "justify-center", "rounded-md",
-              "text-sm", "font-medium", "h-11", "px-8",
-              "bg-primary", "text-primary-foreground", "hover:bg-primary/90",
-              "disabled:pointer-events-none", "disabled:opacity-50"
-            ]}
+            class={["px-8", "h-11"]}
           >
             {event.status === "published" ? "进入 3D 选座" : "该活动已停止预约"}
-          </button>
+          </Button>
         </div>
 
       </div>

@@ -11,8 +11,10 @@ from app.types.authentication import UserRole, UserRow
 
 def _read_role(row: sqlite3.Row) -> UserRole:
     value = read_text(row, "role")
-    if value == "user" or value == "organizer":
-        return value
+    if value == "user":
+        return "user"
+    if value == "organizer":
+        return "organizer"
     raise ValueError(f"Unknown role: {value!r}")
 
 
@@ -53,6 +55,28 @@ def find_user_by_id(user_id: int) -> UserRow | None:
     finally:
         connection.close()
     return None if row is None else _row_to_user(row)
+
+
+def find_organizer() -> UserRow | None:
+    connection = get_connection()
+    try:
+        row = fetch_one_row(
+            connection,
+            "SELECT id, name, email, password_hash, role, created_at "
+            "FROM users WHERE role = 'organizer' ORDER BY id ASC LIMIT 1",
+        )
+    finally:
+        connection.close()
+    return None if row is None else _row_to_user(row)
+
+
+def count_users() -> int:
+    connection = get_connection()
+    try:
+        row = fetch_one_row(connection, "SELECT COUNT(*) AS total FROM users")
+    finally:
+        connection.close()
+    return 0 if row is None else read_integer(row, "total")
 
 
 def insert_user(
