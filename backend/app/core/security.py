@@ -76,12 +76,12 @@ def issue_token(
         "iat": issued_at,
         "exp": issued_at + time_to_live_seconds,
     }
-    return jwt.encode(payload, _get_jwt_secret_key(), _JWT_ALGORITHM)  # type: ignore
+    return jwt.encode(payload, _get_jwt_secret_key(), _JWT_ALGORITHM)
 
 
 def parse_token(token: str) -> TokenClaims | None:
     try:
-        claims = jwt.decode(  # type: ignore
+        claims = jwt.decode(
             token,
             _get_jwt_secret_key(),
             algorithms=[_JWT_ALGORITHM],
