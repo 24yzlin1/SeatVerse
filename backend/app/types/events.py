@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Literal
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from app.types.venues import VenuePublic
 
 ActivityStatus = Literal["draft", "published", "closed", "cancelled"]
@@ -31,15 +31,11 @@ class EventPublic(BaseModel):
     id: int
     title: str
     description: str
-    start_time: str
-    end_time: str
+    start_time: str = Field(..., alias="startTime")
+    end_time: str = Field(..., alias="endTime")
     status: ActivityStatus
     venue: VenuePublic
-    organizer_name: str
-
-
-class EventDetailPayload(BaseModel):
-    event: EventPublic
+    organizer_name: str = Field(..., alias="organizerName")
 
 
 class EventListQuery(BaseModel):
