@@ -88,15 +88,15 @@
         <div class={["flex", "flex-col", "gap-4", "text-base", "text-muted-foreground", "mb-10"]}>
           <div class={["flex", "items-center", "gap-3"]}>
             <span class={["font-medium", "text-foreground", "w-20"]}>活动场馆</span>
-            <span>📍 {event.venue.name}</span>
+            <span> {event.venue.name}</span>
           </div>
           <div class={["flex", "items-center", "gap-3"]}>
             <span class={["font-medium", "text-foreground", "w-20"]}>开始时间</span>
-            <span>🕒 {new Date(event.startTime).toLocaleString()}</span>
+            <span> {new Date(event.startTime).toLocaleString()}</span>
           </div>
           <div class={["flex", "items-center", "gap-3"]}>
             <span class={["font-medium", "text-foreground", "w-20"]}>结束时间</span>
-            <span>🕒 {new Date(event.endTime).toLocaleString()}</span>
+            <span> {new Date(event.endTime).toLocaleString()}</span>
           </div>
         </div>
 

@@ -89,7 +89,7 @@
               class={["p-6", "border", "border-border", "rounded-xl", "bg-card", "hover:shadow-md", "cursor-pointer"]}
             >
               <h2 class={["text-xl", "font-semibold"]}>{event.title}</h2>
-              <p class={["text-sm", "text-muted-foreground", "mt-2"]}>📍 {event.venue.name}</p>
+              <p class={["text-sm", "text-muted-foreground", "mt-2"]}> {event.venue.name}</p>
             </div>
           {/each}
         </div>
