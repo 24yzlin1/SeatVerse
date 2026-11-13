@@ -7,9 +7,9 @@
   import { router } from "@/common/router";
 
   import { Button } from "$lib/components/ui/button";
+  import { RiMapPinLine, RiTimeLine } from "remixicon-svelte";
 
-  // 从路由接收活动 ID (A 的 router 会把 :id 传进来)
-  let { id }: { id: string } = $props();
+  const id = $derived(router.params.id ?? "");
 
   let pageState = $state<"loading" | "error" | "empty" | "success">("loading");
   let event = $state<EventSummary | null>(null);
@@ -20,9 +20,12 @@
     errorMessage = "";
 
     try {
-      const res = await request<EventSummary>(`/events/${id}`, {
-        method: "GET"
-      });
+      const res = await request<EventSummary>(
+        `/events/${encodeURIComponent(id)}`,
+        {
+          method: "GET",
+        },
+      );
 
       if (!res) {
         pageState = "empty";
@@ -54,9 +57,8 @@
 
 <div class={["min-h-screen", "bg-background", "p-8"]}>
   <div class={["max-w-3xl", "mx-auto"]}>
-    
-    <Button 
-      variant="ghost" 
+    <Button
+      variant="ghost"
       onclick={() => router.navigate("/events")}
       class={["mb-8"]}
     >
@@ -70,22 +72,46 @@
     {:else if pageState === "empty"}
       <Empty message="活动不存在或已下架" />
     {:else if pageState === "success" && event}
-      
-      <div class={["bg-card", "border", "border-border", "rounded-2xl", "p-8", "shadow-sm"]}>
-        
+      <div
+        class={[
+          "bg-card",
+          "border",
+          "border-border",
+          "rounded-2xl",
+          "p-8",
+          "shadow-sm",
+        ]}
+      >
         <div class={["flex", "justify-between", "items-start", "mb-6"]}>
-          <h1 class={["text-3xl", "font-bold", "text-foreground"]}>{event.title}</h1>
-          <span class={[
-            "px-3", "py-1", "text-sm", "font-medium", "rounded-full",
-            ...(event.status === "published" 
-              ? ["bg-primary/10", "text-primary"] 
-              : ["bg-muted", "text-muted-foreground"])
-          ]}>
+          <h1 class={["text-3xl", "font-bold", "text-foreground"]}>
+            {event.title}
+          </h1>
+          <span
+            class={[
+              "px-3",
+              "py-1",
+              "text-sm",
+              "font-medium",
+              "rounded-full",
+              ...(event.status === "published"
+                ? ["bg-primary/10", "text-primary"]
+                : ["bg-muted", "text-muted-foreground"]),
+            ]}
+          >
             {event.status === "published" ? "预约中" : "已结束"}
           </span>
         </div>
 
-        <div class={["flex", "flex-col", "gap-4", "text-base", "text-muted-foreground", "mb-10"]}>
+        <div
+          class={[
+            "flex",
+            "flex-col",
+            "gap-4",
+            "text-base",
+            "text-muted-foreground",
+            "mb-10",
+          ]}
+        >
           <div class={["flex", "items-center", "gap-3"]}>
             <span class={["font-medium", "text-foreground", "w-20"]}>活动场馆</span>
             <span> {event.venue.name}</span>
@@ -100,7 +126,9 @@
           </div>
         </div>
 
-        <div class={["flex", "justify-end", "border-t", "border-border", "pt-6"]}>
+        <div
+          class={["flex", "justify-end", "border-t", "border-border", "pt-6"]}
+        >
           <Button
             onclick={goToSeatMap}
             disabled={event.status !== "published"}
@@ -109,7 +137,6 @@
             {event.status === "published" ? "进入 3D 选座" : "该活动已停止预约"}
           </Button>
         </div>
-
       </div>
     {/if}
   </div>

@@ -34,14 +34,6 @@ def _normalize_name(value: str) -> str:
     return name
 
 
-def _validate_registration_role(value: str | None) -> None:
-    if value is not None:
-        raise AppError(
-            400,
-            "Organizer registration is not available; only ordinary users can register",
-        )
-
-
 def _validate_password(value: str) -> None:
     if not value:
         raise AppError(400, "Password is required")
@@ -75,11 +67,11 @@ def require_role(role: UserRole) -> object:
 
 @router.post("/register")
 def register(body: RegisterRequest) -> ResponsePayload[AuthenticationPayload]:
-    _validate_registration_role(body.role)
     name = _normalize_name(body.name)
     email = _normalize_email(body.email)
     _validate_password(body.password)
-    return ok(register_core(name, email, body.password, body.role))
+    role: UserRole = "user"
+    return ok(register_core(name, email, body.password, role))
 
 
 @router.post("/login")

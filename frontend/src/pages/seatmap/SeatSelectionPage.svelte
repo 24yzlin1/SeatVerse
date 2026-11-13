@@ -8,6 +8,8 @@
   }
 
   const props: Props = $props();
+  // 只在进入选座页时加载 Three.js，避免其他业务页面承担 3D 包的首屏开销。
+  const sceneModule = import("./SeatScene.svelte");
   const fixture = $derived(getMockEvent(props.eventId));
   const states = $derived(
     new Map(fixture?.seatStates.map((seat) => [seat.seatId, seat.status])),
@@ -42,7 +44,7 @@
 <main class="seatmap-page">
   <header class="page-header">
     <p class="brand">SEATVERSE <span>/ 场馆预览</span></p>
-    <span class="demo-badge">模拟演示 · C-01</span>
+    <span class="demo-badge">模拟演示 · C-02</span>
   </header>
 
   <nav class="event-nav" aria-label="切换模拟活动">
@@ -77,42 +79,54 @@
     <div class="preview-layout">
       <section class="venue-card" aria-labelledby="preview-title">
         <div class="card-heading">
-          <h2 id="preview-title">座位分布</h2>
+          <h2 id="preview-title">3D 场馆</h2>
           <span>10 排 × 12 座</span>
         </div>
-        <div
-          class="map-scroll"
-          role="group"
-          aria-label="120 座平面预览，可横向滚动"
-        >
-          <div class="seat-plan">
-            <div class="stage">舞 台 <span>STAGE</span></div>
-            <div class="seat-rows" role="group" aria-label="座位状态预览">
-              {#each rows as row (row.row)}
-                <div class="seat-row">
-                  <span class="row-label">{row.row}排</span>
-                  {#each row.seats as seat (seat.id)}
-                    {@const state = states.get(seat.id) ?? "unknown"}
-                    <span
-                      class="seat"
-                      data-state={state}
-                      class:aisle={seat.number === 7}
-                      title={`${seat.label} · ${statusLabels[state]}`}
-                      aria-label={`${seat.label}，${statusLabels[state]}`}
-                      >{seat.number}</span
-                    >
-                  {/each}
-                </div>
-              {/each}
+        {#await sceneModule}
+          <p class="scene-loading" role="status">正在加载 3D 场馆…</p>
+        {:then scene}
+          <scene.default seats={mockSeats} />
+        {:catch}
+          <p class="scene-loading" role="alert">
+            场馆加载失败，请刷新重试，或展开下方平面图查看座位。
+          </p>
+        {/await}
+        <details class="flat-preview">
+          <summary>查看平面座位状态 <span>可选 / 已预约</span></summary>
+          <div
+            class="map-scroll"
+            role="group"
+            aria-label="120 座平面预览，可横向滚动"
+          >
+            <div class="seat-plan">
+              <div class="stage">舞 台 <span>STAGE</span></div>
+              <div class="seat-rows" role="group" aria-label="座位状态预览">
+                {#each rows as row (row.row)}
+                  <div class="seat-row">
+                    <span class="row-label">{row.row}排</span>
+                    {#each row.seats as seat (seat.id)}
+                      {@const state = states.get(seat.id) ?? "unknown"}
+                      <span
+                        class="seat"
+                        data-state={state}
+                        class:aisle={seat.number === 7}
+                        title={`${seat.label} · ${statusLabels[state]}`}
+                        aria-label={`${seat.label}，${statusLabels[state]}`}
+                        >{seat.number}</span
+                      >
+                    {/each}
+                  </div>
+                {/each}
+              </div>
+              <p class="orientation">后排 / 入场方向</p>
             </div>
-            <p class="orientation">后排 / 入场方向</p>
           </div>
-        </div>
-        <div class="legend" aria-label="座位图例">
-          <span><i class="swatch available"></i>可选</span>
-          <span><i class="swatch sold"></i>已预约</span>
-          <span class="legend-note">平面数据预览</span>
-        </div>
+          <div class="legend" aria-label="座位图例">
+            <span><i class="swatch available"></i>可选</span>
+            <span><i class="swatch sold"></i>已预约</span>
+            <span class="legend-note">平面数据预览</span>
+          </div>
+        </details>
       </section>
 
       <aside class="summary-card" aria-labelledby="summary-title">
@@ -134,8 +148,7 @@
           </div>
         </dl>
         <p class="demo-note">
-          当前使用固定模拟数据，无需登录。座位仅供预览，3D
-          场景与选座操作将在后续阶段开放。
+          当前为场馆空间预览，可旋转、缩放和重置视角。展开平面图查看本场座位状态；点击选座将在下一阶段开放。
         </p>
       </aside>
     </div>
@@ -286,6 +299,18 @@
   }
   .venue-card {
     overflow: hidden;
+  }
+  .flat-preview {
+    border-top: 1px solid var(--border);
+  }
+  .flat-preview > summary {
+    padding: 16px 24px;
+  }
+  .scene-loading {
+    min-height: 420px;
+    padding: 40px 24px;
+    color: var(--muted-foreground);
+    font-size: 13px;
   }
   .card-heading {
     padding: 20px 24px;

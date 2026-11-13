@@ -19,7 +19,7 @@ class UserPublic(BaseModel):
     id: int
     name: str
     email: str
-    role: UserRole
+    role: UserRole = "user"
 
 
 class LoginRequest(BaseModel):
@@ -32,7 +32,7 @@ class RegisterRequest(BaseModel):
     name: str
     email: str
     password: str
-    role: UserRole
+    # role: UserRole
 
 
 class AuthenticationPayload(BaseModel):

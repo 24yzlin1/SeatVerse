@@ -14,3 +14,10 @@ class VenuePublic(BaseModel):
     id: int
     name: str
     capacity: int
+
+
+class VenuePage(BaseModel):
+    items: list[VenuePublic]
+    total: int
+    page: int
+    pageSize: int

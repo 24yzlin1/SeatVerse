@@ -1,10 +1,10 @@
 <script lang="ts">
+  import { SvelteURLSearchParams } from "svelte/reactivity";
   import { request, ApiError } from "@/common/api";
   import type { Page, EventSummary } from "@/common/api/types";
   import Loading from "@/common/components/Loading.svelte";
   import Empty from "@/common/components/Empty.svelte";
   import ErrorState from "@/common/components/ErrorState.svelte";
-  import { router } from "@/common/router";
 
   import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
@@ -15,15 +15,14 @@
   
   let keyword = $state("");
   let currentPage = $state(1);
-  let totalPages = $state(1);
-  let pageSize = 10;
+  const pageSize = 10;
 
   async function fetchEvents() {
     pageState = "loading";
     errorMessage = "";
     
     try {
-      const query = new URLSearchParams({
+      const query = new SvelteURLSearchParams({
         page: currentPage.toString(),
         pageSize: pageSize.toString(),
       });
@@ -32,15 +31,8 @@
       const res = await request<Page<EventSummary>>(`/events?${query.toString()}`, { method: "GET" });
 
       events = res.items;
-      totalPages = Math.ceil(res.total / res.pageSize) || 1;
       pageState = events.length === 0 ? "empty" : "success";
     } catch (error: unknown) {
-      // ==== 测试代码开始（后端通了就删掉） ====
-      events = [{ id: 1, title: "测试活动：校园歌手大赛", status: "published", startTime: new Date().toISOString(), endTime: new Date().toISOString(), venue: { id: 1, name: "大礼堂" } }];
-      pageState = "success";
-      return; 
-      // ==== 测试代码结束 ====
-
       errorMessage = error instanceof ApiError ? error.message : "获取活动列表失败";
       pageState = "error";
     }
@@ -84,8 +76,8 @@
       {:else if pageState === "success"}
         <div class={["grid", "grid-cols-1", "md:grid-cols-2", "gap-6"]}>
           {#each events as event (event.id)}
-            <div 
-              onclick={() => router.navigate(`/events/${event.id}`)}
+            <a
+              href={`#/events/${event.id}`}
               class={["p-6", "border", "border-border", "rounded-xl", "bg-card", "hover:shadow-md", "cursor-pointer"]}
             >
               <h2 class={["text-xl", "font-semibold"]}>{event.title}</h2>
