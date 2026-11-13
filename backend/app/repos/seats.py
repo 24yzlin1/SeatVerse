@@ -9,6 +9,7 @@ import sqlite3
 
 from app.repos.database import (
     DatabaseConnection,
+    execute_update,
     fetch_all_rows,
     fetch_one_row,
     get_connection,
@@ -16,7 +17,13 @@ from app.repos.database import (
     read_real,
     read_text,
 )
-from app.types.seats import SeatRow, SeatType
+from app.types.seats import (
+    EventSeatRow,
+    EventSeatStateRow,
+    EventSeatStatus,
+    SeatRow,
+    SeatType,
+)
 
 _SEAT_COLUMNS = (
     "id, venue_id, row_number, seat_number, x, y, z, seat_type"
@@ -27,6 +34,16 @@ def _read_seat_type(value: str) -> SeatType:
     if value == "standard":
         return "standard"
     raise ValueError(f"Unknown seat type: {value!r}")
+
+
+def _read_event_seat_status(value: str) -> EventSeatStatus:
+    if value == "available":
+        return "available"
+    if value == "locked":
+        return "locked"
+    if value == "sold":
+        return "sold"
+    raise ValueError(f"Unknown event seat status: {value!r}")
 
 
 def _row_to_seat(row: sqlite3.Row) -> SeatRow:
@@ -54,6 +71,74 @@ def list_seats_by_venue(venue_id: int) -> list[SeatRow]:
     finally:
         connection.close()
     return [_row_to_seat(row) for row in rows]
+
+
+def list_event_seats(event_id: int) -> list[EventSeatStateRow]:
+    connection = get_connection()
+    try:
+        rows = fetch_all_rows(
+            connection,
+            "SELECT seat_id, status FROM event_seats "
+            "WHERE event_id = ? ORDER BY seat_id",
+            (event_id,),
+        )
+    finally:
+        connection.close()
+    return [
+        EventSeatStateRow(
+            seat_id=read_integer(row, "seat_id"),
+            status=_read_event_seat_status(read_text(row, "status")),
+        )
+        for row in rows
+    ]
+
+
+def _row_to_event_seat(row: sqlite3.Row) -> EventSeatRow:
+    return EventSeatRow(
+        id=read_integer(row, "id"),
+        event_id=read_integer(row, "event_id"),
+        seat_id=read_integer(row, "seat_id"),
+        status=_read_event_seat_status(read_text(row, "status")),
+        version=read_integer(row, "version"),
+    )
+
+
+def find_event_seat_in_transaction(
+    connection: DatabaseConnection, event_id: int, seat_id: int
+) -> EventSeatRow | None:
+    row = fetch_one_row(
+        connection,
+        "SELECT id, event_id, seat_id, status, version "
+        "FROM event_seats WHERE event_id = ? AND seat_id = ?",
+        (event_id, seat_id),
+    )
+    return None if row is None else _row_to_event_seat(row)
+
+
+def mark_event_seat_sold(
+    connection: DatabaseConnection, event_id: int, seat_id: int
+) -> bool:
+    """条件更新：只有当前仍是 available 才改成 sold，返回是否命中。"""
+    updated = execute_update(
+        connection,
+        "UPDATE event_seats SET status = 'sold', version = version + 1 "
+        "WHERE event_id = ? AND seat_id = ? AND status = 'available'",
+        (event_id, seat_id),
+    )
+    return updated == 1
+
+
+def release_event_seat(
+    connection: DatabaseConnection, event_id: int, seat_id: int
+) -> bool:
+    """取消预约时把已售座位放回 available；条件更新防止释放错座位。"""
+    updated = execute_update(
+        connection,
+        "UPDATE event_seats SET status = 'available', version = version + 1 "
+        "WHERE event_id = ? AND seat_id = ? AND status = 'sold'",
+        (event_id, seat_id),
+    )
+    return updated == 1
 
 
 def count_seats_by_venue(venue_id: int) -> int:

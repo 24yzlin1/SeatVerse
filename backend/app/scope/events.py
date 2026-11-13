@@ -11,7 +11,6 @@ from app.scope.common import ok
 from app.types.common import PaginatedPayload, ResponsePayload
 from app.types.events import (
     ActivityStatus,
-    EventDetailPayload,
     EventListQuery,
     EventPublic,
     UpdateEventStatusRequest,
@@ -68,7 +67,7 @@ def list_events(
 
 
 @router.get("/{event_id}")
-def get_event_detail(event_id: int) -> ResponsePayload[EventDetailPayload]:
+def get_event_detail(event_id: int) -> ResponsePayload[EventPublic]:
     if event_id < 1:
         raise AppError(400, "Event id must be a positive integer")
     return ok(get_event_detail_core(event_id))
@@ -79,7 +78,7 @@ def update_event_status(
     event_id: int,
     body: UpdateEventStatusRequest,
     identity: Identity = Depends(require_role("organizer")),
-) -> ResponsePayload[EventDetailPayload]:
+) -> ResponsePayload[EventPublic]:
     if event_id < 1:
         raise AppError(400, "Event id must be a positive integer")
     return ok(

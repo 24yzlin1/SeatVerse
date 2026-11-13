@@ -11,9 +11,8 @@ from app.repos.events import (
 from app.types.common import PaginatedPayload
 from app.types.events import (
     ActivityStatus,
-    EventDetailPayload,
-    EventListQuery,
     EventPublic,
+    EventListQuery,
     EventWithVenueRow,
 )
 from app.types.venues import VenuePublic
@@ -33,15 +32,15 @@ def _to_public(row: EventWithVenueRow) -> EventPublic:
         id=row.event.id,
         title=row.event.title,
         description=row.event.description,
-        start_time=row.event.start_time,
-        end_time=row.event.end_time,
+        startTime=row.event.start_time,
+        endTime=row.event.end_time,
         status=row.event.status,
         venue=VenuePublic(
             id=row.event.venue_id,
             name=row.venue_name,
             capacity=row.venue_capacity,
         ),
-        organizer_name=row.organizer_name,
+        organizerName=row.organizer_name,
     )
 
 
@@ -68,15 +67,15 @@ def list_events(query: EventListQuery) -> PaginatedPayload[EventPublic]:
         items=items,
         total=total,
         page=query.page,
-        page_size=query.page_size,
+        pageSize=query.page_size,
     )
 
 
-def get_event_detail(event_id: int) -> EventDetailPayload:
+def get_event_detail(event_id: int) -> EventPublic:
     row = find_event_by_id(event_id)
     if row is None:
         raise AppError(404, "Event not found")
-    return EventDetailPayload(event=_to_public(row))
+    return _to_public(row)
 
 
 def create_event(
@@ -86,7 +85,7 @@ def create_event(
     start_time: str,
     end_time: str,
     requested_venue_id: int | None,
-) -> EventDetailPayload:
+) -> EventPublic:
     venue_id = _resolve_venue_id(requested_venue_id)
     created_at = datetime.now(timezone.utc).isoformat()
     event_id = insert_event(
@@ -102,14 +101,14 @@ def create_event(
     row = find_event_by_id(event_id)
     if row is None:
         raise RuntimeError("Inserted event row not found")
-    return EventDetailPayload(event=_to_public(row))
+    return _to_public(row)
 
 
 def update_event_status(
     identity: Identity,
     event_id: int,
     target_status: ActivityStatus,
-) -> EventDetailPayload:
+) -> EventPublic:
     row = find_event_by_id(event_id)
     if row is None:
         raise AppError(404, "Event not found")
@@ -133,4 +132,4 @@ def update_event_status(
     refreshed_row = find_event_by_id(event_id)
     if refreshed_row is None:
         raise RuntimeError("Updated event row not found")
-    return EventDetailPayload(event=_to_public(refreshed_row))
+    return _to_public(refreshed_row)
