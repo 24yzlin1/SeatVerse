@@ -56,18 +56,21 @@ cd frontend && npm ci && npm run dev
 
 ## 检查入口
 
-统一入口：
+提交前跑一次统一检查。
+
+Windows（PowerShell / cmd）：
+
+```powershell
+.\scripts\check.cmd
+```
+
+macOS / Linux / Git Bash：
 
 ```bash
 bash scripts/check.sh
 ```
 
-> `scripts/check.sh` 在 S2-15 提供；在此之前使用等价命令：
->
-> ```bash
-> cd frontend && npm run check
-> cd backend && uv run poe check
-> ```
+脚本依次执行前端 `check` / `lint` / `build`、后端 `mypy`、`pytest`（没有测试时容忍退出码 5），全部通过后输出 `ALL GREEN`。
 
 检查未通过不得合并；前端类型检查、后端 mypy 均要求零错误。
 

@@ -67,7 +67,7 @@ def list_events(query: EventListQuery) -> PaginatedPayload[EventPublic]:
         items=items,
         total=total,
         page=query.page,
-        pageSize=query.page_size,
+        page_size=query.page_size,
     )
 
 

@@ -134,7 +134,7 @@ git add uv.lock
 ### 4.1 发起前
 
 - [ ] 分支基于最新 `master`
-- [ ] 本地检查通过（`bash scripts/check.sh`；脚本未落地前按根 README「检查入口」执行等价命令）
+- [ ] 本地检查通过（Windows `scripts\check.cmd`，POSIX `bash scripts/check.sh`）
 - [ ] 提交信息符合第 2 节
 - [ ] 未手改 `frontend/src/lib/components/ui/`
 - [ ] 锁文件变更已在说明中标注理由

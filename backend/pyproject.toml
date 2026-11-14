@@ -30,7 +30,7 @@ plugins = ["pydantic.mypy"]
 [tool.poe.tasks]
 dev = "uvicorn main:app --reload"
 start = "uvicorn main:app"
-check = "mypy app scripts"
+check = "mypy app scripts main.py"
 test = "pytest"
 migrate = "python -m scripts.migrate"
 seed = "python -m scripts.seed"

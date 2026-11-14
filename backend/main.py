@@ -1,3 +1,4 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 import dotenv
 from fastapi import APIRouter, FastAPI
@@ -14,7 +15,7 @@ from app.repos.database import run_migrations
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     run_migrations()
     yield
 
@@ -48,7 +49,7 @@ api_router.include_router(venues_router, tags=["venues"])
 app.include_router(api_router)
 
 
-def main():
+def main() -> None:
     print("Hello from seat-verse!")
 
 

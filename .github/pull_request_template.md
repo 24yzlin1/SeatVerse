@@ -8,7 +8,7 @@
 
 ## 自检
 
-- [ ] 本地已跑 `bash scripts/check.sh`（脚本未落地前按根 README「检查入口」执行等价命令）
+- [ ] 本地已跑 `scripts\check.cmd`（Windows）或 `bash scripts/check.sh`
 - [ ] 未手改 `frontend/src/lib/components/ui/`
 - [ ] 未单独修改锁文件（如需改，已在下方说明中标注）
 
