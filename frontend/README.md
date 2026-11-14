@@ -1,47 +1,56 @@
-# Svelte + TS + Vite
+# SeatVerse 前端
 
-This template should help get you started developing with Svelte and TypeScript in Vite.
+SeatVerse 是面向校园活动的 3D 场馆选座与预约平台，本目录是 Svelte 5 + Vite 前端。
 
-## Recommended IDE Setup
+## 技术栈
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+- Svelte 5 + Vite + TypeScript
+- Tailwind CSS 4 + shadcn-svelte
+- 3D 选座：Threlte + Three.js
 
-## Need an official Svelte framework?
+## 环境要求
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
+- Node.js 20+、npm
+- Windows PowerShell 默认禁止执行 `npm.ps1`，请统一使用 `npm.cmd`
 
-## Technical considerations
+## 安装与启动
 
-**Why use this over SvelteKit?**
-
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
-
-This template contains as little as possible to get started with Vite + TypeScript + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
-
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
-
-**Why `global.d.ts` instead of `compilerOptions.types` inside `jsconfig.json` or `tsconfig.json`?**
-
-Setting `compilerOptions.types` shuts out all other types not explicitly listed in the configuration. Using triple-slash references keeps the default TypeScript setting of accepting type information from the entire workspace, while also adding `svelte` and `vite/client` type information.
-
-**Why include `.vscode/extensions.json`?**
-
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
-
-**Why enable `allowJs` in the TS template?**
-
-While `allowJs: false` would indeed prevent the use of `.js` files in the project, it does not prevent the use of JavaScript syntax in `.svelte` files. In addition, it would force `checkJs: false`, bringing the worst of both worlds: not being able to guarantee the entire codebase is TypeScript, and also having worse typechecking for the existing JavaScript. In addition, there are valid use cases in which a mixed codebase may be relevant.
-
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/rixo/svelte-hmr#svelte-hmr).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```ts
-// store.ts
-// An extremely simple external store
-import { writable } from "svelte/store";
-export default writable(0);
+```powershell
+cd frontend
+npm.cmd install
+npm.cmd run dev
 ```
+
+打开 <http://localhost:5173>。后端默认在 <http://localhost:8000>，需另行启动（见仓库根 README）。
+
+## 代理与环境变量
+
+- 浏览器里的接口请求统一走 `/api`，Vite 把 `/api` 代理到 `http://localhost:8000`，原样转发、不 rewrite。
+- 需要指向其他后端时设置 `VITE_API_BASE`（默认 `/api`）。
+
+## 检查
+
+```powershell
+npm.cmd run check        # svelte-check
+npm.cmd run lint         # eslint
+npm.cmd run build        # 生产构建
+npm.cmd run test:seatmap # 选座数据与 3D 模型测试
+```
+
+仓库根还提供一键检查入口（见根 README「检查入口」）；脚本未就绪时以以上命令为准，全绿再合并。
+
+## 目录
+
+```text
+src/
+├── common/        api、components、router、stores、utils
+├── pages/         按业务划分的页面
+├── lib/           shadcn 生成的 UI（不手改）与工具函数
+├── App.svelte     应用壳 + 路由出口
+└── main.ts        挂载入口
+```
+
+## 约定
+
+- 页面放 `src/pages/`，公共层放 `src/common/`；`src/lib/components/ui/` 由 shadcn 生成，不要手改。
+- 接口类型与路径统一在 `src/common/api/`，页面不直接 `fetch`。
