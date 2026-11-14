@@ -114,14 +114,17 @@
         >
           <div class={["flex", "items-center", "gap-3"]}>
             <span class={["font-medium", "text-foreground", "w-20"]}>活动场馆</span>
+            <RiMapPinLine class={["size-4"]} />
             <span> {event.venue.name}</span>
           </div>
           <div class={["flex", "items-center", "gap-3"]}>
             <span class={["font-medium", "text-foreground", "w-20"]}>开始时间</span>
+            <RiTimeLine class={["size-4"]} />
             <span> {new Date(event.startTime).toLocaleString()}</span>
           </div>
           <div class={["flex", "items-center", "gap-3"]}>
             <span class={["font-medium", "text-foreground", "w-20"]}>结束时间</span>
+            <RiTimeLine class={["size-4"]} />
             <span> {new Date(event.endTime).toLocaleString()}</span>
           </div>
         </div>

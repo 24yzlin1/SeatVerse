@@ -82,7 +82,7 @@
             >
               <h2 class={["text-xl", "font-semibold"]}>{event.title}</h2>
               <p class={["text-sm", "text-muted-foreground", "mt-2"]}> {event.venue.name}</p>
-            </div>
+            </a>
           {/each}
         </div>
       {/if}
