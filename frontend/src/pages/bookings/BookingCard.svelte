@@ -1,20 +1,17 @@
 <script lang="ts">
   import type { Booking, BookingStatus } from "@/common/api";
+  import { STATUS_LABEL } from "@/common/utils/groupBookings";
 
   const { booking }: { booking: Booking } = $props();
 
-  interface StatusStyle {
-    label: string;
-    className: string;
-  }
-
-  const STATUS: Record<BookingStatus, StatusStyle> = {
-    reserved: { label: "待参加", className: "bg-primary/10 text-primary" },
-    cancelled: { label: "已取消", className: "bg-muted text-muted-foreground" },
-    used: { label: "已签到", className: "bg-secondary text-secondary-foreground" },
+  const STATUS_CLASS: Record<BookingStatus, string> = {
+    reserved: "bg-primary/10 text-primary",
+    cancelled: "bg-muted text-muted-foreground",
+    used: "bg-secondary text-secondary-foreground",
   };
 
-  const status = $derived(STATUS[booking.status]);
+  const statusClass = $derived(STATUS_CLASS[booking.status]);
+  const statusLabel = $derived(STATUS_LABEL[booking.status]);
   const seats = $derived(booking.seats.map((seat) => seat.label).join("、"));
   const period = $derived(
     `${formatDate(booking.event.startTime)} — ${formatDate(booking.event.endTime)}`,
@@ -49,10 +46,10 @@
         "py-1",
         "text-xs",
         "font-medium",
-        status.className,
+        statusClass,
       ]}
     >
-      {status.label}
+      {statusLabel}
     </span>
   </header>
 

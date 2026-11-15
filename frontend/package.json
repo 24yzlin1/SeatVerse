@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:seatmap": "node --test tests/seatmap.test.mjs tests/seatmap-scene.test.mjs",
+    "test:bookings": "node tests/bookings-group.test.mjs",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
