@@ -23,7 +23,8 @@ SeatVerse/
 │   └── src/                 App.svelte、app.css、common/、pages/、lib/
 ├── docs/
 │   ├── collaboration.md     分支、提交信息与锁文件规范
-│   └── contracts/           接口、登录态、枚举、电子票、前端路由契约
+│   ├── contracts/           接口、登录态、枚举、电子票、前端路由契约
+│   └── requirements/        团队规划与规范文档副本
 ├── .github/                 PR 与 Issue 模板
 └── README.md
 ```
