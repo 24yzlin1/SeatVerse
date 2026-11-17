@@ -12,6 +12,12 @@ echo "==> frontend lint"
 echo "==> frontend build"
 (cd frontend && npm run build)
 
+echo "==> banned-item scan"
+bash scripts/scan_banned.sh
+
+echo "==> sync endpoint scan"
+(cd backend && uv run python ../scripts/scan_sync_endpoints.py)
+
 echo "==> backend mypy"
 (cd backend && uv run poe check)
 

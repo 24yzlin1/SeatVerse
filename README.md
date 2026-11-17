@@ -71,7 +71,9 @@ macOS / Linux / Git Bash：
 bash scripts/check.sh
 ```
 
-脚本依次执行前端 `check` / `lint` / `build`、后端 `mypy`、`pytest`（没有测试时容忍退出码 5），全部通过后输出 `ALL GREEN`。
+脚本依次执行前端 `check` / `lint` / `build`、禁用项扫描、同步端点扫描、后端 `mypy`、`pytest`（没有测试时容忍退出码 5），全部通过后输出 `ALL GREEN`。
+
+检查链路包含禁用项扫描与同步端点扫描；接口文档快照归档在 [docs/api/openapi.json](docs/api/openapi.json)。
 
 检查未通过不得合并；前端类型检查、后端 mypy 均要求零错误。
 
