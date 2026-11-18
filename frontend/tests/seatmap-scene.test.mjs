@@ -1,26 +1,11 @@
 import assert from "node:assert/strict";
-import { Buffer } from "node:buffer";
-import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import { URL } from "node:url";
 import { Box3, Raycaster, Vector2, Vector3 } from "three";
-import ts from "typescript";
+import { loadTypeScript } from "./helpers/load-typescript.mjs";
 
 async function loadModule(path) {
-  const source = await readFile(new URL(path, import.meta.url), "utf8");
-  const { outputText } = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.ESNext,
-      target: ts.ScriptTarget.ES2023,
-    },
-  });
-  const code = outputText.replace(
-    /from "(three(?:\/[^"]*)?)"/g,
-    (_, path) => `from "${import.meta.resolve(path)}"`,
-  );
-  return import(
-    `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`
-  );
+  return loadTypeScript(new URL(path, import.meta.url));
 }
 
 const { mockSeats } = await loadModule("../src/pages/seatmap/mock-data.ts");

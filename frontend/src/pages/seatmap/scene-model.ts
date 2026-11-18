@@ -19,10 +19,10 @@ import {
   Vector3,
 } from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
-import type { StaticSeat } from "./types";
+import type { SeatPalette, SeatVisualState, StaticSeat } from "./types";
+import { venueLayout as hall } from "./seat-layout";
 
 export type VenueView = "interior" | "overview";
-const hall = { halfWidth: 10, front: -4, rear: 16, height: 5.8 };
 type XYZ = [number, number, number];
 
 function curtainGeometry() {
@@ -107,6 +107,9 @@ export function createVenueResources() {
     carpet: finish("#45424b"),
     runner: finish("#633844"),
     velvet: finish("#813345"),
+    seatSold: finish("#737582"),
+    seatSelected: finish("#efb747"),
+    seatUnavailable: finish("#938ba0"),
     walnut: finish("#664634", 0.55),
     oak: finish("#bc8656", 0.64),
     paleOak: finish("#deaa75"),
@@ -131,7 +134,14 @@ export function createVenueResources() {
   };
   for (const material of [materials.walnut, materials.oak, materials.paleOak])
     material.map = wood;
-  for (const material of [materials.carpet, materials.runner, materials.velvet])
+  for (const material of [
+    materials.carpet,
+    materials.runner,
+    materials.velvet,
+    materials.seatSold,
+    materials.seatSelected,
+    materials.seatUnavailable,
+  ])
     material.map = weave;
   return {
     geometries,
@@ -146,6 +156,46 @@ export function createVenueResources() {
 }
 
 export type VenueResources = ReturnType<typeof createVenueResources>;
+
+function seatMaterial(resources: VenueResources, state: SeatVisualState) {
+  const m = resources.materials;
+  return {
+    available: m.velvet,
+    sold: m.seatSold,
+    selected: m.seatSelected,
+    unavailable: m.seatUnavailable,
+  }[state];
+}
+
+export function setSeatPalette(
+  resources: VenueResources,
+  palette: SeatPalette,
+) {
+  for (const state of [
+    "available",
+    "sold",
+    "selected",
+    "unavailable",
+  ] as const) {
+    const material = seatMaterial(resources, state);
+    material.color.set(palette[state]);
+    material.emissive.set(palette[state]);
+    material.emissiveIntensity = state === "selected" ? 0.3 : 0.08;
+  }
+}
+
+export function setSeatAppearance(
+  object: Group,
+  resources: VenueResources,
+  state: SeatVisualState,
+) {
+  const material = seatMaterial(resources, state);
+  for (const name of ["seat-cushion", "seat-back"]) {
+    const mesh = object.getObjectByName(name);
+    if (mesh instanceof Mesh) mesh.material = material;
+  }
+  object.userData.visualState = state;
+}
 
 export function createSeatObject(
   seat: StaticSeat,
@@ -162,8 +212,10 @@ export function createSeatObject(
   };
   const { geometries: g, materials: m } = resources;
   const cushion = new Mesh(g.cushion, m.velvet);
+  cushion.name = "seat-cushion";
   cushion.position.y = 0.53;
   const back = new Mesh(g.back, m.velvet);
+  back.name = "seat-back";
   back.position.set(0, 0.89, 0.28);
   back.rotation.x = 0.1;
   back.castShadow = true;
@@ -232,13 +284,25 @@ export function createVenueStructure({
   const { height: h, halfWidth: w, front, rear } = hall;
   const mid = (front + rear) / 2;
   box(room, "floor", [20, 0.3, 20], [0, -0.15, mid], m.carpet);
-  box(room, "aisle", [2.2, 0.024, 14], [0, 0.012, 8], m.runner);
+  box(
+    room,
+    "aisle",
+    [hall.aisle.width, 0.024, hall.aisle.depth],
+    [hall.aisle.x, 0.012, hall.aisle.z],
+    m.runner,
+  );
   const markers: XYZ[] = [];
   for (let row = 0; row < 10; row++) {
     for (const x of [-1.03, 1.03]) markers.push([x, 0.03, 1.8 + row * 1.2]);
   }
   repeat(room, markers, [0.065, 0.014, 0.26], m.lamp);
-  box(room, "stage", [15.6, 0.72, 4.2], [0, 0.36, -1.65], m.oak);
+  box(
+    room,
+    "stage",
+    [hall.stage.width, 0.72, hall.stage.depth],
+    [hall.stage.x, 0.36, hall.stage.z],
+    m.oak,
+  );
   box(room, "stage-step", [5.4, 0.3, 0.55], [0, 0.15, 0.72], m.walnut);
   box(room, "apron-light", [15.3, 0.035, 0.025], [0, 0.62, 0.47], m.lamp);
 

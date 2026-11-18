@@ -48,6 +48,9 @@ export interface MockSeatEvent {
 /** 仅表示本地选择，不是服务端状态，不表示锁座。 */
 export type SelectedSeatIds = ReadonlySet<SeatId>;
 
+export type SeatVisualState = "available" | "sold" | "selected" | "unavailable";
+export type SeatPalette = Readonly<Record<SeatVisualState, string>>;
+
 /** 供后续场景接入；场景只通知页面，不提交预约。 */
 export interface SeatInteractionCallbacks {
   readonly onSeatToggle: (seatId: SeatId) => void;

@@ -37,6 +37,15 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+
+  /* 选座双视图共用；3D 同样读取这些颜色，不另建状态色表。 */
+  --seat-available: #248372;
+  --seat-available-foreground: #ffffff;
+  --seat-sold: #737582;
+  --seat-sold-foreground: #ffffff;
+  --seat-selected: #efb747;
+  --seat-selected-foreground: #332710;
+  --seat-unavailable: #938ba0;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -73,6 +82,13 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
+  --seat-available: #38a891;
+  --seat-available-foreground: #102b25;
+  --seat-sold: #696b78;
+  --seat-sold-foreground: #ffffff;
+  --seat-selected: #f4c361;
+  --seat-selected-foreground: #332710;
+  --seat-unavailable: #81798d;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);

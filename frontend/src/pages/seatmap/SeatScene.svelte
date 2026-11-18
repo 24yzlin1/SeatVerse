@@ -3,9 +3,9 @@
   import { AgXToneMapping, PCFShadowMap } from "three";
   import VenueScene from "./VenueScene.svelte";
   import type { VenueView } from "./scene-model";
-  import type { StaticSeat } from "./types";
+  import type { SeatSceneProps } from "./types";
 
-  const props: { seats: readonly StaticSeat[] } = $props();
+  const props: SeatSceneProps = $props();
   let view = $state<VenueView>("interior");
   let ready = $state(false);
   let sceneFailed = $state(false);
@@ -80,6 +80,10 @@
     >
       <VenueScene
         seats={props.seats}
+        seatStates={props.seatStates}
+        selectedSeatIds={props.selectedSeatIds}
+        onSeatToggle={props.onSeatToggle}
+        onSeatHover={props.onSeatHover}
         {view}
         {command}
         onReady={() => {
@@ -109,7 +113,9 @@
     <p class="loading" role="status">正在准备场馆…</p>
   {/if}
 </div>
-<p class="scene-caption">拖动旋转视角，滚轮或双指缩放。</p>
+<p class="scene-caption">
+  点击座位选中或取消。拖动旋转，滚轮或双指缩放；全馆俯瞰便于查看全部座位。
+</p>
 
 <style>
   .scene-toolbar,

@@ -1,7 +1,15 @@
 <script lang="ts">
   import { T, useThrelte } from "@threlte/core";
   import { onDestroy, onMount, untrack } from "svelte";
-  import { InstancedMesh, PerspectiveCamera, SpotLight, Vector3 } from "three";
+  import {
+    Group,
+    InstancedMesh,
+    PerspectiveCamera,
+    Raycaster,
+    SpotLight,
+    Vector2,
+    Vector3,
+  } from "three";
   import { OrbitControls } from "three/addons/controls/OrbitControls.js";
   import SceneLabel from "./SceneLabel.svelte";
   import SeatMesh from "./SeatMesh.svelte";
@@ -10,12 +18,14 @@
     createVenueStructure,
     frameVenueCamera,
     updateVenueShell,
+    setSeatPalette,
     type VenueView,
   } from "./scene-model";
-  import type { StaticSeat } from "./types";
+  import { SeatPointerGesture, pickSeat } from "./seat-interaction";
+  import { seatVisualState } from "./selection";
+  import type { SeatSceneProps } from "./types";
 
-  interface Props {
-    seats: readonly StaticSeat[];
+  interface Props extends SeatSceneProps {
     view: VenueView;
     command: {
       action: "reset" | "left" | "right" | "in" | "out";
@@ -28,6 +38,7 @@
   const viewCamera = new PerspectiveCamera(42, 1, 0.1, 250);
   const resources = createVenueResources();
   const structure = createVenueStructure(resources);
+  const seatGroup = new Group();
   const rows = $derived(props.seats.filter((seat) => seat.number === 1));
   let controls = $state.raw<OrbitControls>();
 
@@ -44,16 +55,98 @@
       invalidate();
     }
     orbit.addEventListener("change", updateView);
+    const gesture = new SeatPointerGesture();
+    const raycaster = new Raycaster();
+    const point = new Vector2();
+    let hoverFrame = 0;
+    const previousCursor = canvas.style.cursor;
+    const seatAt = (event: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      if (
+        rect.width <= 0 ||
+        rect.height <= 0 ||
+        event.clientX < rect.left ||
+        event.clientX > rect.right ||
+        event.clientY < rect.top ||
+        event.clientY > rect.bottom
+      )
+        return null;
+      point.set(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1,
+      );
+      return pickSeat(point, viewCamera, seatGroup, structure, raycaster);
+    };
+    const hover = (id: number | null) => {
+      props.onSeatHover?.(id);
+      canvas.style.cursor =
+        id === null
+          ? "grab"
+          : props.seatStates.get(id) === "available"
+            ? "pointer"
+            : "not-allowed";
+    };
+    const resetPointer = () => {
+      gesture.cancel();
+      cancelAnimationFrame(hoverFrame);
+      hover(null);
+    };
+    const pointerDown = (event: PointerEvent) => {
+      gesture.down(event);
+      cancelAnimationFrame(hoverFrame);
+      hover(null);
+    };
+    const pointerMove = (event: PointerEvent) => {
+      gesture.move(event);
+      cancelAnimationFrame(hoverFrame);
+      if (event.buttons === 0 && event.pointerType === "mouse")
+        hoverFrame = requestAnimationFrame(() => hover(seatAt(event)));
+    };
+    const pointerUp = (event: PointerEvent) => {
+      if (!gesture.up(event)) return;
+      const id = seatAt(event);
+      if (id !== null) props.onSeatToggle(id);
+      hover(id);
+    };
+    canvas.addEventListener("pointerdown", pointerDown);
+    canvas.addEventListener("pointermove", pointerMove);
+    canvas.addEventListener("pointerup", pointerUp);
+    canvas.addEventListener("pointercancel", resetPointer);
+    canvas.addEventListener("pointerleave", resetPointer);
+    const applyTheme = () => {
+      const style = getComputedStyle(canvas);
+      setSeatPalette(resources, {
+        available: style.getPropertyValue("--seat-available").trim(),
+        sold: style.getPropertyValue("--seat-sold").trim(),
+        selected: style.getPropertyValue("--seat-selected").trim(),
+        unavailable: style.getPropertyValue("--seat-unavailable").trim(),
+      });
+      invalidate();
+    };
+    applyTheme();
+    const themeObserver = new MutationObserver(applyTheme);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "style"],
+    });
     canvas.setAttribute("role", "img");
     canvas.setAttribute(
       "aria-label",
-      "120 座礼堂 3D 预览，前方为舞台，中央为过道。可使用上方按钮调整视角。",
+      "120 座礼堂 3D 选座，前方为舞台，中央为过道。可点击座位，也可使用下方平面图进行键盘选座。",
     );
     controls = orbit;
     props.onReady();
     return () => {
       orbit.removeEventListener("change", updateView);
       orbit.dispose();
+      canvas.removeEventListener("pointerdown", pointerDown);
+      canvas.removeEventListener("pointermove", pointerMove);
+      canvas.removeEventListener("pointerup", pointerUp);
+      canvas.removeEventListener("pointercancel", resetPointer);
+      canvas.removeEventListener("pointerleave", resetPointer);
+      cancelAnimationFrame(hoverFrame);
+      themeObserver.disconnect();
+      canvas.style.cursor = previousCursor;
     };
   });
   onDestroy(() => {
@@ -131,9 +224,19 @@
   }}
 />
 <T is={structure} dispose={false} />
-{#each props.seats as seat (seat.id)}
-  <SeatMesh {seat} {resources} />
-{/each}
+<T is={seatGroup} dispose={false}>
+  {#each props.seats as seat (seat.id)}
+    <SeatMesh
+      {seat}
+      {resources}
+      visualState={seatVisualState(
+        seat.id,
+        props.seatStates,
+        props.selectedSeatIds,
+      )}
+    />
+  {/each}
+</T>
 {#if props.view === "overview"}
   <SceneLabel
     text="舞台 · STAGE"

@@ -1,6 +1,19 @@
 <script lang="ts">
   import { getMockEvent, mockEvents, mockSeats } from "./mock-data";
-  import type { EventId, EventSeatStatus } from "./types";
+  import SeatLegend from "./SeatLegend.svelte";
+  import SeatPlan from "./SeatPlan.svelte";
+  import {
+    clearSelection,
+    filterSelection,
+    seatVisualState,
+    toggleSeatSelection,
+  } from "./selection";
+  import type {
+    EventId,
+    EventSeatStatus,
+    SeatId,
+    SelectedSeatIds,
+  } from "./types";
 
   interface Props {
     eventId: EventId;
@@ -21,10 +34,64 @@
   const soldCount = $derived(
     fixture?.seatStates.filter((seat) => seat.status === "sold").length ?? 0,
   );
-  const rows = Array.from({ length: 10 }, (_, index) => ({
-    row: index + 1,
-    seats: mockSeats.filter((seat) => seat.row === index + 1),
-  }));
+  const emptySelection = clearSelection();
+  let selection = $state.raw<{ eventId: EventId; ids: SelectedSeatIds }>({
+    eventId: Number.NaN,
+    ids: emptySelection,
+  });
+  let hoveredSeatId = $state<SeatId | null>(null);
+  let lastInteraction = $state("尚未选择座位");
+  const selectedSeatIds = $derived(
+    filterSelection(
+      Object.is(selection.eventId, props.eventId)
+        ? selection.ids
+        : emptySelection,
+      mockSeats,
+      states,
+    ),
+  );
+  const selectedSeats = $derived(
+    mockSeats.filter((seat) => selectedSeatIds.has(seat.id)),
+  );
+  const hoveredSeat = $derived(
+    mockSeats.find((seat) => seat.id === hoveredSeatId),
+  );
+  const visualLabels = {
+    available: "可选",
+    sold: "已预约",
+    selected: "本地已选",
+    unavailable: "锁定或状态未知，不可选",
+  };
+
+  $effect(() => {
+    const eventId = props.eventId;
+    if (!Object.is(selection.eventId, eventId)) {
+      selection = { eventId, ids: clearSelection() };
+      hoveredSeatId = null;
+      lastInteraction = "尚未选择座位";
+    } else {
+      const valid = filterSelection(selection.ids, mockSeats, states);
+      if (valid.size !== selection.ids.size)
+        selection = { eventId, ids: valid };
+    }
+  });
+
+  function toggleSeat(seatId: SeatId) {
+    if (!fixture || states.get(seatId) !== "available") return;
+    const seat = mockSeats.find((seat) => seat.id === seatId);
+    if (!seat) return;
+    const wasSelected = selectedSeatIds.has(seatId);
+    selection = {
+      eventId: props.eventId,
+      ids: toggleSeatSelection(selectedSeatIds, seatId, mockSeats, states),
+    };
+    lastInteraction = `${seat.label}${wasSelected ? "已取消选择" : "已选中"}`;
+  }
+
+  function clearSeats() {
+    selection = { eventId: props.eventId, ids: clearSelection() };
+    lastInteraction = "已清空本地选择";
+  }
   const statusLabels: Record<EventSeatStatus | "unknown", string> = {
     available: "可选",
     sold: "已预约",
@@ -43,8 +110,8 @@
 
 <main class="seatmap-page">
   <header class="page-header">
-    <p class="brand">SEATVERSE <span>/ 场馆预览</span></p>
-    <span class="demo-badge">模拟演示 · C-02</span>
+    <p class="brand">SEATVERSE <span>/ 场馆选座</span></p>
+    <span class="demo-badge">模拟演示 · C-03</span>
   </header>
 
   <nav class="event-nav" aria-label="切换模拟活动">
@@ -79,60 +146,50 @@
     <div class="preview-layout">
       <section class="venue-card" aria-labelledby="preview-title">
         <div class="card-heading">
-          <h2 id="preview-title">3D 场馆</h2>
+          <h2 id="preview-title">3D 场馆选座</h2>
           <span>10 排 × 12 座</span>
         </div>
+        <SeatLegend />
         {#await sceneModule}
           <p class="scene-loading" role="status">正在加载 3D 场馆…</p>
         {:then scene}
-          <scene.default seats={mockSeats} />
+          <scene.default
+            seats={mockSeats}
+            seatStates={states}
+            {selectedSeatIds}
+            onSeatToggle={toggleSeat}
+            onSeatHover={(id) => (hoveredSeatId = id)}
+          />
         {:catch}
           <p class="scene-loading" role="alert">
-            场馆加载失败，请刷新重试，或展开下方平面图查看座位。
+            场馆加载失败，请刷新重试，或使用下方平面图继续选座。
           </p>
         {/await}
-        <details class="flat-preview">
-          <summary>查看平面座位状态 <span>可选 / 已预约</span></summary>
-          <div
-            class="map-scroll"
-            role="group"
-            aria-label="120 座平面预览，可横向滚动"
-          >
-            <div class="seat-plan">
-              <div class="stage">舞 台 <span>STAGE</span></div>
-              <div class="seat-rows" role="group" aria-label="座位状态预览">
-                {#each rows as row (row.row)}
-                  <div class="seat-row">
-                    <span class="row-label">{row.row}排</span>
-                    {#each row.seats as seat (seat.id)}
-                      {@const state = states.get(seat.id) ?? "unknown"}
-                      <span
-                        class="seat"
-                        data-state={state}
-                        class:aisle={seat.number === 7}
-                        title={`${seat.label} · ${statusLabels[state]}`}
-                        aria-label={`${seat.label}，${statusLabels[state]}`}
-                        >{seat.number}</span
-                      >
-                    {/each}
-                  </div>
-                {/each}
-              </div>
-              <p class="orientation">后排 / 入场方向</p>
-            </div>
-          </div>
-          <div class="legend" aria-label="座位图例">
-            <span><i class="swatch available"></i>可选</span>
-            <span><i class="swatch sold"></i>已预约</span>
-            <span class="legend-note">平面数据预览</span>
-          </div>
+        <p class="seat-inspection">
+          {#if hoveredSeat}
+            <strong>{hoveredSeat.label}</strong> · {visualLabels[
+              seatVisualState(hoveredSeat.id, states, selectedSeatIds)
+            ]}
+          {:else}
+            指向 3D 座椅或平面座位，查看排号、座号和状态。
+          {/if}
+        </p>
+        <details class="flat-preview" open>
+          <summary>平面选座 <span>与 3D 同步 · 舞台在上方</span></summary>
+          <SeatPlan
+            seats={mockSeats}
+            seatStates={states}
+            {selectedSeatIds}
+            onSeatToggle={toggleSeat}
+            onSeatHover={(id) => (hoveredSeatId = id)}
+          />
         </details>
       </section>
 
       <aside class="summary-card" aria-labelledby="summary-title">
         <p class="eyebrow">本场座位概览</p>
-        <h2 id="summary-title">同一场馆，不同场次。</h2>
-        <p class="summary-copy">切换活动，查看这一场的座位占用情况。</p>
+        <h2 id="summary-title">选择你的座位</h2>
+        <p class="summary-copy">在 3D 或平面图中选座，另一视图同步更新。</p>
         <dl class="seat-counts" aria-live="polite" aria-atomic="true">
           <div>
             <dt>可选座位</dt>
@@ -146,9 +203,26 @@
             <dt>场馆总座位</dt>
             <dd>{mockSeats.length}<small> 座</small></dd>
           </div>
+          <div>
+            <dt>本地已选</dt>
+            <dd>{selectedSeatIds.size}<small> 座</small></dd>
+          </div>
         </dl>
+        <p class="selection-feedback" role="status" aria-live="polite">
+          {lastInteraction} · 已选 {selectedSeatIds.size} 座
+        </p>
+        <p class="selection-preview" aria-label="本地已选座位">
+          {selectedSeats.map((seat) => seat.label).join("、") ||
+            "点击可选座位开始选择"}
+        </p>
+        <button
+          type="button"
+          class="clear-selection"
+          disabled={selectedSeatIds.size === 0}
+          onclick={clearSeats}>清空选择</button
+        >
         <p class="demo-note">
-          当前为场馆空间预览，可旋转、缩放和重置视角。展开平面图查看本场座位状态；点击选座将在下一阶段开放。
+          本地选择尚未锁座。切换活动将清空选择；当前演示暂不提交预约。
         </p>
       </aside>
     </div>
@@ -200,8 +274,7 @@
     padding: 32px 24px 48px;
   }
   .page-header,
-  .card-heading,
-  .legend {
+  .card-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -258,7 +331,6 @@
   }
   button:focus-visible,
   summary:focus-visible,
-  .map-scroll:focus-visible,
   .table-scroll:focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 4px;
@@ -324,106 +396,41 @@
     font-size: 12px;
     color: var(--muted-foreground);
   }
-  .map-scroll {
-    overflow-x: auto;
-    padding: 28px 20px 0;
-  }
-  .seat-plan {
-    min-width: 440px;
-    max-width: 560px;
-    margin: 0 auto;
-  }
-  .stage {
-    text-align: center;
-    background: var(--muted);
-    color: var(--muted-foreground);
-    border-radius: 4px 4px 50% 50% / 4px 4px 14px 14px;
-    padding: 12px;
-    margin: 0 48px 28px;
-    font-size: 13px;
-  }
-  .stage span {
-    margin-left: 10px;
-    font-size: 9px;
-    letter-spacing: 0.15em;
-  }
-  .seat-rows {
-    display: grid;
-    gap: 9px;
-  }
-  .seat-row {
-    display: grid;
-    grid-template-columns:
-      28px repeat(6, minmax(0, 1fr)) minmax(0, 1.8fr)
-      repeat(5, minmax(0, 1fr));
-    align-items: center;
-    gap: 6px;
-  }
-  .row-label {
-    font-size: 10px;
-    color: var(--muted-foreground);
-  }
-  .seat {
-    display: grid;
-    place-items: center;
-    height: 27px;
-    border: 1px solid var(--border);
-    border-radius: 6px 6px 3px 3px;
-    background: var(--secondary);
-    color: var(--secondary-foreground);
-    font-size: 10px;
-    font-variant-numeric: tabular-nums;
-  }
-  .seat.aisle {
-    margin-left: 18px;
-  }
-  .seat[data-state="available"],
-  .swatch.available {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: var(--primary-foreground);
-  }
-  .seat[data-state="sold"],
-  .swatch.sold {
-    background: var(--muted);
-    border-color: var(--border);
-    color: var(--muted-foreground);
-  }
-  .seat[data-state="sold"] {
-    text-decoration: line-through;
-  }
-  .seat[data-state="locked"],
-  .seat[data-state="unknown"] {
-    border-style: dashed;
-  }
-  .orientation {
-    font-size: 10px;
-    text-align: center;
-    color: var(--muted-foreground);
-    margin: 22px 0;
-    letter-spacing: 0.12em;
-  }
-  .legend {
-    justify-content: start;
-    padding: 16px 24px;
-    border-top: 1px solid var(--border);
+  .seat-inspection {
+    padding: 14px 20px;
     font-size: 12px;
-    flex-wrap: wrap;
-  }
-  .legend > span {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-  }
-  .swatch {
-    width: 12px;
-    height: 12px;
-    border: 1px solid;
-    border-radius: 3px;
-  }
-  .legend-note {
     color: var(--muted-foreground);
-    margin-left: auto;
+    border-top: 1px solid var(--border);
+    min-height: 48px;
+  }
+  .seat-inspection strong {
+    color: var(--foreground);
+  }
+  .selection-feedback {
+    margin-top: 20px;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .selection-preview {
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--muted-foreground);
+    overflow-wrap: anywhere;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+  .clear-selection {
+    margin-top: 16px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .clear-selection:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
   .summary-card {
     padding: 24px;
@@ -557,8 +564,7 @@
     .event-header {
       margin-top: 28px;
     }
-    .card-heading,
-    .legend {
+    .card-heading {
       padding: 16px;
     }
     .data-details {
