@@ -62,7 +62,7 @@ npm run dev
 
 ## 验收
 
-在 `frontend/` 运行 `npm run check:all` 和团队原有的 `npm run test:bookings`；后端运行 `uv run poe check`。本模块验证脚本只在本地保留，不加入仓库、包脚本或构建命令；新增接口与适配验证位于被 Git 忽略的 `.local-checks/`。
+在 `frontend/` 运行 `npm run check:all`；后端运行 `uv run poe check`。前端验证脚本只在本地保留，不加入仓库、包脚本或构建命令；新增接口与适配验证位于被 Git 忽略的 `.local-checks/`。
 
 浏览器检查：实际活动进入 → 登录后返回 → 3D / 平面同步选择 → 确认成功 → 刷新“我的预约”仍有记录 → 取消 → 本场座位恢复可选。还需核对已结束 / 关闭活动禁用、未知编号无模拟回退，以及窄屏确认按钮和局部横向滚动。
 
