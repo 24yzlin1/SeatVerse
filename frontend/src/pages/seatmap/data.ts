@@ -5,7 +5,7 @@ import type {
   SeatMapData,
   StaticSeat,
 } from "./types";
-export { bookingBlockReason } from "../../common/utils/eventAvailability";
+export { bookingBlockReason } from "@/common/utils/eventAvailability";
 
 function record(value: unknown): Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value))
