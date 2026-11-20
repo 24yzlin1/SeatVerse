@@ -42,7 +42,11 @@ class TicketRow:
 
 @dataclass(frozen=True)
 class TicketDetailRow:
-    """电子票查询的 JOIN 行：tickets + bookings + events + venues。"""
+    """电子票查询的 JOIN 行：tickets + bookings + events + venues。
+
+    `booking_user_id` 与 `event_organizer_id` 是 F 补充的归属校验字段：
+    票号查询要判断“是不是本人的票”，核验要判断“是不是本主办方活动的票”。
+    """
 
     ticket_id: int
     booking_id: int
@@ -51,13 +55,31 @@ class TicketDetailRow:
     verified_by: int | None
     booking_status: BookingStatus
     booking_created_at: str
+    booking_user_id: int
     event_id: int
     event_title: str
     event_status: EventStatus
     event_start_time: str
     event_end_time: str
+    event_organizer_id: int
     venue_id: int
     venue_name: str
+
+
+@dataclass(frozen=True)
+class RosterRow:
+    """主办方名单的一行：预约 + 用户 + 票面核验信息（F 补充，见 tickets-roster.md）。"""
+
+    booking_id: int
+    booking_status: BookingStatus
+    created_at: str
+    cancelled_at: str | None
+    ticket_code: str | None
+    user_id: int
+    user_name: str
+    user_email: str
+    verified_at: str | None
+    verified_by: int | None
 
 
 class TicketPublic(BaseModel):
@@ -80,3 +102,34 @@ class VerifyTicketRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     ticketCode: str
+
+
+class RosterUserPublic(BaseModel):
+    """名单里的用户摘要；主办方现场核对用。"""
+
+    id: int
+    name: str
+    email: str
+
+
+class RosterEntryPublic(BaseModel):
+    """本场名单的一行；字段见 docs/contracts/tickets-roster.md §1.3。"""
+
+    id: int
+    status: BookingStatus
+    createdAt: str
+    cancelledAt: str | None
+    ticketCode: str | None
+    user: RosterUserPublic
+    seats: list[SeatBrief]
+    verifiedAt: str | None
+    verifiedBy: int | None
+
+
+class RosterPagePublic(BaseModel):
+    """名单分页信封内的结构，与 api.md §2 的 `{items,total,page,pageSize}` 一致。"""
+
+    items: list[RosterEntryPublic]
+    total: int
+    page: int
+    pageSize: int
