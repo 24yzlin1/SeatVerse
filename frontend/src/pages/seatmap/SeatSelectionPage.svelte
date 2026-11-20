@@ -2,6 +2,8 @@
   import SeatLegend from "./SeatLegend.svelte";
   import SeatPlan from "./SeatPlan.svelte";
   import SelectedSeatPanel from "./SelectedSeatPanel.svelte";
+  import { Button } from "$lib/components/ui/button";
+  import type { Booking } from "@/common/api";
   import { seatVisualState } from "./selection";
   import { eventStatusLabel } from "@/common/utils/eventAvailability";
   import type { SeatId, SeatMapData, SelectedSeatIds } from "./types";
@@ -14,6 +16,9 @@
     refreshing: boolean;
     loggedIn: boolean;
     feedback: string;
+    submissionError: string;
+    completed: Booking | null;
+    now: number;
     onSeatToggle: (id: SeatId) => void;
     onClear: () => void;
     onSubmit: () => void;
@@ -22,6 +27,7 @@
   const props: Props = $props();
   const sceneModule = import("./SeatScene.svelte");
   const event = $derived(props.data.event);
+  const statusLabel = $derived(eventStatusLabel(event, props.now));
   const seats = $derived(props.data.seats);
   const states = $derived(props.data.seatStates);
   let hoveredSeatId = $state<SeatId | null>(null);
@@ -45,6 +51,13 @@
     dateStyle: "medium",
     timeStyle: "short",
   });
+
+  function showSelection() {
+    document
+      .getElementById("selected-seat-panel")
+      ?.scrollIntoView({ block: "start" });
+    document.getElementById("selection-title")?.focus({ preventScroll: true });
+  }
 </script>
 
 <main class="seatmap-page">
@@ -64,7 +77,7 @@
         >{format.format(new Date(event.startTime))}</time
       ><span>—</span><time datetime={event.endTime}
         >{format.format(new Date(event.endTime))}</time
-      ><span>{eventStatusLabel(event)}</span>
+      ><span>{statusLabel}</span>
     </p>
     {#if event.description}<p class="description">{event.description}</p>{/if}
   </section>
@@ -123,10 +136,15 @@
       {/if}
     </section>
     <SelectedSeatPanel
+      {event}
+      {statusLabel}
       seats={selectedSeats}
       submitting={props.submitting}
+      refreshing={props.refreshing}
       disabledReason={props.disabledReason}
       feedback={props.feedback}
+      submissionError={props.submissionError}
+      completed={props.completed}
       loggedIn={props.loggedIn}
       onSeatToggle={props.onSeatToggle}
       onClear={props.onClear}
@@ -166,6 +184,15 @@
       </table>
     </div>
   </details>
+  <nav class="mobile-selection" aria-label="选座确认快捷入口">
+    <p>已选 <strong>{selectedSeats.length}</strong> 座</p>
+    <Button
+      variant="secondary"
+      class="min-h-11"
+      aria-controls="selected-seat-panel"
+      onclick={showSelection}>查看已选与确认</Button
+    >
+  </nav>
 </main>
 
 <style>
@@ -173,6 +200,9 @@
     max-width: 1120px;
     margin: 0 auto;
     padding: 32px 24px 48px;
+  }
+  .mobile-selection {
+    display: none;
   }
   .page-header,
   .card-heading {
@@ -345,13 +375,29 @@
     font-weight: 500;
   }
   @media (max-width: 800px) {
+    .seatmap-page {
+      padding-bottom: 112px;
+    }
     .preview-layout {
       grid-template-columns: minmax(0, 1fr);
+    }
+    .mobile-selection {
+      display: flex;
+      position: fixed;
+      z-index: 30;
+      inset: auto 0 0;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--border);
+      background: var(--background);
+      font-size: 13px;
     }
   }
   @media (max-width: 480px) {
     .seatmap-page {
-      padding: 20px 16px 32px;
+      padding: 20px 16px 112px;
     }
     .page-header {
       align-items: start;

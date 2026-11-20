@@ -119,23 +119,25 @@
     selected = toggleSeatSelection(selected, id, data.seats, data.seatStates);
     feedback = `${seat.label}${wasSelected ? "已取消选择" : "已选中"}`;
     notice = "";
+    completed = null;
   }
 
   function clearSeats() {
     if (submitting) return;
     selected = clearSelection();
     feedback = "已清空选择";
+    notice = "";
   }
 
   async function confirmSeats() {
+    if (!data || submitting || disabledReason || selected.size === 0) return;
     if (!auth.isLoggedIn) {
       navigate(`/login?next=${encodeURIComponent(`/events/${eventId}/seats`)}`);
       return;
     }
-    if (!data || submitting || disabledReason || selected.size === 0) return;
     const id = data.event.id;
     const scope = context;
-    const seatIds = [...selected].sort((a, b) => a - b);
+    const seatIds = Object.freeze([...selected].sort((a, b) => a - b));
     submitting = true;
     notice = "";
     completed = null;
@@ -145,6 +147,7 @@
       completed = result;
       selected = clearSelection();
       feedback = "预约成功，座位已更新";
+      submitting = false;
       await refresh(false, id, scope);
     } catch (error) {
       if (scope !== context) return;
@@ -214,29 +217,9 @@
   </section>
 {:else if data}
   <div class="notifications">
-    {#if notice}<p class="alert" role="alert">
-        {notice}
-        {#if auth.isLoggedIn}<a href="#/bookings">查看我的预约</a>{/if}
-      </p>{/if}
     {#if refreshError}<p class="alert" role="alert">
         {refreshError}，请刷新座位后继续。
       </p>{/if}
-    {#if completed}
-      <section class="success" role="status" aria-label="预约成功">
-        <h2>预约成功</h2>
-        <p>
-          {completed.event.title} · {completed.seats
-            .map((seat) => seat.label)
-            .join("、")}
-        </p>
-        <p>
-          预约编号：{completed.id} · 票号：<span class="ticket-code"
-            >{completed.ticketCode}</span
-          >
-        </p>
-        <a href="#/bookings">查看我的预约</a>
-      </section>
-    {/if}
   </div>
   <SeatSelectionPage
     {data}
@@ -246,6 +229,9 @@
     {disabledReason}
     {selectionDisabled}
     {feedback}
+    submissionError={notice}
+    {completed}
+    {now}
     loggedIn={auth.isLoggedIn}
     onSeatToggle={toggleSeat}
     onClear={clearSeats}
@@ -281,8 +267,7 @@
     margin: 0 auto;
     padding: 0 24px;
   }
-  .alert,
-  .success {
+  .alert {
     margin-top: 20px;
     padding: 18px;
     border: 1px solid var(--border);
@@ -291,17 +276,5 @@
   }
   .alert {
     color: var(--destructive);
-  }
-  .success {
-    border-color: var(--seat-available);
-    background: var(--card);
-  }
-  .success h2 {
-    font-size: 18px;
-    font-weight: 650;
-  }
-  .ticket-code {
-    overflow-wrap: anywhere;
-    font-variant-numeric: tabular-nums;
   }
 </style>
