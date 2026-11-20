@@ -27,6 +27,13 @@ warn_return_any = true
 warn_unused_ignores = true
 plugins = ["pydantic.mypy"]
 
+# poe 0.49 的 auto 执行器在 uv 项目里会改用 `uv run` 再跑一遍任务；
+# 外层已经是 `uv run poe ...` 时，内层 uv 抢不到 uv 缓存锁，报
+# `Could not acquire lock ... uv\cache\.lock: 拒绝访问`。
+# 固定用 virtualenv 执行器直接调用 .venv 里的可执行文件，避免嵌套 uv。
+[tool.poe]
+executor.type = "virtualenv"
+
 [tool.poe.tasks]
 dev = "uvicorn main:app --reload"
 start = "uvicorn main:app"
