@@ -1,8 +1,10 @@
+from datetime import datetime, timezone
 from typing import Callable
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from app.core.common import AppError
 from app.core.events import (
+    create_event as create_event_core,
     get_event_detail as get_event_detail_core,
     update_event_status as update_event_status_core,
 )
@@ -11,6 +13,7 @@ from app.scope.common import ok
 from app.types.common import PaginatedPayload, ResponsePayload
 from app.types.events import (
     ActivityStatus,
+    CreateEventRequest,
     EventListQuery,
     EventPublic,
     UpdateEventStatusRequest,
@@ -42,12 +45,52 @@ def require_role(required_role: UserRole) -> Callable[[Identity], Identity]:
     return dependency
 
 
+def _parse_event_time(value: str, field_label: str) -> datetime:
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        raise AppError(400, f"{field_label}必须是 ISO 8601 时间") from None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+@router.post("")
+def create_event(
+    body: CreateEventRequest,
+    identity: Identity = Depends(require_role("organizer")),
+) -> ResponsePayload[EventPublic]:
+    title = body.title.strip()
+    if not title:
+        raise AppError(400, "活动标题不能为空")
+    if len(title) > 120:
+        raise AppError(400, "活动标题不能超过 120 个字符")
+    start_time = body.start_time.strip()
+    end_time = body.end_time.strip()
+    if _parse_event_time(end_time, "结束时间") <= _parse_event_time(
+        start_time, "开始时间"
+    ):
+        raise AppError(400, "结束时间必须晚于开始时间")
+    if body.venue_id is not None and body.venue_id < 1:
+        raise AppError(400, "场馆编号必须是正整数")
+    return ok(
+        create_event_core(
+            identity=identity,
+            title=title,
+            description=body.description.strip(),
+            start_time=start_time,
+            end_time=end_time,
+            requested_venue_id=body.venue_id,
+        )
+    )
+
+
 @router.get("")
 def list_events(
     keyword: str | None = None,
     status: ActivityStatus | None = None,
     page: int = 1,
-    page_size: int = 20,
+    page_size: int = Query(default=20, alias="pageSize"),
 ) -> ResponsePayload[dict[str, object]]:
     if page < 1:
         raise AppError(400, "Page must be at least 1")

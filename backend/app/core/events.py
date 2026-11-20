@@ -41,6 +41,7 @@ def _to_public(row: EventWithVenueRow) -> EventPublic:
             capacity=row.venue_capacity,
         ),
         organizerName=row.organizer_name,
+        organizerId=row.event.organizer_id,
     )
 
 
