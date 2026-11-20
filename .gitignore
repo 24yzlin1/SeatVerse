@@ -1,2 +1,8 @@
 .env
 .db
+.local-checks/
+
+# C 模块验证脚本与旧模拟数据只在本地保留。
+/frontend/tests/seatmap*.test.mjs
+/frontend/tests/helpers/load-typescript.mjs
+/frontend/src/pages/seatmap/mock-data.ts
