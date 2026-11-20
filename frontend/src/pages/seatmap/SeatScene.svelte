@@ -82,6 +82,7 @@
         seats={props.seats}
         seatStates={props.seatStates}
         selectedSeatIds={props.selectedSeatIds}
+        disabled={props.disabled}
         onSeatToggle={props.onSeatToggle}
         onSeatHover={props.onSeatHover}
         {view}

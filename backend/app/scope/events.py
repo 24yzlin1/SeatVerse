@@ -1,6 +1,6 @@
 from typing import Callable
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from app.core.common import AppError
 from app.core.events import (
     get_event_detail as get_event_detail_core,
@@ -47,7 +47,7 @@ def list_events(
     keyword: str | None = None,
     status: ActivityStatus | None = None,
     page: int = 1,
-    page_size: int = 20,
+    page_size: int = Query(20, alias="pageSize"),
 ) -> ResponsePayload[dict[str, object]]:
     if page < 1:
         raise AppError(400, "Page must be at least 1")

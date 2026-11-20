@@ -1,4 +1,4 @@
-"""预约创建的业务用例。
+"""预约创建、本人查询与取消的业务用例。
 
 一个预约请求要同时完成五件事，且必须在一个事务里：
 1. 校验活动可预约；
@@ -21,13 +21,22 @@ from app.repos.bookings import (
     insert_booking,
     insert_booking_seat,
     list_booking_seats,
+    list_user_bookings,
+    find_booking_in_transaction,
+    active_booking_seat_ids,
+    mark_booking_cancelled,
+    deactivate_booking_seats,
 )
 from app.repos.database import (
     DatabaseConnection,
     get_connection,
     immediate_transaction,
 )
-from app.repos.seats import find_event_seat_in_transaction, mark_event_seat_sold
+from app.repos.seats import (
+    find_event_seat_in_transaction,
+    mark_event_seat_sold,
+    release_event_seat,
+)
 from app.repos.tickets import insert_ticket
 from app.types.authentication import Identity
 from app.types.bookings import (
@@ -39,11 +48,58 @@ from app.types.bookings import (
     EventSummary,
     SeatBrief,
     VenueBrief,
+    BookingPage,
+    CancelBookingPayload,
 )
 
 _TICKET_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 _TICKET_CODE_LENGTH = 20
 _MAX_TICKET_GENERATION_ATTEMPTS = 5
+
+
+def list_my_bookings(identity: Identity, page: int, page_size: int) -> BookingPage:
+    rows, total = list_user_bookings(identity.user_id, page_size, (page - 1) * page_size)
+    seats = list_booking_seats([row.id for row in rows])
+    return BookingPage(
+        items=[_to_public(row, seats) for row in rows],
+        total=total,
+        page=page,
+        pageSize=page_size,
+    )
+
+
+def cancel_booking(identity: Identity, booking_id: int) -> CancelBookingPayload:
+    connection = get_connection()
+    try:
+        with immediate_transaction(connection):
+            now = datetime.now(timezone.utc)
+            cancelled_at = now.isoformat()
+            booking = find_booking_in_transaction(connection, booking_id)
+            if booking is None:
+                raise AppError(404, "预约不存在")
+            if booking.user_id != identity.user_id:
+                raise AppError(403, "只能取消自己的预约")
+            if booking.status != "reserved":
+                raise AppError(409, "预约已取消或已签到，无法重复取消")
+            event = find_event_for_booking_in_transaction(connection, booking.event_id)
+            if event is None:
+                raise AppError(404, "活动不存在")
+            if now >= _parse_event_time(event.start_time):
+                raise AppError(400, "活动已开始或已结束，不能取消预约")
+            if not mark_booking_cancelled(connection, booking.id, cancelled_at):
+                raise AppError(409, "预约状态已变化，不能取消")
+            seat_ids = active_booking_seat_ids(connection, booking.id)
+            if not seat_ids:
+                raise AppError(500, "预约座位记录不完整")
+            for seat_id in seat_ids:
+                if not release_event_seat(connection, booking.event_id, seat_id):
+                    raise AppError(409, "座位状态已变化，请刷新后重试")
+            deactivate_booking_seats(connection, booking.id)
+    finally:
+        connection.close()
+    return CancelBookingPayload(
+        id=booking_id, status="cancelled", cancelledAt=cancelled_at
+    )
 
 
 def _generate_ticket_code() -> str:
@@ -129,13 +185,13 @@ def _to_public(
 def create_booking(
     identity: Identity, request: CreateBookingRequest
 ) -> BookingPublic:
-    now = datetime.now(timezone.utc)
-    created_at = now.isoformat()
     booking_id = 0
     connection = get_connection()
     try:
         try:
             with immediate_transaction(connection):
+                now = datetime.now(timezone.utc)
+                created_at = now.isoformat()
                 event = find_event_for_booking_in_transaction(
                     connection, request.eventId
                 )

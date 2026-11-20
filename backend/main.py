@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 import dotenv
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
 from app.core.common import AppError
 from app.scope.common import error_handler, ok
 from app.types.common import ResponsePayload
@@ -24,6 +25,7 @@ dotenv.load_dotenv()
 router = APIRouter()
 app = FastAPI(title="SeatVerse", lifespan=lifespan)
 app.add_exception_handler(AppError, error_handler)
+app.add_exception_handler(RequestValidationError, error_handler)
 app.add_exception_handler(Exception, error_handler)
 app.add_middleware(
     CORSMiddleware,

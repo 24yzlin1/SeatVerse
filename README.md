@@ -53,6 +53,8 @@ cd frontend && npm ci && npm run dev
 - 后端：<http://localhost:8000>
 - 前端通过 Vite 代理访问后端，浏览器请求统一走 `/api/...`；后端源码路由统一挂载在 `/api` 下（`APIRouter(prefix="/api")`），代理原样转发、不 rewrite。
 
+首次使用空数据库时，在 `backend/` 执行 `uv run poe seed`，从仓库提供的后端数据初始化活动、场馆和座位。该命令跳过已有记录，不要通过 `--reset` 覆盖业务数据。选座应从活动列表进入实际活动；选座页和“我的预约”均请求后端，不再使用 1001 / 1002 的前端演示活动。
+
 > 若 `npm ci` 因锁文件与 `package.json` 不同步而失败，先执行一次 `npm install` 重新生成锁文件，再按上面的命令启动。
 
 ## 检查入口

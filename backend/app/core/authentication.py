@@ -5,7 +5,6 @@ from app.repos.authentication import find_user_by_email, find_user_by_id, insert
 from app.types.authentication import (
     AuthenticationPayload,
     Identity,
-    MePayload,
     UserPublic,
     UserRole,
     UserRow,
@@ -50,8 +49,8 @@ def login(
     return AuthenticationPayload(token=token, user=_to_public(user))
 
 
-def me(identity: Identity) -> MePayload:
+def me(identity: Identity) -> UserPublic:
     user = find_user_by_id(identity.user_id)
     if user is None:
         raise AppError(401, "Session expired, please log in again")
-    return MePayload(user=_to_public(user))
+    return _to_public(user)

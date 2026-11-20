@@ -5,6 +5,11 @@
   import Empty from "@/common/components/Empty.svelte";
   import ErrorState from "@/common/components/ErrorState.svelte";
   import { router } from "@/common/router";
+  import { onMount, untrack } from "svelte";
+  import {
+    bookingBlockReason,
+    eventStatusLabel,
+  } from "@/common/utils/eventAvailability";
 
   import { Button } from "$lib/components/ui/button";
   import { RiMapPinLine, RiTimeLine } from "remixicon-svelte";
@@ -14,12 +19,32 @@
   let pageState = $state<"loading" | "error" | "empty" | "success">("loading");
   let event = $state<EventSummary | null>(null);
   let errorMessage = $state("");
+  let loadVersion = 0;
+  let loadController: AbortController | null = null;
+  let now = $state(Date.now());
+  const blockReason = $derived(
+    event ? bookingBlockReason(event, now) : "正在加载活动",
+  );
+  onMount(() => {
+    const timer = window.setInterval(() => {
+      now = Date.now();
+    }, 1000);
+    return () => clearInterval(timer);
+  });
 
-  async function fetchEventDetail() {
+  async function fetchEventDetail(currentId: string) {
+    const version = ++loadVersion;
+    loadController?.abort();
+    const controller = new AbortController();
+    loadController = controller;
     pageState = "loading";
+    event = null;
     errorMessage = "";
 
-    if (!id) {
+    if (
+      !/^[1-9]\d*$/.test(currentId) ||
+      !Number.isSafeInteger(Number(currentId))
+    ) {
       errorMessage = "无效的活动 ID";
       pageState = "error";
       return;
@@ -27,20 +52,26 @@
 
     try {
       const res = await request<EventSummary>(
-        `/events/${encodeURIComponent(id)}`,
+        `/events/${encodeURIComponent(currentId)}`,
         {
           method: "GET",
+          signal: controller.signal,
         },
       );
+      if (version !== loadVersion || controller.signal.aborted) return;
 
       if (!res) {
         pageState = "empty";
         return;
       }
+      if (res.id !== Number(currentId)) {
+        throw new Error("活动编号与当前页面不一致");
+      }
 
       event = res;
       pageState = "success";
     } catch (error: unknown) {
+      if (version !== loadVersion || controller.signal.aborted) return;
       if (error instanceof ApiError) {
         errorMessage = error.message;
       } else {
@@ -51,13 +82,18 @@
   }
 
   function goToSeatMap() {
-    if (event) {
+    if (event && !blockReason && pageState === "success") {
       router.navigate(`/events/${event.id}/seats`);
     }
   }
 
   $effect(() => {
-    fetchEventDetail();
+    const currentId = id;
+    untrack(() => void fetchEventDetail(currentId));
+    return () => {
+      loadVersion++;
+      loadController?.abort();
+    };
   });
 </script>
 
@@ -104,7 +140,7 @@
                 : ["bg-muted", "text-muted-foreground"]),
             ]}
           >
-            {event.status === "published" ? "预约中" : "已结束"}
+            {eventStatusLabel(event, now)}
           </span>
         </div>
 
@@ -119,17 +155,23 @@
           ]}
         >
           <div class={["flex", "items-center", "gap-3"]}>
-            <span class={["font-medium", "text-foreground", "w-20"]}>活动场馆</span>
+            <span class={["font-medium", "text-foreground", "w-20"]}
+              >活动场馆</span
+            >
             <RiMapPinLine class={["size-4"]} />
             <span> {event.venue.name}</span>
           </div>
           <div class={["flex", "items-center", "gap-3"]}>
-            <span class={["font-medium", "text-foreground", "w-20"]}>开始时间</span>
+            <span class={["font-medium", "text-foreground", "w-20"]}
+              >开始时间</span
+            >
             <RiTimeLine class={["size-4"]} />
             <span> {new Date(event.startTime).toLocaleString()}</span>
           </div>
           <div class={["flex", "items-center", "gap-3"]}>
-            <span class={["font-medium", "text-foreground", "w-20"]}>结束时间</span>
+            <span class={["font-medium", "text-foreground", "w-20"]}
+              >结束时间</span
+            >
             <RiTimeLine class={["size-4"]} />
             <span> {new Date(event.endTime).toLocaleString()}</span>
           </div>
@@ -140,10 +182,10 @@
         >
           <Button
             onclick={goToSeatMap}
-            disabled={event.status !== "published"}
+            disabled={Boolean(blockReason)}
             class={["px-8", "h-11"]}
           >
-            {event.status === "published" ? "进入 3D 选座" : "该活动已停止预约"}
+            {blockReason || "进入选座（3D / 平面）"}
           </Button>
         </div>
       </div>

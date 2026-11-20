@@ -131,7 +131,7 @@ curl -s http://localhost:5173/api/   # 同上，证明代理原样转发生效
 | 404 | 资源不存在 | 显示 `message`；票号场景统一"不存在或无权查看" |
 | 409 | 状态冲突 | 显示后端 `message`；选座提交的 409 刷新座位状态并提示重选（02 §三、03 §六）；重复签到 409 按 03 §8 展示首次签到时间 |
 
-**前端兜底**：后端目前尚未接管 `HTTPException` 与 `RequestValidationError`，非 2xx 响应体是 `{"detail": ...}`。请求客户端必须先尝试按信封解析；解析失败一律抛 `ApiError(-1, MALFORMED_RESPONSE_MESSAGE)`，**不得读取 HTTP 状态码、不得按 404/422/5xx 分支**，页面展示固定中文文案、不得白屏（02 §三、03 §六、04 §3.1）。
+**前端兜底**：请求参数的 `RequestValidationError` 已统一为 HTTP 200、业务码 `400` 的信封。框架级 `HTTPException`（例如不存在的路由）仍可能返回 `{"detail": ...}`。请求客户端必须先尝试按信封解析；解析失败一律抛 `ApiError(-1, MALFORMED_RESPONSE_MESSAGE)`，**不得读取 HTTP 状态码、不得按 404/422/5xx 分支**，页面展示固定中文文案、不得白屏（02 §三、03 §六、04 §3.1）。
 
 **分页**：列表统一 `{ items, total, page, pageSize }`，`page` 从 1 开始，`pageSize` 默认 20、上限 100；单对象接口直接返回对象，不包分页。`total` 是满足条件的总条数，不是当前页条数。具体排序与查询参数见 §4.1。
 

@@ -1,6 +1,7 @@
 from typing import TypeVar
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from app.core.common import AppError
 from app.types.common import ResponsePayload
 
@@ -12,6 +13,13 @@ def ok(payload: T, message: str = "ok") -> ResponsePayload[T]:
 
 
 def error_handler(request: Request, exception: Exception) -> JSONResponse:
+    if isinstance(exception, RequestValidationError):
+        return JSONResponse(
+            status_code=200,
+            content=ResponsePayload[None](
+                code=400, message="请求参数格式错误", payload=None
+            ).model_dump(mode="json"),
+        )
     if isinstance(exception, AppError):
         return JSONResponse(
             status_code=200,

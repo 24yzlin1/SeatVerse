@@ -10,9 +10,9 @@
 """
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.types.seats import SeatType
 
@@ -131,8 +131,8 @@ class BookingPage(BaseModel):
 class CreateBookingRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    eventId: int
-    seatIds: list[int]
+    eventId: Annotated[int, Field(strict=True, gt=0)]
+    seatIds: Annotated[list[Annotated[int, Field(strict=True, gt=0)]], Field(min_length=1)]
 
 
 class CancelBookingPayload(BaseModel):

@@ -82,7 +82,7 @@
       canvas.style.cursor =
         id === null
           ? "grab"
-          : props.seatStates.get(id) === "available"
+          : !props.disabled && props.seatStates.get(id) === "available"
             ? "pointer"
             : "not-allowed";
     };
@@ -105,7 +105,7 @@
     const pointerUp = (event: PointerEvent) => {
       if (!gesture.up(event)) return;
       const id = seatAt(event);
-      if (id !== null) props.onSeatToggle(id);
+      if (id !== null && !props.disabled) props.onSeatToggle(id);
       hover(id);
     };
     canvas.addEventListener("pointerdown", pointerDown);
@@ -132,7 +132,7 @@
     canvas.setAttribute("role", "img");
     canvas.setAttribute(
       "aria-label",
-      "120 座礼堂 3D 选座，前方为舞台，中央为过道。可点击座位，也可使用下方平面图进行键盘选座。",
+      `${props.seats.length} 座礼堂 3D 选座，前方为舞台，中央为过道。可点击座位，也可使用下方平面图进行键盘选座。`,
     );
     controls = orbit;
     props.onReady();
