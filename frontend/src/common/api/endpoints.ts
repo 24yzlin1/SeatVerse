@@ -9,13 +9,20 @@
  */
 
 /** 路径段编码；id 允许 number，调用方直接传 `booking.id` 即可。 */
-const segment = (value: string | number): string => encodeURIComponent(String(value));
+const segment = (value: string | number): string =>
+  encodeURIComponent(String(value));
 
 export const endpoints = {
   authLogin: () => "/authentication/login",
   authMe: () => "/authentication/me",
+  events: () => "/events",
+  eventCreate: () => "/events",
+  eventDetail: (id: string | number) => `/events/${segment(id)}`,
+  eventStatus: (id: string | number) => `/events/${segment(id)}/status`,
+  eventBookings: (id: string | number) => `/events/${segment(id)}/bookings`,
   bookingsMe: () => "/bookings/me",
   bookingCancel: (id: string | number) => `/bookings/${segment(id)}/cancel`,
   bookingTicket: (id: string | number) => `/bookings/${segment(id)}/ticket`,
   ticketByCode: (code: string) => `/tickets/${segment(code)}`,
+  ticketVerify: () => "/tickets/verify",
 } as const;
