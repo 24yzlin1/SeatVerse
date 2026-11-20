@@ -1,6 +1,7 @@
 .env
 .db
 .local-checks/
+/backend/tests/
 
 # 前端验证脚本与旧选座模拟数据只在本地保留。
 /frontend/tests/seatmap*.test.mjs

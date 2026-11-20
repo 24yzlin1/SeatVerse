@@ -11,6 +11,7 @@ from app.scope.authentication import router as authentication_router
 from app.scope.bookings import router as bookings_router
 from app.scope.events import router as events_router
 from app.scope.seats import router as seats_router
+from app.scope.tickets import router as tickets_router
 from app.scope.venues import router as venues_router
 from app.repos.database import run_migrations
 
@@ -48,6 +49,7 @@ api_router.include_router(events_router, tags=["events"])
 api_router.include_router(bookings_router, tags=["bookings"])
 api_router.include_router(seats_router, tags=["seats"])
 api_router.include_router(venues_router, tags=["venues"])
+api_router.include_router(tickets_router, tags=["tickets"])
 app.include_router(api_router)
 
 

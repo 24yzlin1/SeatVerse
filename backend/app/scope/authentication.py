@@ -9,8 +9,8 @@ from app.types.authentication import (
     AuthenticationPayload,
     Identity,
     LoginRequest,
-    UserPublic,
     RegisterRequest,
+    UserPublic,
     UserRole,
 )
 from app.types.common import ResponsePayload

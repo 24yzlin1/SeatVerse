@@ -40,10 +40,6 @@ class AuthenticationPayload(BaseModel):
     user: UserPublic
 
 
-class MePayload(BaseModel):
-    user: UserPublic
-
-
 class Identity(BaseModel):
     user_id: int
     role: UserRole

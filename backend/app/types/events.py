@@ -36,6 +36,8 @@ class EventPublic(BaseModel):
     status: ActivityStatus
     venue: VenuePublic
     organizer_name: str = Field(..., alias="organizerName")
+    # 主办方前端按编号筛自己的活动；没有这个字段只能靠姓名猜（F 于 2026-11-17 补）。
+    organizer_id: int = Field(..., alias="organizerId")
 
 
 class EventListQuery(BaseModel):
@@ -47,12 +49,13 @@ class EventListQuery(BaseModel):
 
 
 class CreateEventRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
     title: str
-    description: str
-    start_time: str
-    end_time: str
-    venue_id: int | None = None
+    description: str = ""
+    start_time: str = Field(..., alias="startTime")
+    end_time: str = Field(..., alias="endTime")
+    venue_id: int | None = Field(default=None, alias="venueId")
 
 
 class UpdateEventStatusRequest(BaseModel):
