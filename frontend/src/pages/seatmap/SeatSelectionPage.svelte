@@ -53,10 +53,22 @@
   });
 
   function showSelection() {
-    document
-      .getElementById("selected-seat-panel")
-      ?.scrollIntoView({ block: "start" });
+    const panel = document.getElementById("selected-seat-panel");
+    const confirm = document.getElementById("selection-confirm");
+    const shortcut = document.querySelector<HTMLElement>(".mobile-selection");
+    panel?.scrollIntoView({ block: "start", behavior: "instant" });
     document.getElementById("selection-title")?.focus({ preventScroll: true });
+    if (
+      confirm instanceof HTMLButtonElement &&
+      !confirm.disabled &&
+      shortcut &&
+      shortcut.getBoundingClientRect().height > 0 &&
+      confirm.getBoundingClientRect().bottom >
+        shortcut.getBoundingClientRect().top - 16
+    ) {
+      confirm.scrollIntoView({ block: "center", behavior: "instant" });
+      confirm.focus({ preventScroll: true });
+    }
   }
 </script>
 

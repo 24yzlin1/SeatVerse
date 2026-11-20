@@ -93,6 +93,7 @@
       onclick={props.onClear}>清空选择</Button
     >
     <Button
+      id="selection-confirm"
       class="h-11 w-full"
       disabled={confirmDisabled}
       aria-busy={props.submitting}
