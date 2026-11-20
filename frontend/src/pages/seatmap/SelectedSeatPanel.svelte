@@ -81,7 +81,7 @@
         </li>
       {/each}
     </ul>
-  {:else if !props.completed}
+  {:else if !props.completed && !props.disabledReason}
     <p class="hint">在 3D 或平面图中点击可选座位，再在此核对并确认。</p>
   {/if}
 
