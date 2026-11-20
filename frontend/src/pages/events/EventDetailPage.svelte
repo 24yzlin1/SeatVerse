@@ -19,6 +19,12 @@
     pageState = "loading";
     errorMessage = "";
 
+    if (!id) {
+      errorMessage = "无效的活动 ID";
+      pageState = "error";
+      return;
+    }
+
     try {
       const res = await request<EventSummary>(
         `/events/${encodeURIComponent(id)}`,

@@ -15,6 +15,7 @@
   
   let keyword = $state("");
   let currentPage = $state(1);
+  let totalPages = $state(1); 
   const pageSize = 10;
 
   async function fetchEvents() {
@@ -31,6 +32,7 @@
       const res = await request<Page<EventSummary>>(`/events?${query.toString()}`, { method: "GET" });
 
       events = res.items;
+      totalPages = Math.ceil(res.total / res.pageSize) || 1; 
       pageState = events.length === 0 ? "empty" : "success";
     } catch (error: unknown) {
       errorMessage = error instanceof ApiError ? error.message : "获取活动列表失败";
@@ -42,6 +44,21 @@
     e.preventDefault();
     currentPage = 1;
     fetchEvents();
+  }
+
+
+  function handlePrevPage() {
+    if (currentPage > 1) {
+      currentPage -= 1;
+      fetchEvents();
+    }
+  }
+
+  function handleNextPage() {
+    if (currentPage < totalPages) {
+      currentPage += 1;
+      fetchEvents();
+    }
   }
 
   $effect(() => {
@@ -81,9 +98,22 @@
               class={["p-6", "border", "border-border", "rounded-xl", "bg-card", "hover:shadow-md", "cursor-pointer"]}
             >
               <h2 class={["text-xl", "font-semibold"]}>{event.title}</h2>
-              <p class={["text-sm", "text-muted-foreground", "mt-2"]}> {event.venue.name}</p>
+              <p class={["text-sm", "text-muted-foreground", "mt-2"]}>场馆：{event.venue.name}</p>
             </a>
           {/each}
+        </div>
+
+        <!-- 分页器 -->
+        <div class={["flex", "items-center", "justify-center", "gap-4", "mt-10"]}>
+          <Button variant="outline" onclick={handlePrevPage} disabled={currentPage === 1}>
+            上一页
+          </Button>
+          <span class={["text-sm", "text-muted-foreground"]}>
+            第 {currentPage} / {totalPages} 页
+          </span>
+          <Button variant="outline" onclick={handleNextPage} disabled={currentPage >= totalPages}>
+            下一页
+          </Button>
         </div>
       {/if}
     </div>
