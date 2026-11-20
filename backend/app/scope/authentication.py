@@ -9,8 +9,8 @@ from app.types.authentication import (
     AuthenticationPayload,
     Identity,
     LoginRequest,
-    MePayload,
     RegisterRequest,
+    UserPublic,
     UserRole,
 )
 from app.types.common import ResponsePayload
@@ -83,5 +83,5 @@ def login(body: LoginRequest) -> ResponsePayload[AuthenticationPayload]:
 
 
 @router.get("/me")
-def me(identity: Identity = Depends(require_identity)) -> ResponsePayload[MePayload]:
+def me(identity: Identity = Depends(require_identity)) -> ResponsePayload[UserPublic]:
     return ok(me_core(identity))
