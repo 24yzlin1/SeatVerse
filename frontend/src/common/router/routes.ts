@@ -3,22 +3,9 @@
  *
  * 依据 docs/contracts/frontend-arch.md §3.4（13 条路由）与 §1（自写 hash 路由、零依赖）。
  * 路由路径一律写成归一化形式：不带 `#`、不带末尾斜杠、动态段用 `:name`。
- * 页面全部静态导入：契约 §1.4 明确不做路由级代码分割。
+ * 此文件只定义元数据，不导入页面；静态组件表由 RouteView 单独加载，避免反向循环。
  */
-import type { Component } from "svelte";
-
 import type { Role } from "@/common/api/types";
-import LoginPage from "@/pages/authentication/LoginPage.svelte";
-import RegisterPage from "@/pages/authentication/RegisterPage.svelte";
-import BookingsPage from "@/pages/bookings/BookingsPage.svelte";
-import EventDetailPage from "@/pages/events/EventDetailPage.svelte";
-import EventsPage from "@/pages/events/EventsPage.svelte";
-import OrganizerBookingsPage from "@/pages/organizer/OrganizerBookingsPage.svelte";
-import OrganizerEventsPage from "@/pages/organizer/OrganizerEventsPage.svelte";
-import VerifyPage from "@/pages/organizer/VerifyPage.svelte";
-import SeatMapPage from "@/pages/seatmap/SeatMapPage.svelte";
-import TicketByCodePage from "@/pages/tickets/TicketByCodePage.svelte";
-import TicketPage from "@/pages/tickets/TicketPage.svelte";
 
 /** 角色字面量与 docs/contracts/enums.md §2.1 一致；唯一定义在 `@/common/api/types`，此处转出以便路由层自洽。 */
 export type { Role };
@@ -28,8 +15,6 @@ export interface RouteDef {
   name: string;
   /** 归一化路径；`*` 为兜底。 */
   path: string;
-  /** 页面组件；带 `redirect` 的路由没有组件。 */
-  component?: Component;
   /** 需要登录才能访问（frontend-arch.md §3.2）。 */
   requiresAuth?: boolean;
   /** 需要的角色；为空表示不限角色。 */
@@ -50,42 +35,37 @@ export const HOME_BY_ROLE: Record<Role, string> = {
  */
 export const routes: RouteDef[] = [
   { name: "index", path: "/", redirect: "/events" },
-  { name: "login", path: "/login", component: LoginPage },
-  { name: "register", path: "/register", component: RegisterPage },
-  { name: "events", path: "/events", component: EventsPage },
-  { name: "eventDetail", path: "/events/:id", component: EventDetailPage },
-  { name: "seatMap", path: "/events/:id/seats", component: SeatMapPage },
-  { name: "bookings", path: "/bookings", component: BookingsPage, requiresAuth: true },
+  { name: "login", path: "/login" },
+  { name: "register", path: "/register" },
+  { name: "events", path: "/events" },
+  { name: "eventDetail", path: "/events/:id" },
+  { name: "seatMap", path: "/events/:id/seats" },
+  { name: "bookings", path: "/bookings", requiresAuth: true },
   {
     name: "ticket",
     path: "/bookings/:id/ticket",
-    component: TicketPage,
     requiresAuth: true,
   },
   {
     name: "ticketByCode",
     path: "/tickets/:code",
-    component: TicketByCodePage,
     requiresAuth: true,
   },
   {
     name: "organizerEvents",
     path: "/organizer/events",
-    component: OrganizerEventsPage,
     requiresAuth: true,
     roles: ["organizer"],
   },
   {
     name: "organizerBookings",
     path: "/organizer/events/:id/bookings",
-    component: OrganizerBookingsPage,
     requiresAuth: true,
     roles: ["organizer"],
   },
   {
     name: "verify",
     path: "/organizer/verify",
-    component: VerifyPage,
     requiresAuth: true,
     roles: ["organizer"],
   },

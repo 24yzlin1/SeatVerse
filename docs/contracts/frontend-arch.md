@@ -126,7 +126,7 @@ frontend/src/
 ├── common/
 │   ├── api/          client.ts  codes.ts  messages.ts  types.ts  endpoints.ts  index.ts
 │   ├── components/   AppShell  NavBar  RoleNav  NotFound  LoadingBlock  EmptyBlock  ErrorBlock  QrCode  form/
-│   ├── router/       routes.ts  router.svelte.ts  RouteView.svelte  index.ts
+│   ├── router/       routes.ts  routeComponents.ts  router.svelte.ts  RouteView.svelte  index.ts
 │   ├── stores/       auth.svelte.ts
 │   └── utils/
 ├── lib/
@@ -177,11 +177,18 @@ frontend/src/
 
 05 号《六人分工方案》里写的是 `features/authentication/` 等目录名，属早期写法；03 号《前端开发规范》统一为 `pages/`。**以本文档为准：一律使用 `pages/`，不再新建 `features/`。**
 
-### 4.6 新增页面的三步
+### 4.6 新增页面的四步
 
 1. 在 `pages/<模块>/` 新建 `XxxPage.svelte`。
 2. 在 `common/router/routes.ts` 增加路由项（含 `requiresAuth` / `roles`）。
-3. 需要接口时，在 `common/api/endpoints.ts` 增加路径函数，并在 `types.ts` 补类型。
+3. 在 `common/router/routeComponents.ts` 静态导入页面，并以路由项的 `name` 注册组件。
+4. 需要接口时，在 `common/api/endpoints.ts` 增加路径函数，并在 `types.ts` 补类型。
+
+### 4.7 路由依赖与开发热更新
+
+`routes.ts` 只保存路径、名称、守卫与角色落点，不导入页面组件。组件静态导入集中在 `routeComponents.ts`，仅由 `RouteView.svelte` 使用；公共路由出口、路由状态和登录落点不得反向加载组件表。页面仍按 §1.4 静态加载，不新增路由级代码分割。
+
+此边界避免“页面 → 公共路由 → 路由表 → 页面”的运行时循环。2026-11-20 修复前，该循环会在修改选座流程模块时引发 `Cannot access 'SeatMapPage' before initialization`，导致 HMR 失败或整页重载。
 
 ---
 

@@ -22,7 +22,6 @@ import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.j
 import type { SeatPalette, SeatVisualState, StaticSeat } from "./types";
 import { venueLayout as hall } from "./seat-layout";
 
-export type VenueView = "interior" | "overview";
 type XYZ = [number, number, number];
 
 function curtainGeometry() {
@@ -444,47 +443,30 @@ export function createVenueStructure({
 }
 
 // A cutaway hides the whole near-side assembly, including its trim and fixtures.
-export function updateVenueShell(
-  room: Group,
-  camera: Vector3,
-  view: VenueView,
-) {
-  const interior = view === "interior";
+export function updateVenueShell(room: Group, camera: Vector3) {
   for (const group of room.children) {
     switch (group.name) {
       case "ceiling":
-        group.visible = interior;
+        group.visible = false;
         break;
       case "front-wall":
-        group.visible = interior || camera.z >= hall.front;
+        group.visible = camera.z >= hall.front;
         break;
       case "rear-wall":
-        group.visible = interior || camera.z <= hall.rear;
+        group.visible = camera.z <= hall.rear;
         break;
       case "left-wall":
-        group.visible = interior || camera.x >= -hall.halfWidth;
+        group.visible = camera.x >= -hall.halfWidth;
         break;
       case "right-wall":
-        group.visible = interior || camera.x <= hall.halfWidth;
+        group.visible = camera.x <= hall.halfWidth;
         break;
     }
   }
 }
 /** 用固定场馆（含标识）的八个角适配画幅；同一计算用于初始、重置和 resize。 */
-export function frameVenueCamera(aspect: number, view: VenueView = "overview") {
+export function frameVenueCamera(aspect: number) {
   const safeAspect = Number.isFinite(aspect) && aspect > 0 ? aspect : 1;
-  if (view === "interior") {
-    // At the rear cross-aisle. Keep the stage in frame on a portrait screen.
-    const fov = Math.max(
-      56,
-      (2 * Math.atan(0.54 / safeAspect) * 180) / Math.PI,
-    );
-    const camera = new PerspectiveCamera(fov, safeAspect, 0.08, 100);
-    const target = new Vector3(0, 2.0, 2.4);
-    camera.position.set(0.8, 3.1, 15.25);
-    camera.lookAt(target);
-    return { camera, target, distance: camera.position.distanceTo(target) };
-  }
   const camera = new PerspectiveCamera(42, safeAspect, 0.1, 250);
   const target = new Vector3(0, 2.1, 6);
   const backward = new Vector3(15, 22, 26).normalize();

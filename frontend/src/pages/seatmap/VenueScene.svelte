@@ -1,6 +1,6 @@
 <script lang="ts">
   import { T, useThrelte } from "@threlte/core";
-  import { onDestroy, onMount, untrack } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import {
     Group,
     InstancedMesh,
@@ -19,14 +19,12 @@
     frameVenueCamera,
     updateVenueShell,
     setSeatPalette,
-    type VenueView,
   } from "./scene-model";
   import { SeatPointerGesture, pickSeat } from "./seat-interaction";
   import { seatVisualState } from "./selection";
   import type { SeatSceneProps } from "./types";
 
   interface Props extends SeatSceneProps {
-    view: VenueView;
     command: {
       action: "reset" | "left" | "right" | "in" | "out";
       revision: number;
@@ -47,11 +45,7 @@
     orbit.enablePan = false;
     orbit.enableDamping = false;
     function updateView() {
-      updateVenueShell(
-        structure,
-        viewCamera.position,
-        untrack(() => props.view),
-      );
+      updateVenueShell(structure, viewCamera.position);
       invalidate();
     }
     orbit.addEventListener("change", updateView);
@@ -160,22 +154,21 @@
   $effect(() => {
     const { width, height } = $size;
     if (!controls || width <= 0 || height <= 0) return;
-    const interior = props.view === "interior";
-    const frame = frameVenueCamera(width / height, props.view);
+    const frame = frameVenueCamera(width / height);
     viewCamera.fov = frame.camera.fov;
-    controls.minPolarAngle = interior ? 1.34 : 0.15;
-    controls.maxPolarAngle = interior ? 1.57 : Math.PI / 2 - 0.15;
-    controls.minAzimuthAngle = interior ? -0.52 : -Infinity;
-    controls.maxAzimuthAngle = interior ? 0.52 : Infinity;
-    controls.minDistance = interior ? 7 : 8;
+    controls.minPolarAngle = 0.15;
+    controls.maxPolarAngle = Math.PI / 2 - 0.15;
+    controls.minAzimuthAngle = -Infinity;
+    controls.maxAzimuthAngle = Infinity;
+    controls.minDistance = 8;
     viewCamera.aspect = width / height;
     viewCamera.position.copy(frame.camera.position);
     viewCamera.updateProjectionMatrix();
     controls.target.copy(frame.target);
-    controls.maxDistance = interior ? 13.2 : frame.distance * 1.8;
+    controls.maxDistance = frame.distance * 1.8;
     controls.update();
     controls.saveState();
-    updateVenueShell(structure, viewCamera.position, props.view);
+    updateVenueShell(structure, viewCamera.position);
     invalidate();
   });
 
@@ -237,26 +230,24 @@
     />
   {/each}
 </T>
-{#if props.view === "overview"}
+<SceneLabel
+  text="舞台 · STAGE"
+  color="#fff4da"
+  background="#433239"
+  position={[0, 1.25, -1.2]}
+  width={5}
+/>
+<SceneLabel
+  text="入口 / 后排"
+  color="#fff4da"
+  position={[0, 0.5, 15]}
+  width={3.6}
+/>
+{#each rows as seat (seat.id)}
   <SceneLabel
-    text="舞台 · STAGE"
+    text={`${seat.row}排`}
     color="#fff4da"
-    background="#433239"
-    position={[0, 1.25, -1.2]}
-    width={5}
+    position={[-8.6, 0.5, seat.z]}
+    width={1.6}
   />
-  <SceneLabel
-    text="入口 / 后排"
-    color="#fff4da"
-    position={[0, 0.5, 15]}
-    width={3.6}
-  />
-  {#each rows as seat (seat.id)}
-    <SceneLabel
-      text={`${seat.row}排`}
-      color="#fff4da"
-      position={[-8.6, 0.5, seat.z]}
-      width={1.6}
-    />
-  {/each}
-{/if}
+{/each}
