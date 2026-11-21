@@ -1,0 +1,38 @@
+{
+  "code": 200,
+  "message": "ok",
+  "payload": {
+    "id": 1,
+    "status": "reserved",
+    "createdAt": "2026-11-21T05:32:32.738900+00:00",
+    "cancelledAt": null,
+    "ticketCode": "GVTEZR3MT7R6JHV4610H",
+    "event": {
+      "id": 2,
+      "title": "校园音乐夜",
+      "status": "published",
+      "startTime": "2026-12-20T19:00:00+08:00",
+      "endTime": "2026-12-20T21:00:00+08:00",
+      "venue": {
+        "id": 1,
+        "name": "学生活动中心·主报告厅"
+      }
+    },
+    "seats": [
+      {
+        "id": 1,
+        "row": 1,
+        "number": 1,
+        "label": "1排1号",
+        "seatType": "standard"
+      },
+      {
+        "id": 2,
+        "row": 1,
+        "number": 2,
+        "label": "1排2号",
+        "seatType": "standard"
+      }
+    ]
+  }
+}

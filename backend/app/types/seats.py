@@ -76,3 +76,20 @@ class EventSeatStatePublic(BaseModel):
 
 class EventSeatListPayload(BaseModel):
     items: list[EventSeatStatePublic]
+
+
+@dataclass(frozen=True)
+class SeatStatisticsRow:
+    total: int
+    sold: int
+    locked: int
+    available: int
+
+
+class SeatStatisticsPublic(BaseModel):
+    eventId: int
+    total: int
+    sold: int
+    locked: int
+    available: int
+    updatedAt: str

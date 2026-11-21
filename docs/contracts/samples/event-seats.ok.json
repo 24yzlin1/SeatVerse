@@ -1,0 +1,488 @@
+{
+  "code": 200,
+  "message": "ok",
+  "payload": {
+    "items": [
+      {
+        "seatId": 1,
+        "status": "available"
+      },
+      {
+        "seatId": 2,
+        "status": "available"
+      },
+      {
+        "seatId": 3,
+        "status": "available"
+      },
+      {
+        "seatId": 4,
+        "status": "available"
+      },
+      {
+        "seatId": 5,
+        "status": "available"
+      },
+      {
+        "seatId": 6,
+        "status": "available"
+      },
+      {
+        "seatId": 7,
+        "status": "available"
+      },
+      {
+        "seatId": 8,
+        "status": "available"
+      },
+      {
+        "seatId": 9,
+        "status": "available"
+      },
+      {
+        "seatId": 10,
+        "status": "available"
+      },
+      {
+        "seatId": 11,
+        "status": "available"
+      },
+      {
+        "seatId": 12,
+        "status": "available"
+      },
+      {
+        "seatId": 13,
+        "status": "available"
+      },
+      {
+        "seatId": 14,
+        "status": "available"
+      },
+      {
+        "seatId": 15,
+        "status": "available"
+      },
+      {
+        "seatId": 16,
+        "status": "available"
+      },
+      {
+        "seatId": 17,
+        "status": "available"
+      },
+      {
+        "seatId": 18,
+        "status": "available"
+      },
+      {
+        "seatId": 19,
+        "status": "available"
+      },
+      {
+        "seatId": 20,
+        "status": "available"
+      },
+      {
+        "seatId": 21,
+        "status": "available"
+      },
+      {
+        "seatId": 22,
+        "status": "available"
+      },
+      {
+        "seatId": 23,
+        "status": "available"
+      },
+      {
+        "seatId": 24,
+        "status": "available"
+      },
+      {
+        "seatId": 25,
+        "status": "available"
+      },
+      {
+        "seatId": 26,
+        "status": "available"
+      },
+      {
+        "seatId": 27,
+        "status": "available"
+      },
+      {
+        "seatId": 28,
+        "status": "available"
+      },
+      {
+        "seatId": 29,
+        "status": "available"
+      },
+      {
+        "seatId": 30,
+        "status": "available"
+      },
+      {
+        "seatId": 31,
+        "status": "available"
+      },
+      {
+        "seatId": 32,
+        "status": "available"
+      },
+      {
+        "seatId": 33,
+        "status": "available"
+      },
+      {
+        "seatId": 34,
+        "status": "available"
+      },
+      {
+        "seatId": 35,
+        "status": "available"
+      },
+      {
+        "seatId": 36,
+        "status": "available"
+      },
+      {
+        "seatId": 37,
+        "status": "available"
+      },
+      {
+        "seatId": 38,
+        "status": "available"
+      },
+      {
+        "seatId": 39,
+        "status": "available"
+      },
+      {
+        "seatId": 40,
+        "status": "available"
+      },
+      {
+        "seatId": 41,
+        "status": "available"
+      },
+      {
+        "seatId": 42,
+        "status": "available"
+      },
+      {
+        "seatId": 43,
+        "status": "available"
+      },
+      {
+        "seatId": 44,
+        "status": "available"
+      },
+      {
+        "seatId": 45,
+        "status": "available"
+      },
+      {
+        "seatId": 46,
+        "status": "available"
+      },
+      {
+        "seatId": 47,
+        "status": "available"
+      },
+      {
+        "seatId": 48,
+        "status": "available"
+      },
+      {
+        "seatId": 49,
+        "status": "available"
+      },
+      {
+        "seatId": 50,
+        "status": "available"
+      },
+      {
+        "seatId": 51,
+        "status": "available"
+      },
+      {
+        "seatId": 52,
+        "status": "available"
+      },
+      {
+        "seatId": 53,
+        "status": "available"
+      },
+      {
+        "seatId": 54,
+        "status": "available"
+      },
+      {
+        "seatId": 55,
+        "status": "available"
+      },
+      {
+        "seatId": 56,
+        "status": "available"
+      },
+      {
+        "seatId": 57,
+        "status": "available"
+      },
+      {
+        "seatId": 58,
+        "status": "available"
+      },
+      {
+        "seatId": 59,
+        "status": "available"
+      },
+      {
+        "seatId": 60,
+        "status": "available"
+      },
+      {
+        "seatId": 61,
+        "status": "available"
+      },
+      {
+        "seatId": 62,
+        "status": "available"
+      },
+      {
+        "seatId": 63,
+        "status": "available"
+      },
+      {
+        "seatId": 64,
+        "status": "available"
+      },
+      {
+        "seatId": 65,
+        "status": "available"
+      },
+      {
+        "seatId": 66,
+        "status": "available"
+      },
+      {
+        "seatId": 67,
+        "status": "available"
+      },
+      {
+        "seatId": 68,
+        "status": "available"
+      },
+      {
+        "seatId": 69,
+        "status": "available"
+      },
+      {
+        "seatId": 70,
+        "status": "available"
+      },
+      {
+        "seatId": 71,
+        "status": "available"
+      },
+      {
+        "seatId": 72,
+        "status": "available"
+      },
+      {
+        "seatId": 73,
+        "status": "available"
+      },
+      {
+        "seatId": 74,
+        "status": "available"
+      },
+      {
+        "seatId": 75,
+        "status": "available"
+      },
+      {
+        "seatId": 76,
+        "status": "available"
+      },
+      {
+        "seatId": 77,
+        "status": "available"
+      },
+      {
+        "seatId": 78,
+        "status": "available"
+      },
+      {
+        "seatId": 79,
+        "status": "available"
+      },
+      {
+        "seatId": 80,
+        "status": "available"
+      },
+      {
+        "seatId": 81,
+        "status": "available"
+      },
+      {
+        "seatId": 82,
+        "status": "available"
+      },
+      {
+        "seatId": 83,
+        "status": "available"
+      },
+      {
+        "seatId": 84,
+        "status": "available"
+      },
+      {
+        "seatId": 85,
+        "status": "available"
+      },
+      {
+        "seatId": 86,
+        "status": "available"
+      },
+      {
+        "seatId": 87,
+        "status": "available"
+      },
+      {
+        "seatId": 88,
+        "status": "available"
+      },
+      {
+        "seatId": 89,
+        "status": "available"
+      },
+      {
+        "seatId": 90,
+        "status": "available"
+      },
+      {
+        "seatId": 91,
+        "status": "available"
+      },
+      {
+        "seatId": 92,
+        "status": "available"
+      },
+      {
+        "seatId": 93,
+        "status": "available"
+      },
+      {
+        "seatId": 94,
+        "status": "available"
+      },
+      {
+        "seatId": 95,
+        "status": "available"
+      },
+      {
+        "seatId": 96,
+        "status": "available"
+      },
+      {
+        "seatId": 97,
+        "status": "available"
+      },
+      {
+        "seatId": 98,
+        "status": "available"
+      },
+      {
+        "seatId": 99,
+        "status": "available"
+      },
+      {
+        "seatId": 100,
+        "status": "available"
+      },
+      {
+        "seatId": 101,
+        "status": "available"
+      },
+      {
+        "seatId": 102,
+        "status": "available"
+      },
+      {
+        "seatId": 103,
+        "status": "available"
+      },
+      {
+        "seatId": 104,
+        "status": "available"
+      },
+      {
+        "seatId": 105,
+        "status": "available"
+      },
+      {
+        "seatId": 106,
+        "status": "available"
+      },
+      {
+        "seatId": 107,
+        "status": "available"
+      },
+      {
+        "seatId": 108,
+        "status": "available"
+      },
+      {
+        "seatId": 109,
+        "status": "available"
+      },
+      {
+        "seatId": 110,
+        "status": "available"
+      },
+      {
+        "seatId": 111,
+        "status": "available"
+      },
+      {
+        "seatId": 112,
+        "status": "available"
+      },
+      {
+        "seatId": 113,
+        "status": "available"
+      },
+      {
+        "seatId": 114,
+        "status": "available"
+      },
+      {
+        "seatId": 115,
+        "status": "available"
+      },
+      {
+        "seatId": 116,
+        "status": "available"
+      },
+      {
+        "seatId": 117,
+        "status": "available"
+      },
+      {
+        "seatId": 118,
+        "status": "available"
+      },
+      {
+        "seatId": 119,
+        "status": "available"
+      },
+      {
+        "seatId": 120,
+        "status": "available"
+      }
+    ]
+  }
+}

@@ -1,21 +1,29 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { untrack } from "svelte";
   import { push } from "svelte-spa-router";
   import { toast } from "svelte-sonner";
 
   import { Badge } from "$lib/components/ui/badge";
+  import { Button } from "$lib/components/ui/button";
   import * as Item from "$lib/components/ui/item";
   import * as Tabs from "$lib/components/ui/tabs";
 
   import Description from "@/pages/bookings/components/Description.svelte";
   import NavigationLayout from "@/layout/NavigationLayout.svelte";
   import { ApiError, endpoints, request } from "@/common/api";
-  import type { Booking, Page } from "@/common/api";
+  import type { Booking, BookingStatus } from "@/common/api";
+  import { authentication } from "@/common/stores/authentication.svelte";
+  import { loadBookingWindow } from "./api";
   import { BOOKING_STATUS_LABEL } from "@/common/utils/groupBookings";
 
   let error = $state("");
 
   let bookings: Booking[] = $state([]);
+  let page = $state(0);
+  let total = $state(0);
+  let loading = $state(false);
+  let cancelling = $state<number | null>(null);
+  let requestVersion = 0;
 
   // Status filter tabs; "all" shows every booking of the current user.
   let statusFilter = $state("all");
@@ -27,35 +35,90 @@
     { value: "cancelled", label: "已取消" },
   ] as const;
 
-  const visibleBookings = $derived(
-    statusFilter === "all"
-      ? bookings
-      : bookings.filter((booking) => booking.status === statusFilter),
-  );
-
-  async function loadBookings() {
+  async function loadBookings(nextPage = 1) {
+    const version = ++requestVersion;
+    const userId = authentication.user?.id;
+    const status: BookingStatus | undefined =
+      statusFilter === "reserved" ||
+      statusFilter === "used" ||
+      statusFilter === "cancelled"
+        ? statusFilter
+        : undefined;
+    loading = true;
+    error = "";
     try {
-      const page = await request<Page<Booking>>(
-        `${endpoints.bookingsMe()}?page=1&pageSize=100`,
-      );
-      bookings = page.items;
+      const result = await loadBookingWindow({ status }, nextPage);
+      if (version !== requestVersion || userId !== authentication.user?.id) {
+        return;
+      }
+      bookings = result.items;
+      page = result.page;
+      total = result.total;
     } catch (requestError: unknown) {
-      error =
-        requestError instanceof ApiError
-          ? requestError.message
-          : "获取预约列表失败";
+      if (version === requestVersion && userId === authentication.user?.id) {
+        error =
+          requestError instanceof ApiError
+            ? requestError.message
+            : "获取预约列表失败";
+      }
+    } finally {
+      if (version === requestVersion) {
+        loading = false;
+      }
     }
   }
 
-  onMount(loadBookings);
-
-  $effect(() => {
-    if (error.length === 0) {
+  async function cancelBooking(booking: Booking) {
+    if (cancelling !== null) {
       return;
     }
+    cancelling = booking.id;
+    const userId = authentication.user?.id;
+    try {
+      await request(endpoints.bookingCancel(booking.id), { method: "POST" });
+      if (userId !== authentication.user?.id) {
+        return;
+      }
+      window.dispatchEvent(
+        new CustomEvent("seatverse:booking-cancelled", {
+          detail: {
+            bookingId: booking.id,
+            eventId: booking.event.id,
+            seatIds: booking.seats.map((seat) => seat.id),
+          },
+        }),
+      );
+      toast.success("预约已取消，座位已释放");
+      await loadBookings();
+    } catch (requestError: unknown) {
+      toast.error(
+        requestError instanceof Error
+          ? requestError.message
+          : "取消结果未能确认，请刷新预约核对",
+      );
+      if (userId === authentication.user?.id) {
+        await loadBookings();
+      }
+    } finally {
+      cancelling = null;
+    }
+  }
 
-    toast.error(error);
-    error = "";
+  $effect(() => {
+    const filter = statusFilter;
+    const userId = authentication.user?.id;
+    untrack(() => {
+      bookings = [];
+      page = 0;
+      total = 0;
+      if (userId !== undefined) {
+        void loadBookings();
+      }
+    });
+    void filter;
+    return () => {
+      requestVersion++;
+    };
   });
 </script>
 
@@ -82,7 +145,7 @@
     <div class={["grow", "overflow-x-scroll", "overflow-y-hidden"]}>
       <Tabs.Root bind:value={statusFilter} class={["w-full"]}>
         <Tabs.List>
-          {#each statusFilters as option}
+          {#each statusFilters as option (option.value)}
             <Tabs.Trigger value={option.value}>{option.label}</Tabs.Trigger>
           {/each}
         </Tabs.List>
@@ -90,7 +153,21 @@
     </div>
   </div>
   <div class={["px-2", "flex", "flex-col"]}>
-    {#each visibleBookings as booking (booking.id)}
+    {#if error}
+      <p class="px-4 py-3 text-destructive" role="alert">{error}</p>
+      <Button
+        variant="secondary"
+        disabled={loading}
+        onclick={() => {
+          void loadBookings(page + 1);
+        }}>重试</Button
+      >
+    {:else if loading && bookings.length === 0}
+      <p class="px-4 py-6" role="status">正在加载预约…</p>
+    {:else if bookings.length === 0}
+      <p class="px-4 py-6">暂无符合条件的预约。</p>
+    {/if}
+    {#each bookings as booking (booking.id)}
       <Item.Root
         class={["click-link"]}
         onclick={() => push(`/bookings/${booking.id}/ticket`)}
@@ -112,7 +189,26 @@
             </Item.Description>
           </div>
         </Item.Content>
+        {#if booking.status === "reserved" && Date.now() < Date.parse(booking.event.startTime)}
+          <Button
+            variant="secondary"
+            disabled={cancelling !== null}
+            onclick={(event) => {
+              event.stopPropagation();
+              void cancelBooking(booking);
+            }}>{cancelling === booking.id ? "取消中…" : "取消预约"}</Button
+          >
+        {/if}
       </Item.Root>
     {/each}
+    {#if bookings.length < total && !error}
+      <Button
+        variant="secondary"
+        disabled={loading}
+        onclick={() => {
+          void loadBookings(page + 1);
+        }}>{loading ? "加载中…" : "加载更多预约"}</Button
+      >
+    {/if}
   </div>
 {/snippet}

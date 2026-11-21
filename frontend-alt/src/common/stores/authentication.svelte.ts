@@ -217,8 +217,10 @@ class AuthenticationStore {
     }
 
     // Another tab switched the token: sync it and re-fetch the identity (§8).
+    this.epoch += 1;
+    this.inFlight = null;
     this.token = next;
-    this.user = readUserCache();
+    this.user = null;
     this.status = "loading";
     void this.bootstrap();
   };
@@ -267,6 +269,7 @@ class AuthenticationStore {
     }
 
     this.epoch += 1;
+    this.inFlight = null;
     writeRaw(AUTHENTICATION_TOKEN_STORAGE_KEY, normalized);
     cacheUser(user ?? null);
     this.token = normalized;
@@ -278,6 +281,7 @@ class AuthenticationStore {
   // no request (§6).
   clear(): void {
     this.epoch += 1;
+    this.inFlight = null;
     removeRaw(AUTHENTICATION_USER_STORAGE_KEY);
     removeRaw(AUTHENTICATION_TOKEN_STORAGE_KEY);
     this.token = null;

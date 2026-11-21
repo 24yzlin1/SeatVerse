@@ -50,6 +50,7 @@ from app.types.bookings import (
     VenueBrief,
     BookingPage,
     CancelBookingPayload,
+    BookingStatus,
 )
 
 _TICKET_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
@@ -57,8 +58,20 @@ _TICKET_CODE_LENGTH = 20
 _MAX_TICKET_GENERATION_ATTEMPTS = 5
 
 
-def list_my_bookings(identity: Identity, page: int, page_size: int) -> BookingPage:
-    rows, total = list_user_bookings(identity.user_id, page_size, (page - 1) * page_size)
+def list_my_bookings(
+    identity: Identity, page: int, page_size: int,
+    event_id: int | None = None, status: str | None = None,
+) -> BookingPage:
+    if event_id is not None and event_id < 1:
+        raise AppError(400, "活动编号必须为正整数")
+    allowed: dict[str, BookingStatus] = {"reserved": "reserved", "used": "used", "cancelled": "cancelled"}
+    parts = [] if status is None else [part.strip() for part in status.split(",")]
+    if any(part not in allowed for part in parts):
+        raise AppError(400, "预约状态仅支持 reserved、used、cancelled")
+    statuses = tuple(dict.fromkeys(allowed[part] for part in parts))
+    rows, total = list_user_bookings(
+        identity.user_id, page_size, (page - 1) * page_size, event_id, statuses,
+    )
     seats = list_booking_seats([row.id for row in rows])
     return BookingPage(
         items=[_to_public(row, seats) for row in rows],

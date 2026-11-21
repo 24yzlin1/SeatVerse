@@ -23,6 +23,7 @@ from app.types.seats import (
     EventSeatStatus,
     SeatRow,
     SeatType,
+    SeatStatisticsRow,
 )
 
 _SEAT_COLUMNS = (
@@ -91,6 +92,28 @@ def list_event_seats(event_id: int) -> list[EventSeatStateRow]:
         )
         for row in rows
     ]
+
+
+def event_seat_statistics(event_id: int) -> SeatStatisticsRow:
+    connection = get_connection()
+    try:
+        row = fetch_one_row(
+            connection,
+            "SELECT COUNT(*) AS total, "
+            "COALESCE(SUM(status='sold'),0) AS sold, "
+            "COALESCE(SUM(status='locked'),0) AS locked, "
+            "COALESCE(SUM(status='available'),0) AS available "
+            "FROM event_seats WHERE event_id=?",
+            (event_id,),
+        )
+        if row is None:
+            raise RuntimeError("Seat statistics query returned no row")
+        return SeatStatisticsRow(
+            total=read_integer(row, "total"), sold=read_integer(row, "sold"),
+            locked=read_integer(row, "locked"), available=read_integer(row, "available"),
+        )
+    finally:
+        connection.close()
 
 
 def _row_to_event_seat(row: sqlite3.Row) -> EventSeatRow:

@@ -34,8 +34,9 @@ export class SeatPointerGesture {
   }
 
   move(event: Pointer) {
-    if (this.start?.pointerId === event.pointerId && this.distance(event) > 6)
+    if (this.start?.pointerId === event.pointerId && this.distance(event) > 6) {
       this.start = null;
+    }
   }
 
   up(event: Pointer) {
@@ -78,13 +79,17 @@ export function pickSeat(
   for (const root of [seats, room]) {
     root.updateMatrixWorld(true);
     root.traverseVisible((object) => {
-      if (object instanceof Mesh) meshes.push(object);
+      if (object instanceof Mesh) {
+        meshes.push(object);
+      }
     });
   }
   raycaster.setFromCamera(point, camera);
   let object: Object3D | null =
     raycaster.intersectObjects(meshes, false)[0]?.object ?? null;
-  while (object && object.userData.seatId === undefined) object = object.parent;
+  while (object && object.userData.seatId === undefined) {
+    object = object.parent;
+  }
   const id: unknown = object?.userData.seatId;
   return typeof id === "number" ? id : null;
 }

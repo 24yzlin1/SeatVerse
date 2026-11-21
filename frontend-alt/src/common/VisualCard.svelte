@@ -31,7 +31,7 @@
           label: string;
           value: number;
         }[];
-    options?: Record<string, any>;
+    options?: { note?: string | number; noteDescription?: string };
   } = $props();
 
   function countTop(
@@ -55,9 +55,9 @@
       .sort((a, b) => b[1] - a[1])
       .slice(0, 4);
 
-    const sum = Object.entries(counter).reduce((acc, x) => (acc += x[1]), 0);
-    const remains = sum - counterTop.reduce((acc, x) => (acc += x[1]), 0);
-    if (remains != 0) {
+    const sum = Object.entries(counter).reduce((acc, x) => acc + x[1], 0);
+    const remains = sum - counterTop.reduce((acc, x) => acc + x[1], 0);
+    if (remains !== 0) {
       counterTop.push(["其他", remains]);
     }
 
@@ -85,8 +85,8 @@
     return countTop(raw).map(({ label, value }, i) => {
       return {
         key: i.toString(),
-        value: value,
-        label: label,
+        value,
+        label,
         color: `var(--chart-${i + 1})`,
       };
     });
@@ -119,7 +119,7 @@
     {/if}
     {#if type === "badge"}
       <Item.Content class={["pl-12", "pr-4"]}>
-        {#each data as string[] as x}
+        {#each data as string[] as x, i (i)}
           <Badge>{x}</Badge>
         {/each}
       </Item.Content>
@@ -173,7 +173,7 @@
           </div>
         </div>
         <div class={["pl-12", "pr-4", "pt-4", "flex", "flex-col", "gap-2"]}>
-          {#each chart as x}
+          {#each chart as x (x.key)}
             <div class={["flex", "gap-2", "text-xs"]}>
               <div class={["flex", "items-center", "gap-2"]}>
                 <div

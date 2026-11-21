@@ -19,7 +19,8 @@ SeatVerse/
 │   ├── app/                 四层：types / repos / core / scope
 │   ├── main.py              应用入口
 │   └── pyproject.toml       uv 依赖与 poe 任务
-├── frontend/                Svelte 5 + Vite 前端
+├── frontend-alt/            当前主前端（Svelte 5 + Vite）
+├── frontend/                历史前端，保留作参考
 │   └── src/                 App.svelte、app.css、common/、pages/、lib/
 ├── docs/
 │   ├── collaboration.md     分支、提交信息与锁文件规范
@@ -28,6 +29,8 @@ SeatVerse/
 ├── .github/                 PR 与 Issue 模板
 └── README.md
 ```
+
+当前主前端为 `frontend-alt/`，后续开发、启动与统一检查均使用该目录。座位与预约接口交接见 [E → C 契约](docs/contracts/seats-bookings.md)，选座运行与验收说明见 [新版选座模块](frontend-alt/src/pages/seatmap/README.md)。
 
 ## 启动三步
 
@@ -41,7 +44,7 @@ SeatVerse/
 cd backend && uv sync && uv run poe dev
 
 # 2) 前端（终端 2，另开一个）
-cd frontend && npm ci && npm run dev
+cd frontend-alt && npm ci && npm run dev
 
 # 3) 浏览器打开
 # http://localhost:5173

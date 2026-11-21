@@ -19,6 +19,8 @@ export const endpoints = {
   authenticationMe: () => "/authentication/me",
   event: (id: string | number) => `/events/${encodePathSegment(id)}`,
   eventSeats: (id: string | number) => `/events/${encodePathSegment(id)}/seats`,
+  eventSeatStatistics: (id: string | number) =>
+    `/events/${encodePathSegment(id)}/seat-statistics`,
   venueSeats: (id: string | number) => `/venues/${encodePathSegment(id)}/seats`,
   bookingsCreate: () => "/bookings",
   events: () => "/events",

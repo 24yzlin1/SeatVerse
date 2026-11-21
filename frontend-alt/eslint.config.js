@@ -6,7 +6,15 @@ import tseslint from "typescript-eslint";
 import svelteConfig from "./svelte.config.js";
 
 export default [
-  { ignores: ["node_modules/**", "dist/**", "public/**"] },
+  // shadcn 生成件沿用项目约定，不参与手写代码规则，也不手工修改。
+  {
+    ignores: [
+      "node_modules/**",
+      "dist/**",
+      "public/**",
+      "src/lib/components/ui/**",
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   ...svelte.configs.recommended,

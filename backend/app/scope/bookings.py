@@ -26,11 +26,13 @@ router = APIRouter(prefix="/bookings", tags=["bookings"])
 def my_bookings(
     page: int = 1,
     page_size: int = Query(20, alias="pageSize"),
+    event_id: int | None = Query(None, alias="eventId"),
+    status: str | None = None,
     identity: Identity = Depends(require_identity),
 ) -> ResponsePayload[BookingPage]:
     if page < 1 or page_size < 1 or page_size > 100:
         raise AppError(400, "页码必须大于等于 1，每页条数必须在 1 到 100 之间")
-    return ok(list_my_bookings(identity, page, page_size))
+    return ok(list_my_bookings(identity, page, page_size, event_id, status))
 
 
 @router.post("/{booking_id}/cancel")

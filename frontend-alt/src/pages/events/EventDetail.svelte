@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { push } from "svelte-spa-router";
-  import { toast } from "svelte-sonner";
   import {
     RiCalendarLine,
     RiFlagLine,
@@ -18,9 +17,11 @@
   import Error from "@/common/Error.svelte";
   import VisualCard from "@/common/VisualCard.svelte";
   import SeatBooking from "@/pages/seatmap/SeatBooking.svelte";
-  import { loadSeatMap } from "@/pages/seatmap/api";
+  import { loadSeatStatistics } from "@/pages/seatmap/api";
+  import { loadBookingWindow } from "@/pages/bookings/api";
+  import { Button } from "$lib/components/ui/button";
   import { ApiError, endpoints, request } from "@/common/api";
-  import type { Booking, EventRecord, Page } from "@/common/api";
+  import type { Booking, EventRecord } from "@/common/api";
   import { authentication } from "@/common/stores/authentication.svelte";
   import { BOOKING_STATUS_LABEL } from "@/common/utils/groupBookings";
   import {
@@ -39,6 +40,12 @@
 
   let detail: EventRecord | null = $state(null);
   let eventBookings: Booking[] | null = $state(null);
+  let bookingPage = $state(0);
+  let bookingTotal = $state(0);
+  let bookingLoading = $state(false);
+  let bookingError = $state("");
+  let bookingVersion = 0;
+  let statisticsVersion = 0;
 
   // Participation summary computed from the seat states of this event;
   // `null` means the seat data has not loaded (the chart stays hidden).
@@ -49,10 +56,19 @@
 
   let now = $state(Date.now());
 
-  async function loadDetail(currentId: number) {
+  async function loadDetail(currentId: number, signal: AbortSignal) {
     try {
-      detail = await request<EventRecord>(endpoints.eventDetail(currentId));
+      const result = await request<EventRecord>(
+        endpoints.eventDetail(currentId),
+        { signal },
+      );
+      if (currentId === eventId && !signal.aborted) {
+        detail = result;
+      }
     } catch (requestError: unknown) {
+      if (currentId !== eventId || signal.aborted) {
+        return;
+      }
       error =
         requestError instanceof ApiError
           ? requestError.message
@@ -61,76 +77,113 @@
   }
 
   async function loadSeatStats(currentId: number) {
+    const version = ++statisticsVersion;
     try {
-      const seatMap = await loadSeatMap(currentId);
-      const sold = seatMap.seats.filter(
-        (seat) => seatMap.seatStates.get(seat.id) === "sold",
-      ).length;
-      const locked = seatMap.seats.filter(
-        (seat) => seatMap.seatStates.get(seat.id) === "locked",
-      ).length;
-      const available = seatMap.seats.filter(
-        (seat) => seatMap.seatStates.get(seat.id) === "available",
-      ).length;
-      seatStats = { sold, locked, available };
+      const result = await loadSeatStatistics(currentId);
+      if (currentId === eventId && version === statisticsVersion) {
+        seatStats = result;
+      }
     } catch {
-      seatStats = null;
+      if (currentId === eventId && version === statisticsVersion) {
+        seatStats = null;
+      }
     }
   }
 
-  async function loadBookings(currentId: number) {
+  async function loadBookings(currentId: number, page = 1) {
+    const version = ++bookingVersion;
+    const userId = authentication.user?.id;
+    bookingLoading = true;
+    bookingError = "";
     try {
-      const page = await request<Page<Booking>>(
-        `${endpoints.bookingsMe()}?page=1&pageSize=100`,
-      );
-      eventBookings = page.items.filter(
-        (booking) => booking.event.id === currentId,
-      );
+      const result = await loadBookingWindow({ eventId: currentId }, page);
+      if (
+        version !== bookingVersion ||
+        currentId !== eventId ||
+        userId !== authentication.user?.id
+      ) {
+        return;
+      }
+      eventBookings = result.items;
+      bookingPage = result.page;
+      bookingTotal = result.total;
     } catch (requestError: unknown) {
-      // Booking list failures are not fatal; keep the stale list and report
-      // through a toast instead of replacing the whole tab.
-      toast.error(
-        requestError instanceof ApiError
-          ? requestError.message
-          : "预约列表没能更新，稍后再试试",
-      );
+      if (
+        version === bookingVersion &&
+        currentId === eventId &&
+        userId === authentication.user?.id
+      ) {
+        bookingError =
+          requestError instanceof ApiError
+            ? requestError.message
+            : "预约列表没能更新，稍后再试试";
+      }
+    } finally {
+      if (version === bookingVersion) {
+        bookingLoading = false;
+      }
     }
   }
 
   // Reload the detail whenever the route id changes.
   $effect(() => {
     const currentId = eventId;
+    const controller = new AbortController();
+    detail = null;
+    error = "";
+    seatStats = null;
     if (!Number.isSafeInteger(currentId)) {
       error = "无效的活动 ID";
       return;
     }
-    void loadDetail(currentId);
-    void loadSeatStats(currentId);
+    untrack(() => {
+      void loadDetail(currentId, controller.signal);
+      void loadSeatStats(currentId);
+    });
+    return () => {
+      controller.abort();
+      statisticsVersion++;
+    };
   });
 
   // The booking tab requires a session; load the list as soon as one exists.
   $effect(() => {
     const currentId = eventId;
-    if (
-      Number.isSafeInteger(currentId) &&
-      authentication.isLoggedIn &&
-      eventBookings === null
-    ) {
-      void loadBookings(currentId);
-    }
+    const loggedIn = authentication.isLoggedIn;
+    const userId = authentication.user?.id;
+    untrack(() => {
+      eventBookings = null;
+      bookingPage = 0;
+      bookingTotal = 0;
+      bookingError = "";
+      bookingLoading = false;
+      if (Number.isSafeInteger(currentId) && loggedIn && userId !== undefined) {
+        void loadBookings(currentId);
+      }
+    });
+    return () => {
+      bookingVersion++;
+    };
   });
 
   onMount(() => {
-    const timer = window.setInterval(() => {
+    const update = () => {
       now = Date.now();
       // Keep bookings and seat availability fresh on long-lived visits; the
       // seat tab has its own poller inside the SeatBooking container.
-      if (authentication.isLoggedIn) {
-        void loadBookings(eventId);
+      if (authentication.isLoggedIn && !bookingLoading) {
+        void loadBookings(eventId, Math.max(1, bookingPage));
       }
       void loadSeatStats(eventId);
-    }, 30000);
-    return () => window.clearInterval(timer);
+    };
+    const timer = window.setInterval(update, 30000);
+    window.addEventListener("seatverse:booking-created", update);
+    window.addEventListener("seatverse:booking-cancelled", update);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("seatverse:booking-created", update);
+      window.removeEventListener("seatverse:booking-cancelled", update);
+    };
   });
 </script>
 
@@ -162,7 +215,7 @@
       <Tabs.Root bind:value={selectedOption} class={["w-full"]}>
         <Tabs.List>
           {@const tabOptions = ["详情", "我的预约", "立即选座"]}
-          {#each tabOptions as x, i}
+          {#each tabOptions as x, i (x)}
             <Tabs.Trigger value={i.toString()}>{x}</Tabs.Trigger>
           {/each}
         </Tabs.List>
@@ -200,11 +253,13 @@
   {#if selectedOption === "1"}
     <div class={["px-2", "flex", "flex-col"]}>
       {#if !authentication.isLoggedIn}
-        <!-- TODO: show a sign-in prompt when the user is not logged in. -->
+        <p class="px-4 py-6">请通过右上角账户入口登录后查看本场预约。</p>
       {:else if !eventBookings}
-        <!-- TODO: show a skeleton placeholder while bookings are loading. -->
+        <p class="px-4 py-6" role="status">
+          {bookingError || "正在加载本场预约…"}
+        </p>
       {:else if eventBookings.length === 0}
-        <!-- TODO: show an empty state when there are no bookings. -->
+        <p class="px-4 py-6">暂无本场预约。</p>
       {:else}
         {#each eventBookings as booking (booking.id)}
           <Item.Root
@@ -227,6 +282,24 @@
             </Item.Content>
           </Item.Root>
         {/each}
+      {/if}
+      {#if authentication.isLoggedIn && bookingError}
+        <p class="px-4 text-destructive" role="alert">{bookingError}</p>
+        <Button
+          variant="secondary"
+          disabled={bookingLoading}
+          onclick={() => {
+            void loadBookings(eventId, bookingPage + 1);
+          }}>重试加载预约</Button
+        >
+      {:else if eventBookings && eventBookings.length < bookingTotal}
+        <Button
+          variant="secondary"
+          disabled={bookingLoading}
+          onclick={() => {
+            void loadBookings(eventId, bookingPage + 1);
+          }}>{bookingLoading ? "加载中…" : "加载更多预约"}</Button
+        >
       {/if}
     </div>
   {/if}

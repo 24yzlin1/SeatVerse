@@ -452,6 +452,38 @@
             }
           },
           {
+            "name": "eventId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Eventid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "required": false,
@@ -594,6 +626,49 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ResponsePayload_BookingPublic_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{event_id}/seat-statistics": {
+      "get": {
+        "tags": [
+          "seats",
+          "seats"
+        ],
+        "summary": "Seat Statistics",
+        "operationId": "seat_statistics_api_events__event_id__seat_statistics_get",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePayload_SeatStatisticsPublic_"
                 }
               }
             }
@@ -1578,6 +1653,28 @@
         ],
         "title": "ResponsePayload[SeatListPayload]"
       },
+      "ResponsePayload_SeatStatisticsPublic_": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/SeatStatisticsPublic"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "payload"
+        ],
+        "title": "ResponsePayload[SeatStatisticsPublic]"
+      },
       "ResponsePayload_TicketPublic_": {
         "properties": {
           "code": {
@@ -1935,6 +2032,44 @@
         ],
         "title": "SeatPublic",
         "description": "静态座位响应；字段与前端 `StaticSeat` 对齐。"
+      },
+      "SeatStatisticsPublic": {
+        "properties": {
+          "eventId": {
+            "type": "integer",
+            "title": "Eventid"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "sold": {
+            "type": "integer",
+            "title": "Sold"
+          },
+          "locked": {
+            "type": "integer",
+            "title": "Locked"
+          },
+          "available": {
+            "type": "integer",
+            "title": "Available"
+          },
+          "updatedAt": {
+            "type": "string",
+            "title": "Updatedat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "eventId",
+          "total",
+          "sold",
+          "locked",
+          "available",
+          "updatedAt"
+        ],
+        "title": "SeatStatisticsPublic"
       },
       "TicketPublic": {
         "properties": {

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { projectSeatToPlan, venueLayout } from "../seat-layout";
-  import { seatVisualState } from "../selection";
-  import type { SeatSceneProps, SeatVisualState } from "../types";
+  import { projectSeatToPlan, venueLayout } from "@/pages/seatmap/seat-layout";
+  import { seatVisualState } from "@/pages/seatmap/selection";
+  import type { SeatSceneProps, SeatVisualState } from "@/pages/seatmap/types";
 
   const props: SeatSceneProps = $props();
   const rows = $derived([

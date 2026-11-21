@@ -92,34 +92,11 @@ function isEnvelopeShape(value: unknown): value is ResponseEnvelope<unknown> {
   return typeof value.code === "number" && typeof value.message === "string";
 }
 
-// Hash-only path and query string of the current address, without the `#` and
-// the origin, so it can be restored after login.
-function currentTarget(): string {
-  const rawHash = window.location.hash;
-  const rawPath = rawHash.startsWith("#") ? rawHash.slice(1) : rawHash;
-  return rawPath.length === 0 ? "/" : rawPath;
-}
-
-// Clear the session and replace the address with the login route; concurrent
-// 401 responses only trigger one redirect.
-function redirectToLogin(): void {
-  if (isRedirectingToLogin) {
-    return;
-  }
-  isRedirectingToLogin = true;
-  const next = encodeURIComponent(currentTarget());
-  authentication.clear();
-  window.history.replaceState(null, "", `#/login?next=${next}`);
-  // Reset on the next tick so one expiry storm redirects only once.
-  setTimeout(() => {
-    isRedirectingToLogin = false;
-  }, 0);
-}
-
 function buildHeaders(
   path: string,
   method: HttpMethod,
   body: unknown,
+  token: string | null,
 ): Record<string, string> {
   const headers: Record<string, string> = { Accept: "application/json" };
 
@@ -129,7 +106,6 @@ function buildHeaders(
 
   // Injection order (auth.md §14.3): exempt path → no header; no token → no
   // header; otherwise attach the Bearer scheme.
-  const token = authentication.token;
   if (!isExemptPath(path) && token !== null && token.length > 0) {
     headers[AUTHORIZATION_HEADER] = `${AUTHORIZATION_SCHEME}${token}`;
   }
@@ -139,7 +115,7 @@ function buildHeaders(
 
 // Parse the envelope and branch on the business code; returns the payload on
 // success.
-function unwrap<T>(path: string, text: string): T {
+function unwrap<T>(path: string, text: string, requestToken: string | null): T {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -163,7 +139,7 @@ function unwrap<T>(path: string, text: string): T {
   }
 
   if (parsed.code === RESPONSE_CODE_UNAUTHORIZED) {
-    if (!isExemptPath(path)) {
+    if (!isExemptPath(path) && authentication.token === requestToken) {
       // The token is invalid: remove the session so the route guards switch
       // to the sign-in prompt (auth.md §7).
       authentication.clear();
@@ -184,6 +160,7 @@ export async function request<T>(
   const method = options.method ?? "GET";
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const target = normalizePath(path);
+  const requestToken = authentication.token;
 
   const controller = new AbortController();
   const timer = setTimeout(() => {
@@ -205,7 +182,7 @@ export async function request<T>(
   try {
     const response = await fetch(`${BASE_URL}${target}`, {
       method,
-      headers: buildHeaders(target, method, options.body),
+      headers: buildHeaders(target, method, options.body, requestToken),
       body:
         method === "GET" || options.body === undefined
           ? undefined
@@ -216,7 +193,7 @@ export async function request<T>(
     // Deliberately does not read response.ok / status: non-2xx HTTP responses
     // must still be parsed as an envelope.
     const text = await response.text();
-    return unwrap<T>(target, text);
+    return unwrap<T>(target, text, requestToken);
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;

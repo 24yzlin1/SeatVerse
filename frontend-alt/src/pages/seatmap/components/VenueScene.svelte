@@ -1,6 +1,6 @@
 <script lang="ts">
   import { T, useThrelte } from "@threlte/core";
-  import { onDestroy, onMount, untrack } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import {
     Group,
     InstancedMesh,
@@ -8,7 +8,6 @@
     Raycaster,
     SpotLight,
     Vector2,
-    Vector3,
   } from "three";
   import { OrbitControls } from "three/addons/controls/OrbitControls.js";
   import SceneLabel from "./SceneLabel.svelte";
@@ -19,10 +18,13 @@
     frameVenueCamera,
     setSeatPalette,
     updateVenueShell,
-  } from "../scene-model";
-  import { SeatPointerGesture, pickSeat } from "../seat-interaction";
-  import { seatVisualState } from "../selection";
-  import type { SeatSceneProps } from "../types";
+  } from "@/pages/seatmap/scene-model";
+  import {
+    SeatPointerGesture,
+    pickSeat,
+  } from "@/pages/seatmap/seat-interaction";
+  import { seatVisualState } from "@/pages/seatmap/selection";
+  import type { SeatSceneProps } from "@/pages/seatmap/types";
 
   // Only the full-venue panorama view is kept; the cutaway shells follow the
   // orbit camera so the hall always reads as an open model.
@@ -58,8 +60,9 @@
         event.clientX > rect.right ||
         event.clientY < rect.top ||
         event.clientY > rect.bottom
-      )
+      ) {
         return null;
+      }
       point.set(
         ((event.clientX - rect.left) / rect.width) * 2 - 1,
         -((event.clientY - rect.top) / rect.height) * 2 + 1,
@@ -88,13 +91,18 @@
     const pointerMove = (event: PointerEvent) => {
       gesture.move(event);
       cancelAnimationFrame(hoverFrame);
-      if (event.buttons === 0 && event.pointerType === "mouse")
+      if (event.buttons === 0 && event.pointerType === "mouse") {
         hoverFrame = requestAnimationFrame(() => hover(seatAt(event)));
+      }
     };
     const pointerUp = (event: PointerEvent) => {
-      if (!gesture.up(event)) return;
+      if (!gesture.up(event)) {
+        return;
+      }
       const id = seatAt(event);
-      if (id !== null && !props.disabled) props.onSeatToggle(id);
+      if (id !== null && !props.disabled) {
+        props.onSeatToggle(id);
+      }
       hover(id);
     };
     canvas.addEventListener("pointerdown", pointerDown);
@@ -139,15 +147,18 @@
   });
   onDestroy(() => {
     structure.traverse((object) => {
-      if (object instanceof InstancedMesh || object instanceof SpotLight)
+      if (object instanceof InstancedMesh || object instanceof SpotLight) {
         object.dispose();
+      }
     });
     resources.dispose();
   });
 
   $effect(() => {
     const { width, height } = $size;
-    if (!controls || width <= 0 || height <= 0) return;
+    if (!controls || width <= 0 || height <= 0) {
+      return;
+    }
     const frame = frameVenueCamera(width / height);
     controls.minPolarAngle = 0.15;
     controls.maxPolarAngle = Math.PI / 2 - 0.15;

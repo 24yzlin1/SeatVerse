@@ -131,8 +131,9 @@ export function createVenueResources() {
       emissiveIntensity: 1.3,
     }),
   };
-  for (const material of [materials.walnut, materials.oak, materials.paleOak])
+  for (const material of [materials.walnut, materials.oak, materials.paleOak]) {
     material.map = wood;
+  }
   for (const material of [
     materials.carpet,
     materials.runner,
@@ -140,16 +141,21 @@ export function createVenueResources() {
     materials.seatSold,
     materials.seatSelected,
     materials.seatUnavailable,
-  ])
+  ]) {
     material.map = weave;
+  }
   return {
     geometries,
     materials,
     dispose() {
       wood.dispose();
       weave.dispose();
-      for (const geometry of Object.values(geometries)) geometry.dispose();
-      for (const material of Object.values(materials)) material.dispose();
+      for (const geometry of Object.values(geometries)) {
+        geometry.dispose();
+      }
+      for (const material of Object.values(materials)) {
+        material.dispose();
+      }
     },
   };
 }
@@ -191,7 +197,9 @@ export function setSeatAppearance(
   const material = seatMaterial(resources, state);
   for (const name of ["seat-cushion", "seat-back"]) {
     const mesh = object.getObjectByName(name);
-    if (mesh instanceof Mesh) mesh.material = material;
+    if (mesh instanceof Mesh) {
+      mesh.material = material;
+    }
   }
   object.userData.visualState = state;
 }
@@ -292,7 +300,9 @@ export function createVenueStructure({
   );
   const markers: XYZ[] = [];
   for (let row = 0; row < 10; row++) {
-    for (const x of [-1.03, 1.03]) markers.push([x, 0.03, 1.8 + row * 1.2]);
+    for (const x of [-1.03, 1.03]) {
+      markers.push([x, 0.03, 1.8 + row * 1.2]);
+    }
   }
   repeat(room, markers, [0.065, 0.014, 0.26], m.lamp);
   box(
@@ -347,8 +357,9 @@ export function createVenueStructure({
         [side * 9.84, 3.08, z],
         m.felt,
       );
-      for (let slat = 0; slat < 8; slat++)
+      for (let slat = 0; slat < 8; slat++) {
         battens.push([side * 9.74, 3.1, z - 1.55 + slat * 0.44]);
+      }
       box(
         wall,
         "sconce-base",
@@ -406,14 +417,20 @@ export function createVenueStructure({
   box(piano, "lid-prop", [0.024, 0.74, 0.024], [0.42, 1.44, 0.27], m.brass);
   box(piano, "keyboard", [1.42, 0.1, 0.25], [0, 0.87, -0.7], m.ivory);
   const keys: XYZ[] = [];
-  for (let i = 0; i < 35; i++)
-    if (i % 7 !== 2 && i % 7 !== 6) keys.push([-0.68 + i * 0.039, 0.94, -0.66]);
+  for (let i = 0; i < 35; i++) {
+    if (i % 7 !== 2 && i % 7 !== 6) {
+      keys.push([-0.68 + i * 0.039, 0.94, -0.66]);
+    }
+  }
   repeat(piano, keys, [0.023, 0.04, 0.13], m.piano);
   box(piano, "bench-seat", [0.86, 0.13, 0.43], [0, 0.5, -1.14], m.piano);
-  for (const x of [-0.32, 0.32])
+  for (const x of [-0.32, 0.32]) {
     box(piano, "bench-leg", [0.09, 0.47, 0.26], [x, 0.235, -1.14], m.walnut);
+  }
   piano.traverse((object) => {
-    if (object instanceof Mesh) object.castShadow = true;
+    if (object instanceof Mesh) {
+      object.castShadow = true;
+    }
   });
   for (const [x, z] of [
     [-5, 6],
@@ -479,6 +496,9 @@ export function frameVenueCamera(aspect: number) {
 export function updateVenueShell(room: Group, camera: Vector3) {
   for (const group of room.children) {
     switch (group.name) {
+      case "ceiling":
+        group.visible = false;
+        break;
       case "front-wall":
         group.visible = camera.z >= hall.front;
         break;

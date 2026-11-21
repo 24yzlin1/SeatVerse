@@ -14,8 +14,12 @@ export function seatVisualState(
   selected: SelectedSeatIds,
 ): SeatVisualState {
   const state = states.get(seatId);
-  if (state === "sold") return "sold";
-  if (state !== "available") return "unavailable";
+  if (state === "sold") {
+    return "sold";
+  }
+  if (state !== "available") {
+    return "unavailable";
+  }
   return selected.has(seatId) ? "selected" : "available";
 }
 
@@ -43,10 +47,14 @@ export function toggleSeatSelection(
   if (
     !seats.some((seat) => seat.id === seatId) ||
     states.get(seatId) !== "available"
-  )
+  ) {
     return next;
-  if (next.has(seatId)) next.delete(seatId);
-  else next.add(seatId);
+  }
+  if (next.has(seatId)) {
+    next.delete(seatId);
+  } else {
+    next.add(seatId);
+  }
   return next;
 }
 
