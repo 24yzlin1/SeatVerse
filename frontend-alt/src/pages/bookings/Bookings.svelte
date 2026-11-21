@@ -189,6 +189,12 @@
             </Item.Description>
           </div>
         </Item.Content>
+        <Button
+          variant="secondary"
+          href={`#/events/${booking.event.id}/seats`}
+          disabled={cancelling === booking.id}
+          onclick={(event) => event.stopPropagation()}>查看本场座位</Button
+        >
         {#if booking.status === "reserved" && Date.now() < Date.parse(booking.event.startTime)}
           <Button
             variant="secondary"

@@ -304,7 +304,12 @@
     </div>
   {/if}
   {#if selectedOption === "2"}
-    <SeatBooking {eventId} />
+    <SeatBooking
+      {eventId}
+      onShowDetails={() => {
+        selectedOption = "0";
+      }}
+    />
   {/if}
 {/if}
 

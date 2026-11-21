@@ -78,6 +78,10 @@
   // Restore the session from the stored token on startup; without a token
   // this only settles the status to signed out.
   onMount(() => {
+    const openLogin = () => {
+      isShowUser = true;
+    };
+    window.addEventListener("seatverse:login-requested", openLogin);
     // Both authentication calls go through the request client, so token
     // injection and 401 handling only happen in one place.
     setAuthenticationApi({
@@ -89,6 +93,8 @@
         }),
     });
     void authentication.bootstrap();
+    return () =>
+      window.removeEventListener("seatverse:login-requested", openLogin);
   });
 
   // Pages behind the session guard open the user drawer when the guard

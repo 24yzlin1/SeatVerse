@@ -13,7 +13,7 @@
 
   import * as Avatar from "$lib/components/ui/avatar";
   import { Badge } from "$lib/components/ui/badge";
-  import Button from "$lib/components/ui/button/button.svelte";
+  import { Button } from "$lib/components/ui/button";
   import * as Item from "$lib/components/ui/item";
 
   import type { Ticket } from "@/common/api";
@@ -50,6 +50,15 @@
   }
 </script>
 
+<nav class="px-6 py-3 flex flex-wrap gap-2" aria-label="电子票导航">
+  <Button variant="secondary" href={`#/events/${ticket.event.id}`}
+    >活动详情</Button
+  >
+  <Button variant="secondary" href={`#/events/${ticket.event.id}/seats`}
+    >返回本场选座</Button
+  >
+  <Button variant="secondary" href="#/bookings">我的预约</Button>
+</nav>
 <div class={["pt-4", "px-6"]}>
   <Item.Root variant="muted" class={["flex-nowrap", "overflow-hidden"]}>
     <Item.Media variant="image">
