@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { Button } from "$lib/components/ui/button";
   import type { Booking } from "@/common/api";
 
@@ -6,12 +7,20 @@
     booking,
     onShowDetails,
   }: { booking: Booking; onShowDetails?: () => void } = $props();
+
+  let result: HTMLElement | undefined;
+  onMount(() => {
+    result?.focus({ preventScroll: true });
+    result?.scrollIntoView({ block: "center" });
+  });
 </script>
 
 <section
+  bind:this={result}
   class="rounded-lg border p-4 flex flex-col gap-2"
   role="status"
   aria-label="预约成功"
+  tabindex="-1"
 >
   <p>预约成功 · 预约编号 {booking.id}</p>
   <p>座位：{booking.seats.map((seat) => seat.label).join("、")}</p>

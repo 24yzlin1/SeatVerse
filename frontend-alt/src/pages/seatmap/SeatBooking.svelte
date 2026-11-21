@@ -129,6 +129,8 @@
   </div>
   <SeatBookingSection
     data={view.data}
+    {now}
+    showEventDetails={!onShowDetails}
     selectedSeatIds={view.selected}
     refreshing={view.refreshing}
     submitting={view.submitting}

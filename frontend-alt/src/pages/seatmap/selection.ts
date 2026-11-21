@@ -6,6 +6,13 @@ import type {
   StaticSeat,
 } from "./types";
 
+export const SEAT_VISUAL_LABEL: Readonly<Record<SeatVisualState, string>> = {
+  available: "可选",
+  sold: "已预约",
+  selected: "本地已选",
+  unavailable: "锁定或状态未知，不可选",
+};
+
 // The business occupancy status always wins over the local selection; unknown
 // statuses are never selectable.
 export function seatVisualState(
