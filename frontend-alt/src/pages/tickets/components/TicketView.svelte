@@ -5,8 +5,10 @@
   import {
     RiCalendarLine,
     RiCheckboxCircleLine,
+    RiCloseCircleLine,
     RiFileCopyLine,
     RiGroupLine,
+    RiInformationLine,
     RiMapPinLine,
     RiQrCodeLine,
   } from "remixicon-svelte";
@@ -20,7 +22,17 @@
   import { formatDateTime } from "@/common/utils/datetime";
   import { BOOKING_STATUS_LABEL } from "@/common/utils/groupBookings";
 
-  const { ticket }: { ticket: Ticket } = $props();
+  const {
+    ticket,
+    cancellable = false,
+    cancelling = false,
+    onCancel,
+  }: {
+    ticket: Ticket;
+    cancellable?: boolean;
+    cancelling?: boolean;
+    onCancel?: () => void;
+  } = $props();
 
   // Pure view state; the barcode is redrawn whenever the ticket changes.
   let barcodeElement = $state<SVGSVGElement | null>(null);
@@ -50,15 +62,6 @@
   }
 </script>
 
-<nav class="px-6 py-3 flex flex-wrap gap-2" aria-label="电子票导航">
-  <Button variant="secondary" href={`#/events/${ticket.event.id}`}
-    >活动详情</Button
-  >
-  <Button variant="secondary" href={`#/events/${ticket.event.id}/seats`}
-    >返回本场选座</Button
-  >
-  <Button variant="secondary" href="#/bookings">我的预约</Button>
-</nav>
 <div class={["pt-4", "px-6"]}>
   <Item.Root variant="muted" class={["flex-nowrap", "overflow-hidden"]}>
     <Item.Media variant="image">
@@ -182,3 +185,29 @@
     </div>
   </Item.Root>
 </div>
+<section
+  class={["sticky", "bottom-0", "z-9", "h-14", "px-6", "flex", "items-center", "justify-end", "gap-2", "bg-background/80", "backdrop-blur-xs"]}
+  aria-label="电子票操作"
+>
+  <Button
+    variant="secondary"
+    size="icon"
+    aria-label="活动详情"
+    title="活动详情"
+    href={`#/events/${ticket.event.id}`}
+  >
+    <RiInformationLine />
+  </Button>
+  <Button
+    variant="secondary"
+    size="icon"
+    aria-label="取消预约"
+    title="取消预约"
+    disabled={!cancellable || cancelling}
+    onclick={() => {
+      onCancel?.();
+    }}
+  >
+    <RiCloseCircleLine />
+  </Button>
+</section>

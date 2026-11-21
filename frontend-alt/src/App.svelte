@@ -9,7 +9,6 @@
   } from "svelte-spa-router";
   import { wrap } from "svelte-spa-router/wrap";
   import { RiArrowLeftLine, RiCircleLine, RiMenu2Line } from "remixicon-svelte";
-  import { toast } from "svelte-sonner";
 
   import * as Avatar from "$lib/components/ui/avatar";
   import { Button } from "$lib/components/ui/button";
@@ -173,14 +172,12 @@
       <Identify
         succeedCallback={() => {
           isShowUser = false;
-          toast.success("");
         }}
       />
     {:else}
       <Authorize
         succeedCallback={() => {
           isShowUser = false;
-          toast.success("");
         }}
       />
     {/if}

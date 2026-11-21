@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, untrack } from "svelte";
   import { push } from "svelte-spa-router";
+  import { toast } from "svelte-sonner";
   import {
     RiCalendarLine,
     RiFlagLine,
@@ -44,6 +45,7 @@
   let bookingTotal = $state(0);
   let bookingLoading = $state(false);
   let bookingError = $state("");
+  let bookingErrorReported = false;
   let bookingVersion = 0;
   let statisticsVersion = 0;
 
@@ -107,6 +109,7 @@
       eventBookings = result.items;
       bookingPage = result.page;
       bookingTotal = result.total;
+      bookingErrorReported = false;
     } catch (requestError: unknown) {
       if (
         version === bookingVersion &&
@@ -117,6 +120,12 @@
           requestError instanceof ApiError
             ? requestError.message
             : "预约列表没能更新，稍后再试试";
+        // List failures surface as a toast; the 30s poller must not spam,
+        // so only the first failure of an episode notifies.
+        if (!bookingErrorReported) {
+          bookingErrorReported = true;
+          toast.error(bookingError);
+        }
       }
     } finally {
       if (version === bookingVersion) {
@@ -254,13 +263,7 @@
     <div class={["px-2", "flex", "flex-col"]}>
       {#if !authentication.isLoggedIn}
         <p class="px-4 py-6">请通过右上角账户入口登录后查看本场预约。</p>
-      {:else if !eventBookings}
-        <p class="px-4 py-6" role="status">
-          {bookingError || "正在加载本场预约…"}
-        </p>
-      {:else if eventBookings.length === 0}
-        <p class="px-4 py-6">暂无本场预约。</p>
-      {:else}
+      {:else if eventBookings}
         {#each eventBookings as booking (booking.id)}
           <Item.Root
             class={["click-link"]}
@@ -283,33 +286,20 @@
           </Item.Root>
         {/each}
       {/if}
-      {#if authentication.isLoggedIn && bookingError}
-        <p class="px-4 text-destructive" role="alert">{bookingError}</p>
+      {#if authentication.isLoggedIn && eventBookings &&
+        eventBookings.length < bookingTotal}
         <Button
           variant="secondary"
           disabled={bookingLoading}
           onclick={() => {
             void loadBookings(eventId, bookingPage + 1);
-          }}>重试加载预约</Button
-        >
-      {:else if eventBookings && eventBookings.length < bookingTotal}
-        <Button
-          variant="secondary"
-          disabled={bookingLoading}
-          onclick={() => {
-            void loadBookings(eventId, bookingPage + 1);
-          }}>{bookingLoading ? "加载中…" : "加载更多预约"}</Button
+          }}>加载更多预约</Button
         >
       {/if}
     </div>
   {/if}
   {#if selectedOption === "2"}
-    <SeatBooking
-      {eventId}
-      onShowDetails={() => {
-        selectedOption = "0";
-      }}
-    />
+    <SeatBooking {eventId} />
   {/if}
 {/if}
 

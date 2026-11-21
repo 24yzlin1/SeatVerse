@@ -2,6 +2,10 @@
   import { untrack } from "svelte";
   import { push } from "svelte-spa-router";
   import { toast } from "svelte-sonner";
+  import {
+    RiCloseCircleLine,
+    RiLoader4Line,
+  } from "remixicon-svelte";
 
   import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
@@ -24,6 +28,7 @@
   let loading = $state(false);
   let cancelling = $state<number | null>(null);
   let requestVersion = 0;
+  let errorReported = false;
 
   // Status filter tabs; "all" shows every booking of the current user.
   let statusFilter = $state("all");
@@ -54,12 +59,18 @@
       bookings = result.items;
       page = result.page;
       total = result.total;
+      errorReported = false;
     } catch (requestError: unknown) {
       if (version === requestVersion && userId === authentication.user?.id) {
         error =
           requestError instanceof ApiError
             ? requestError.message
             : "获取预约列表失败";
+        // List failures surface as a toast instead of an inline error block.
+        if (!errorReported) {
+          errorReported = true;
+          toast.error(error);
+        }
       }
     } finally {
       if (version === requestVersion) {
@@ -153,20 +164,6 @@
     </div>
   </div>
   <div class={["px-2", "flex", "flex-col"]}>
-    {#if error}
-      <p class="px-4 py-3 text-destructive" role="alert">{error}</p>
-      <Button
-        variant="secondary"
-        disabled={loading}
-        onclick={() => {
-          void loadBookings(page + 1);
-        }}>重试</Button
-      >
-    {:else if loading && bookings.length === 0}
-      <p class="px-4 py-6" role="status">正在加载预约…</p>
-    {:else if bookings.length === 0}
-      <p class="px-4 py-6">暂无符合条件的预约。</p>
-    {/if}
     {#each bookings as booking (booking.id)}
       <Item.Root
         class={["click-link"]}
@@ -189,21 +186,24 @@
             </Item.Description>
           </div>
         </Item.Content>
-        <Button
-          variant="secondary"
-          href={`#/events/${booking.event.id}/seats`}
-          disabled={cancelling === booking.id}
-          onclick={(event) => event.stopPropagation()}>查看本场座位</Button
-        >
         {#if booking.status === "reserved" && Date.now() < Date.parse(booking.event.startTime)}
           <Button
             variant="secondary"
+            size="icon"
+            aria-label="取消预约"
+            title="取消预约"
             disabled={cancelling !== null}
             onclick={(event) => {
               event.stopPropagation();
               void cancelBooking(booking);
-            }}>{cancelling === booking.id ? "取消中…" : "取消预约"}</Button
+            }}
           >
+            {#if cancelling === booking.id}
+              <RiLoader4Line class="animate-spin" />
+            {:else}
+              <RiCloseCircleLine />
+            {/if}
+          </Button>
         {/if}
       </Item.Root>
     {/each}
@@ -213,7 +213,7 @@
         disabled={loading}
         onclick={() => {
           void loadBookings(page + 1);
-        }}>{loading ? "加载中…" : "加载更多预约"}</Button
+        }}>加载更多预约</Button
       >
     {/if}
   </div>
