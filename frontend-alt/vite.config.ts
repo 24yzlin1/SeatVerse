@@ -2,6 +2,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { defineConfig } from "vite";
 import path from "path";
+import { layerchartLifecycle } from "./vite.plugins/layerchart-lifecycle.ts";
 
 const apiProxy = {
   "^/api/": {
@@ -12,7 +13,11 @@ const apiProxy = {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [tailwindcss(), svelte()],
+  plugins: [layerchartLifecycle(), tailwindcss(), svelte()],
+  optimizeDeps: {
+    // Keep the lifecycle fix in the normal transform pipeline in dev and build.
+    exclude: ["layerchart"],
+  },
   resolve: {
     alias: {
       "@": path.resolve("./src"),

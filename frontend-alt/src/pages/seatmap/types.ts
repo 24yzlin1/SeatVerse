@@ -67,6 +67,7 @@ export interface SeatSceneProps extends SeatInteractionCallbacks {
   readonly seatStates: ReadonlyMap<SeatId, EventSeatStatus>;
   readonly selectedSeatIds: SelectedSeatIds;
   readonly disabled?: boolean;
+  readonly resetVersion?: number;
 }
 
 export interface SeatMapData {

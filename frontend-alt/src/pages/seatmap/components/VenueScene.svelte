@@ -42,6 +42,8 @@
     orbit.enablePan = false;
     orbit.enableDamping = false;
     function updateView() {
+      props.onSeatHover?.(null);
+      canvas.style.cursor = "grab";
       updateVenueShell(structure, viewCamera.position);
       invalidate();
     }
@@ -172,6 +174,16 @@
     controls.maxDistance = frame.distance * 1.8;
     controls.update();
     controls.saveState();
+    updateVenueShell(structure, viewCamera.position);
+    invalidate();
+  });
+
+  $effect(() => {
+    const version = props.resetVersion;
+    if (!controls || version === undefined) {
+      return;
+    }
+    controls.reset();
     updateVenueShell(structure, viewCamera.position);
     invalidate();
   });

@@ -1,18 +1,15 @@
 <script lang="ts">
   import { projectSeatToPlan, venueLayout } from "@/pages/seatmap/seat-layout";
-  import { seatVisualState } from "@/pages/seatmap/selection";
-  import type { SeatSceneProps, SeatVisualState } from "@/pages/seatmap/types";
+  import {
+    SEAT_VISUAL_LABEL,
+    seatVisualState,
+  } from "@/pages/seatmap/selection";
+  import type { SeatSceneProps } from "@/pages/seatmap/types";
 
   const props: SeatSceneProps = $props();
   const rows = $derived([
     ...new Map(props.seats.map((seat) => [seat.row, seat])).values(),
   ]);
-  const labels: Record<SeatVisualState, string> = {
-    available: "可选",
-    sold: "已预约",
-    selected: "本地已选",
-    unavailable: "锁定或状态未知，不可选",
-  };
   const width = venueLayout.halfWidth * 2;
   const depth = venueLayout.rear - venueLayout.front;
   const stage = projectSeatToPlan(venueLayout.stage);
@@ -62,9 +59,9 @@
         data-world-z={seat.z}
         style:left={`${position.left}%`}
         style:top={`${position.top}%`}
-        aria-label={`${seat.label}，${labels[state]}`}
+        aria-label={`${seat.label}，${SEAT_VISUAL_LABEL[state]}`}
         aria-pressed={state === "selected"}
-        title={`${seat.label} · ${labels[state]}`}
+        title={`${seat.label} · ${SEAT_VISUAL_LABEL[state]}`}
         disabled={props.disabled || state === "sold" || state === "unavailable"}
         onclick={() => props.onSeatToggle(seat.id)}
         onpointerenter={() => props.onSeatHover?.(seat.id)}

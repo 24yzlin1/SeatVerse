@@ -6,7 +6,7 @@
   import VenueScene from "./VenueScene.svelte";
   import type { SeatSceneProps } from "@/pages/seatmap/types";
 
-  const props: SeatSceneProps = $props();
+  const props: SeatSceneProps & { onUnavailable?: () => void } = $props();
   let failed = $state(false);
 </script>
 
@@ -18,6 +18,7 @@
         // A WebGL failure only breaks the 3D view; the flat plan stays
         // usable, so surface the issue as a toast instead of a full error.
         toast.error("3D 视角暂时进不去，先看看平面图吧");
+        props.onUnavailable?.();
       }}
     >
       <Canvas
@@ -32,8 +33,12 @@
           selectedSeatIds={props.selectedSeatIds}
           disabled={props.disabled}
           onSeatToggle={props.onSeatToggle}
+          onSeatHover={props.onSeatHover}
+          resetVersion={props.resetVersion}
         />
       </Canvas>
     </svelte:boundary>
+  {:else}
+    <p role="status">3D 视角暂不可用，请切换到平面选座继续。</p>
   {/if}
 </div>
