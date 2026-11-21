@@ -76,7 +76,7 @@
     提供实时座位图与余座状态，预约成功自动生成电子票，入场时扫码即可完成核验，全程无需排队。
   </p>
   <div class={["flex", "gap-2"]}>
-    {#each ["3D 选座", "实时余座", "电子票", "扫码核验"] as badgeLabel}
+    {#each ["3D 选座", "实时余座", "电子票", "扫码核验"] as badgeLabel (badgeLabel)}
       <Badge variant="secondary">{badgeLabel}</Badge>
     {/each}
   </div>
@@ -105,7 +105,7 @@
     </p>
   </div>
   <div class={["px-2"]}>
-    {#each bookingSteps as { name, description, code }}
+    {#each bookingSteps as { name, description, code } (code)}
       <Item.Root class={["click-link"]}>
         <Item.Media class={["size-8"]}>
           <Avatar.Root class="rounded-lg">

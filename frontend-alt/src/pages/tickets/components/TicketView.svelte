@@ -26,7 +26,9 @@
   let barcodeElement = $state<SVGSVGElement | null>(null);
 
   $effect(() => {
-    if (barcodeElement === null) return;
+    if (barcodeElement === null) {
+      return;
+    }
     // The ticket code is Crockford Base32 (uppercase alphanumerics), which
     // Code 39 covers without extensions.
     JsBarcode(barcodeElement, ticket.ticketCode, {
@@ -133,7 +135,11 @@
         </Item.Content>
       </Item.Root>
       <div class={["size-48", "p-2", "[&>svg]:size-full"]}>
-        {@html renderSVG(ticket.ticketCode)}
+        <img
+          class="size-full"
+          src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(renderSVG(ticket.ticketCode))}`}
+          alt={`电子票入场二维码 ${ticket.ticketCode}`}
+        />
       </div>
       <div
         class={["w-full", "py-2", "flex", "justify-center", "overflow-hidden"]}

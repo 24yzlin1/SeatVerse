@@ -5,7 +5,11 @@
 
   import SeatPlan from "./SeatPlan.svelte";
   import SeatScene from "./SeatScene.svelte";
-  import type { SeatId, SeatMapData, SelectedSeatIds } from "../types";
+  import type {
+    SeatId,
+    SeatMapData,
+    SelectedSeatIds,
+  } from "@/pages/seatmap/types";
 
   // Presentation-only seat booking view. All requests and selection state
   // live in the `SeatBooking` container; this component renders the flat
@@ -15,6 +19,8 @@
     selectedSeatIds,
     refreshing,
     submitting,
+    selectionDisabled = false,
+    confirmDisabled = false,
     onSeatToggle,
     onClear,
     onConfirm,
@@ -23,6 +29,8 @@
     selectedSeatIds: SelectedSeatIds;
     refreshing: boolean;
     submitting: boolean;
+    selectionDisabled?: boolean;
+    confirmDisabled?: boolean;
     onSeatToggle: (seatId: SeatId) => void;
     onClear: () => void;
     onConfirm: () => void;
@@ -38,7 +46,7 @@
       seats={data.seats}
       seatStates={data.seatStates}
       {selectedSeatIds}
-      disabled={refreshing || submitting}
+      disabled={refreshing || submitting || selectionDisabled}
       {onSeatToggle}
     />
   {:else}
@@ -46,7 +54,7 @@
       seats={data.seats}
       seatStates={data.seatStates}
       {selectedSeatIds}
-      disabled={refreshing || submitting}
+      disabled={refreshing || submitting || selectionDisabled}
       {onSeatToggle}
     />
   {/if}
@@ -66,13 +74,16 @@
     size="icon"
     aria-label="清空选择"
     title="清空选择"
-    disabled={selectedSeatIds.size === 0 || submitting}
+    disabled={selectedSeatIds.size === 0 || submitting || refreshing}
     onclick={onClear}
   >
     <RiEraserLine />
   </Button>
   <Button
-    disabled={selectedSeatIds.size === 0 || submitting || refreshing}
+    disabled={selectedSeatIds.size === 0 ||
+      submitting ||
+      refreshing ||
+      confirmDisabled}
     onclick={onConfirm}
   >
     <RiCheckLine />

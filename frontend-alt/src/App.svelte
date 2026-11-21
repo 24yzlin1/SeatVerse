@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ModeWatcher } from "mode-watcher";
-  import { onMount, type Component } from "svelte";
+  import { onMount } from "svelte";
   import Router, {
     pop,
     push,
@@ -49,7 +49,7 @@
   let screenHeight = $state(window.innerHeight);
 
   window.addEventListener("resize", () => (screenHeight = window.innerHeight));
-  let footerMargin = $derived(
+  const footerMargin = $derived(
     Math.max(0, screenHeight - headerHeight - bodyHeight - footerHeight),
   );
 
@@ -94,7 +94,7 @@
   // Pages behind the session guard open the user drawer when the guard
   // rejects access. Organizer pages additionally require the organizer role.
   function wrapRequireAuthorize(
-    target: Component<any>,
+    target: NonNullable<Parameters<typeof wrap>[0]["component"]>,
     roles?: readonly Role[],
   ): WrappedComponent {
     return wrap({

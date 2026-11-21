@@ -41,6 +41,7 @@ export type {
   RosterUser,
   SeatBrief,
   SeatType,
+  SeatStatistics,
   Ticket,
   TicketStatus,
   User,

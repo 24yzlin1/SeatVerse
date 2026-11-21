@@ -11,8 +11,17 @@ from app.core.seats import list_event_seats as list_event_seats_core
 from app.scope.common import ok
 from app.types.common import ResponsePayload
 from app.types.seats import EventSeatListPayload
+from app.types.seats import SeatStatisticsPublic
+from app.core.seats import seat_statistics as seat_statistics_core
 
 router = APIRouter(prefix="/events", tags=["seats"])
+
+
+@router.get("/{event_id}/seat-statistics")
+def seat_statistics(event_id: int) -> ResponsePayload[SeatStatisticsPublic]:
+    if event_id < 1:
+        raise AppError(400, "活动编号必须为正整数")
+    return ok(seat_statistics_core(event_id))
 
 
 @router.get("/{event_id}/seats")

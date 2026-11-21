@@ -8,6 +8,9 @@ from app.core.common import AppError
 from app.repos.events import find_event_by_id
 from app.repos.seats import list_event_seats as list_event_seats_repo
 from app.types.seats import EventSeatListPayload, EventSeatStatePublic
+from datetime import datetime, timezone
+from app.repos.seats import event_seat_statistics
+from app.types.seats import SeatStatisticsPublic
 
 
 def list_event_seats(event_id: int) -> EventSeatListPayload:
@@ -20,3 +23,14 @@ def list_event_seats(event_id: int) -> EventSeatListPayload:
         EventSeatStatePublic(seatId=row.seat_id, status=row.status) for row in rows
     ]
     return EventSeatListPayload(items=items)
+
+
+def seat_statistics(event_id: int) -> SeatStatisticsPublic:
+    if find_event_by_id(event_id) is None:
+        raise AppError(404, "活动不存在")
+    counts = event_seat_statistics(event_id)
+    return SeatStatisticsPublic(
+        eventId=event_id, total=counts.total, sold=counts.sold,
+        locked=counts.locked, available=counts.available,
+        updatedAt=datetime.now(timezone.utc).isoformat(),
+    )

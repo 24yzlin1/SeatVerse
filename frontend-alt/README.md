@@ -1,47 +1,30 @@
-# Svelte + TS + Vite
+# SeatVerse 当前主前端
 
-This template should help get you started developing with Svelte and TypeScript in Vite.
+Svelte 5 + Vite + TypeScript，保留新版界面，选座通过真实 FastAPI / SQLite 接口工作。
 
-## Recommended IDE Setup
+## 启动
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+先按 [后端说明](../backend/README.md) 启动 API，然后在本目录执行：
 
-## Need an official Svelte framework?
-
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
-
-## Technical considerations
-
-**Why use this over SvelteKit?**
-
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
-
-This template contains as little as possible to get started with Vite + TypeScript + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
-
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
-
-**Why `global.d.ts` instead of `compilerOptions.types` inside `jsconfig.json` or `tsconfig.json`?**
-
-Setting `compilerOptions.types` shuts out all other types not explicitly listed in the configuration. Using triple-slash references keeps the default TypeScript setting of accepting type information from the entire workspace, while also adding `svelte` and `vite/client` type information.
-
-**Why include `.vscode/extensions.json`?**
-
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
-
-**Why enable `allowJs` in the TS template?**
-
-While `allowJs: false` would indeed prevent the use of `.js` files in the project, it does not prevent the use of JavaScript syntax in `.svelte` files. In addition, it would force `checkJs: false`, bringing the worst of both worlds: not being able to guarantee the entire codebase is TypeScript, and also having worse typechecking for the existing JavaScript. In addition, there are valid use cases in which a mixed codebase may be relevant.
-
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/rixo/svelte-hmr#svelte-hmr).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```ts
-// store.ts
-// An extremely simple external store
-import { writable } from "svelte/store";
-export default writable(0);
+```powershell
+npm ci
+npm run dev
 ```
+
+浏览器打开 `http://localhost:5173/#/events`，进入实际活动的“立即选座”页签，也可使用 `#/events/:id/seats`。登录使用右上角账户抽屉；普通用户可从仓库的后端开发种子账号登录。
+
+请求通过 Vite 代理原样转发到 `/api`。正式页面没有模拟回退。使用既有业务数据库时不运行重置命令；首次空库按后端说明非重置导入种子数据。
+
+## 检查
+
+在仓库根目录运行 `scripts\check.cmd`（Windows）或 `bash scripts/check.sh`。统一检查现已指向本前端，包含类型、lint、构建、禁用项扫描和后端检查。
+
+新增依赖时遵循 [协作规范](../docs/collaboration.md)，本轮未新增依赖或修改锁文件。生成的 shadcn UI 保持原样，不参与手写代码规则。
+
+## 接口与业务
+
+- [座位／预约接口和样例](../docs/contracts/seats-bookings.md)
+- [C-07 选座实现与验收](src/pages/seatmap/README.md)
+- 我的预约支持服务端状态筛选、继续加载及取消释放；详情页按活动查询本人预约，使用后端聚合座位统计。
+- 成功展示服务端预约编号、座位与票号，并可进入真实电子票；关闭、结束和异常状态禁止预约。
+- 本轮仅接入附件中 E／C-07 所需的预约筛选与座位统计，其余活动筛选、核验历史和主办方搜索提案仍为后续范围。

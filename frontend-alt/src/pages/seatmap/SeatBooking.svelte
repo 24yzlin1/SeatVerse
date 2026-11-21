@@ -1,163 +1,137 @@
 <script lang="ts">
   import { onMount, untrack } from "svelte";
   import { toast } from "svelte-sonner";
-
   import { authentication } from "@/common/stores/authentication.svelte";
-  import SeatBookingSection from "@/pages/seatmap/components/SeatBookingSection.svelte";
+  import { Button } from "$lib/components/ui/button";
+  import ErrorState from "@/common/Error.svelte";
+  import SeatBookingSection from "./components/SeatBookingSection.svelte";
   import { loadSeatMap, submitBooking } from "./api";
-  import {
-    clearSelection,
-    filterSelection,
-    toggleSeatSelection,
-  } from "./selection";
-  import type { SeatId, SeatMapData, SelectedSeatIds } from "./types";
+  import { SeatMapSession, seatMapBlockReason } from "./session";
 
-  // Container for the seat booking flow. Mounted only while the "立即选座"
-  // tab (or the seat map route) is active; `eventId` comes from the detail
-  // page route. The flat plan and the 3D panorama share the same local
-  // selection, so toggling the mode never loses chosen seats.
   const { eventId }: { eventId: number } = $props();
-
-  let pageState = $state<"idle" | "loading" | "ready">("idle");
-  let data = $state.raw<SeatMapData | null>(null);
-  let selected = $state.raw<SelectedSeatIds>(clearSelection());
-  let submitting = $state(false);
-  let refreshing = $state(false);
-  let requestVersion = 0;
-  let loadController: AbortController | null = null;
-
-  async function refresh(
-    initial = false,
-    targetEventId = eventId,
-  ): Promise<void> {
-    const version = ++requestVersion;
-    loadController?.abort();
-    const controller = new AbortController();
-    loadController = controller;
-    if (initial) {
-      pageState = "loading";
-      data = null;
-      selected = clearSelection();
-    }
-    refreshing = true;
-    try {
-      const result = await loadSeatMap(targetEventId, controller.signal);
-      if (version !== requestVersion || controller.signal.aborted) return;
-      const valid = filterSelection(selected, result.seats, result.seatStates);
-      if (valid.size < selected.size)
-        toast.info("部分选择已失效，已保留仍可预约的座位");
-      selected = valid;
-      data = result;
-      pageState = "ready";
-    } catch (error: unknown) {
-      if (version !== requestVersion || controller.signal.aborted) return;
-      // Seat map failures are not fatal for the whole page; report via toast
-      // and keep the tab empty so the user can retry by switching tabs.
-      if (initial) {
-        toast.error(
-          error instanceof Error
-            ? (error as any).message
-            : "服务暂时不可用，请稍后重试",
-        );
-        pageState = "idle";
-      }
-    } finally {
-      if (version === requestVersion) refreshing = false;
-    }
-  }
-
-  function toggleSeat(seatId: SeatId) {
-    if (!data || refreshing || submitting || pageState !== "ready") return;
-    const seat = data.seats.find((candidate) => candidate.id === seatId);
-    if (!seat || data.seatStates.get(seatId) !== "available") return;
-    selected = toggleSeatSelection(
-      selected,
-      seatId,
-      data.seats,
-      data.seatStates,
-    );
-  }
-
-  function clearSeats() {
-    if (submitting || selected.size === 0) return;
-    selected = clearSelection();
-  }
+  const session = new SeatMapSession(
+    { loadSeatMap, submitBooking },
+    (state) => {
+      view = state;
+    },
+  );
+  let view = $state.raw(session.state);
+  let now = $state(Date.now());
+  const disabledReason = $derived(seatMapBlockReason(view, now));
 
   async function confirmSeats() {
-    if (!data || submitting || refreshing || pageState !== "ready") return;
     if (!authentication.isLoggedIn) {
-      toast.error("先登录，再挑座位");
+      toast.error("请先通过右上角账户入口登录，再确认座位");
       return;
     }
-    if (selected.size === 0) {
-      toast.error("先挑个座位吧");
-      return;
-    }
-    const targetEventId = data.event.id;
-    const seatIds = Object.freeze([...selected].sort((a, b) => a - b));
-    submitting = true;
-    try {
-      await submitBooking(targetEventId, seatIds);
-      toast.success("预约成功");
-      selected = clearSelection();
-      // Reload so the plan and the 3D scene reflect the new occupancy.
-      await refresh();
-    } catch (error: unknown) {
-      toast.error(
-        error instanceof Error
-          ? (error as any).message
-          : "预约失败，请稍后重试",
+    await session.confirm(now);
+    if (session.state.completed?.event.id === eventId) {
+      window.dispatchEvent(
+        new CustomEvent("seatverse:booking-created", { detail: { eventId } }),
       );
-      await refresh();
-    } finally {
-      submitting = false;
     }
   }
 
-  // Reload whenever the route id changes; the component stays mounted across
-  // detail navigations while the tab is active.
   $effect(() => {
-    const currentEventId = eventId;
+    const id = eventId;
+    // Account changes must not inherit choices or a private receipt.
+    const identity = authentication.user?.id ?? null;
     untrack(() => {
-      void refresh(true, currentEventId);
+      void session.open(id);
     });
-    return () => {
-      requestVersion++;
-      loadController?.abort();
-    };
+    void identity;
+    return () => session.dispose();
   });
 
   onMount(() => {
     const update = () => {
+      now = Date.now();
       if (
         document.visibilityState === "visible" &&
-        pageState === "ready" &&
-        !refreshing &&
-        !submitting
-      )
-        void refresh();
+        view.pageState === "ready" &&
+        !view.refreshing &&
+        !view.submitting
+      ) {
+        void session.refresh();
+      }
     };
+    const clock = window.setInterval(() => {
+      now = Date.now();
+    }, 1000);
     const poll = window.setInterval(update, 30000);
     window.addEventListener("focus", update);
     document.addEventListener("visibilitychange", update);
+    window.addEventListener("seatverse:booking-cancelled", update);
     return () => {
+      window.clearInterval(clock);
       window.clearInterval(poll);
       window.removeEventListener("focus", update);
-      window.removeEventListener("visibilitychange", update);
+      document.removeEventListener("visibilitychange", update);
+      window.removeEventListener("seatverse:booking-cancelled", update);
     };
   });
 </script>
 
-{#if pageState === "loading"}
-  <!-- TODO: show a skeleton placeholder while the seat map is loading. -->
-{:else if data}
+{#if view.pageState === "loading"}
+  <p class="px-6 py-12" role="status">正在加载活动与座位…</p>
+{:else if view.pageState === "error"}
+  <ErrorState
+    description={view.loadingError}
+    reloadCallback={() => {
+      void session.open(eventId);
+    }}
+  />
+{:else if view.data}
+  <div class="px-6 py-3 space-y-2">
+    {#if !authentication.isLoggedIn}
+      <p role="status">当前可浏览座位，请通过右上角账户入口登录后预约。</p>
+    {/if}
+    {#if view.refreshError}
+      <p class="text-destructive" role="alert">
+        {view.refreshError}，请刷新座位后继续。
+      </p>
+    {/if}
+    {#if view.notice}<p class="text-destructive" role="alert">
+        {view.notice}
+      </p>{/if}
+    {#if disabledReason}<p role="status">{disabledReason}</p>{/if}
+    <div class="flex items-center justify-between gap-3">
+      <p aria-live="polite">{view.feedback} · 已选 {view.selected.size} 座</p>
+      <Button
+        variant="secondary"
+        disabled={view.submitting || view.refreshing}
+        onclick={() => {
+          void session.refresh();
+        }}>刷新座位</Button
+      >
+    </div>
+    {#if view.completed}
+      <section
+        class="rounded-lg border p-4 space-y-2"
+        role="status"
+        aria-label="预约成功"
+      >
+        <p>预约成功 · 预约编号 {view.completed.id}</p>
+        <p>座位：{view.completed.seats.map((seat) => seat.label).join("、")}</p>
+        <p class="break-all">票号：{view.completed.ticketCode}</p>
+        <div class="flex gap-4">
+          <a class="underline" href={`#/bookings/${view.completed.id}/ticket`}
+            >查看电子票</a
+          >
+          <a class="underline" href="#/bookings">我的预约</a>
+        </div>
+      </section>
+    {/if}
+  </div>
   <SeatBookingSection
-    {data}
-    selectedSeatIds={selected}
-    {refreshing}
-    {submitting}
-    onSeatToggle={toggleSeat}
-    onClear={clearSeats}
+    data={view.data}
+    selectedSeatIds={view.selected}
+    refreshing={view.refreshing}
+    submitting={view.submitting}
+    selectionDisabled={Boolean(disabledReason)}
+    confirmDisabled={!authentication.isLoggedIn || Boolean(disabledReason)}
+    onSeatToggle={(id) => session.toggle(id, now)}
+    onClear={() => session.clear()}
     onConfirm={() => {
       void confirmSeats();
     }}

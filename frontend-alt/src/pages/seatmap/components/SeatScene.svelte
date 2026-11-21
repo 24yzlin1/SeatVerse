@@ -4,7 +4,7 @@
   import { AgXToneMapping, PCFShadowMap } from "three";
 
   import VenueScene from "./VenueScene.svelte";
-  import type { SeatSceneProps } from "../types";
+  import type { SeatSceneProps } from "@/pages/seatmap/types";
 
   const props: SeatSceneProps = $props();
   let failed = $state(false);

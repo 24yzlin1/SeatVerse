@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Iterator, Pattern, Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
-FRONTEND_SOURCE = ROOT / "frontend" / "src"
+FRONTEND_SOURCE = ROOT / "frontend-alt" / "src"
 BACKEND_SOURCE = ROOT / "backend"
 
 EXCLUDED_DIRECTORY_NAMES = {
@@ -39,8 +39,8 @@ COLOR_SUFFIXES = {".ts", ".svelte"}
 
 # Three.js material and light colors are GPU parameters, not CSS design tokens.
 COLOR_ALLOWLIST = {
-    "frontend/src/pages/seatmap/scene-model.ts",
-    "frontend/src/pages/seatmap/VenueScene.svelte",
+    "frontend-alt/src/pages/seatmap/scene-model.ts",
+    "frontend-alt/src/pages/seatmap/components/VenueScene.svelte",
 }
 
 PYTHON_RULES: tuple[tuple[str, Pattern[str]], ...] = (
@@ -125,7 +125,7 @@ def main(argv: Sequence[str]) -> int:
         print("usage: scan_banned.py", file=sys.stderr)
         return 2
     if not FRONTEND_SOURCE.is_dir() or not BACKEND_SOURCE.is_dir():
-        print("frontend/src or backend directory not found", file=sys.stderr)
+        print("frontend-alt/src or backend directory not found", file=sys.stderr)
         return 2
 
     findings: list[Finding] = []

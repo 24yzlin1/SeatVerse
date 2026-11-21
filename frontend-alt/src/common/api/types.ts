@@ -168,6 +168,15 @@ export interface Page<T> {
   pageSize: number;
 }
 
+export interface SeatStatistics {
+  eventId: number;
+  total: number;
+  sold: number;
+  locked: number;
+  available: number;
+  updatedAt: string;
+}
+
 // ===== Errors =====
 
 // Unified exception thrown by the request layer.

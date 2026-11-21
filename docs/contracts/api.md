@@ -1,7 +1,7 @@
 # SeatVerse · 接口契约（API）
 
 > 状态：已冻结 ｜ 负责人：A ｜ 日期：2026-11-08
-> 覆盖：通路前缀、统一响应信封、17 个接口的路径与归属、关键接口响应形态与样例
+> 覆盖：通路前缀、统一响应信封、18 个接口的路径与归属、关键接口响应形态与样例；2026-11-21 补 E 的预约筛选与座位统计
 > 依据：02 号《后端开发规范》§三 / §八、04 号《开发路线图》§3.1—3.7、05 号《六人分工方案》接口分工
 
 ---
@@ -137,7 +137,7 @@ curl -s http://localhost:5173/api/   # 同上，证明代理原样转发生效
 
 ---
 
-## 3. 接口索引（17 个）
+## 3. 接口索引（18 个）
 
 表中"路由内 path"是后端 `@router` 里应写的值（**不含** `/api`）；最终挂载路径 = `/api` + 本列，由 `APIRouter(prefix="/api")` 统一加前缀。对外路径与最终挂载路径相同，不得出现第三种写法。
 
@@ -160,6 +160,7 @@ curl -s http://localhost:5173/api/   # 同上，证明代理原样转发生效
 | 15 | GET | `/api/tickets/{ticket_code}` | `/tickets/{ticket_code}` | 登录 | F | 票号直查；非本人/不存在统一 404 |
 | 16 | GET | `/api/events/{id}/bookings` | `/events/{id}/bookings` | 归属主办方 | F | 本场预约名单 |
 | 17 | POST | `/api/tickets/verify` | `/tickets/verify` | 主办方 | F | 请求体 `{ticketCode}`，返回 Ticket；重复核验 409 |
+| 18 | GET | `/api/events/{id}/seat-statistics` | `/events/{id}/seat-statistics` | 公开 | E | 本场座位聚合统计，见 [座位与预约契约](seats-bookings.md) |
 
 约定：
 
@@ -174,6 +175,8 @@ curl -s http://localhost:5173/api/   # 同上，证明代理原样转发生效
 本节冻结“我的预约、取消、电子票”三组接口的字段与样例。字段名统一 **camelCase**；时间统一 ISO 8601 带时区偏移（样例为 `+08:00`）。
 
 ### 4.1 `GET /api/bookings/me`
+
+支持组合 `eventId`（正整数）与 `status`（`reserved/used/cancelled`，逗号分隔多值），先筛选本人数据再分页，`total` 同样应用筛选。无参数保持原行为；无效筛选返回业务码 400。座位查询、创建预约、统计及具体样例见 [E → C 交接契约](seats-bookings.md)。
 
 **查询参数**
 

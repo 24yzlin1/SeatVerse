@@ -4,8 +4,8 @@
     createSeatObject,
     setSeatAppearance,
     type VenueResources,
-  } from "../scene-model";
-  import type { SeatVisualState, StaticSeat } from "../types";
+  } from "@/pages/seatmap/scene-model";
+  import type { SeatVisualState, StaticSeat } from "@/pages/seatmap/types";
 
   const props: {
     seat: StaticSeat;

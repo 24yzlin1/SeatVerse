@@ -40,21 +40,30 @@ _PUBLIC_QUERY = (
 
 
 def list_user_bookings(
-    user_id: int, limit: int, offset: int
+    user_id: int, limit: int, offset: int,
+    event_id: int | None = None, statuses: Sequence[BookingStatus] = (),
 ) -> tuple[list[BookingListRow], int]:
+    conditions = ["b.user_id = ?"]
+    parameters: list[object] = [user_id]
+    if event_id is not None:
+        conditions.append("b.event_id = ?")
+        parameters.append(event_id)
+    if statuses:
+        conditions.append("b.status IN (" + ",".join("?" for _ in statuses) + ")")
+        parameters.extend(statuses)
+    where = "WHERE " + " AND ".join(conditions)
     connection = get_connection()
     try:
         total_row = fetch_one_row(
             connection,
-            "SELECT COUNT(*) AS total FROM bookings WHERE user_id = ?",
-            (user_id,),
+            "SELECT COUNT(*) AS total FROM bookings b " + where,
+            parameters,
         )
         rows = fetch_all_rows(
             connection,
             _PUBLIC_QUERY
-            + "WHERE b.user_id = ? ORDER BY b.created_at DESC, b.id DESC "
-            "LIMIT ? OFFSET ?",
-            (user_id, limit, offset),
+            + where + " ORDER BY b.created_at DESC, b.id DESC LIMIT ? OFFSET ?",
+            [*parameters, limit, offset],
         )
         total = 0 if total_row is None else read_integer(total_row, "total")
         return [_row_to_booking_list(row) for row in rows], total

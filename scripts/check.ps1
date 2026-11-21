@@ -3,7 +3,7 @@
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 
-Push-Location (Join-Path $root "frontend")
+Push-Location (Join-Path $root "frontend-alt")
 try {
     Write-Host "==> frontend check"
     & npm.cmd run check

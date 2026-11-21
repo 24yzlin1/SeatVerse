@@ -42,7 +42,7 @@
     endTime: "",
   });
 
-  let now = $state(Date.now());
+  const now = $state(Date.now());
 
   // Status filter tabs; "all" shows every event owned by the organizer.
   let statusFilter = $state("all");
@@ -185,7 +185,7 @@
     <div class={["grow", "overflow-x-scroll", "overflow-y-hidden"]}>
       <Tabs.Root bind:value={statusFilter} class={["w-full"]}>
         <Tabs.List>
-          {#each statusFilters as option}
+          {#each statusFilters as option (option.value)}
             <Tabs.Trigger value={option.value}>{option.label}</Tabs.Trigger>
           {/each}
         </Tabs.List>

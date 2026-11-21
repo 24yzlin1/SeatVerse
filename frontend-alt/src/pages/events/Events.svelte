@@ -24,7 +24,7 @@
 
   // Status filter tabs; "all" shows every event as returned by the list API.
   let statusFilter = $state("all");
-  let now = $state(Date.now());
+  const now = $state(Date.now());
 
   const statusFilters = [
     { value: "all", label: "全部" },
@@ -93,7 +93,7 @@
     <div class={["grow", "overflow-x-scroll", "overflow-y-hidden"]}>
       <Tabs.Root bind:value={statusFilter} class={["w-full"]}>
         <Tabs.List>
-          {#each statusFilters as option}
+          {#each statusFilters as option (option.value)}
             <Tabs.Trigger value={option.value}>{option.label}</Tabs.Trigger>
           {/each}
         </Tabs.List>
@@ -101,7 +101,7 @@
     </div>
   </div>
   <div class={["px-2", "flex", "flex-col"]}>
-    {#each visibleEvents as x}
+    {#each visibleEvents as x (x.id)}
       {@const displayStatus = deriveEventDisplayStatus(x, now)}
       <Item.Root class={["click-link"]} onclick={() => push(`/events/${x.id}`)}>
         <Item.Media class={["size-8"]}>
