@@ -5,10 +5,14 @@
   import { Button } from "$lib/components/ui/button";
   import ErrorState from "@/common/Error.svelte";
   import SeatBookingSection from "./components/SeatBookingSection.svelte";
+  import BookingResult from "./BookingResult.svelte";
   import { loadSeatMap, submitBooking } from "./api";
   import { SeatMapSession, seatMapBlockReason } from "./session";
 
-  const { eventId }: { eventId: number } = $props();
+  const {
+    eventId,
+    onShowDetails,
+  }: { eventId: number; onShowDetails?: () => void } = $props();
   const session = new SeatMapSession(
     { loadSeatMap, submitBooking },
     (state) => {
@@ -72,6 +76,14 @@
   });
 </script>
 
+<nav class="px-6 py-3 flex flex-wrap gap-2" aria-label="选座导航">
+  {#if onShowDetails}
+    <Button variant="secondary" onclick={onShowDetails}>活动详情</Button>
+  {:else}
+    <Button variant="secondary" href={`#/events/${eventId}`}>活动详情</Button>
+  {/if}
+  <Button variant="secondary" href="#/events">活动列表</Button>
+</nav>
 {#if view.pageState === "loading"}
   <p class="px-6 py-12" role="status">正在加载活动与座位…</p>
 {:else if view.pageState === "error"}
@@ -82,9 +94,15 @@
     }}
   />
 {:else if view.data}
-  <div class="px-6 py-3 space-y-2">
+  <div class="px-6 py-3 flex flex-col gap-2">
     {#if !authentication.isLoggedIn}
       <p role="status">当前可浏览座位，请通过右上角账户入口登录后预约。</p>
+      <Button
+        variant="secondary"
+        onclick={() => {
+          window.dispatchEvent(new Event("seatverse:login-requested"));
+        }}>登录后继续选座</Button
+      >
     {/if}
     {#if view.refreshError}
       <p class="text-destructive" role="alert">
@@ -106,21 +124,7 @@
       >
     </div>
     {#if view.completed}
-      <section
-        class="rounded-lg border p-4 space-y-2"
-        role="status"
-        aria-label="预约成功"
-      >
-        <p>预约成功 · 预约编号 {view.completed.id}</p>
-        <p>座位：{view.completed.seats.map((seat) => seat.label).join("、")}</p>
-        <p class="break-all">票号：{view.completed.ticketCode}</p>
-        <div class="flex gap-4">
-          <a class="underline" href={`#/bookings/${view.completed.id}/ticket`}
-            >查看电子票</a
-          >
-          <a class="underline" href="#/bookings">我的预约</a>
-        </div>
-      </section>
+      <BookingResult booking={view.completed} {onShowDetails} />
     {/if}
   </div>
   <SeatBookingSection
