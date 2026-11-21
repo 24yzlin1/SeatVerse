@@ -184,10 +184,12 @@ curl -s http://localhost:5173/api/   # 同上，证明代理原样转发生效
 |---|---|---|---|---|
 | `page` | integer | 否 | `1` | `>= 1`，越界返回 `400` |
 | `pageSize` | integer | 否 | `20` | `1—100`，越界返回 `400` |
+| `eventId` | integer | 否 | — | 正整数；只返回该活动的预约，非法返回 `400` |
+| `status` | string | 否 | — | `reserved` / `used` / `cancelled`，逗号分隔多值；非法返回 `400` |
 
 - 只返回当前登录用户的预约，包含 `reserved` / `cancelled` / `used` 三种状态。
 - `Booking.status` 只返回这三个存储值；“已完成 / 已签到”是展示态，按 `enums.md` §2.7 由前端从时间与状态派生，不写入接口。
-- **不做服务端状态分组**，也不接受 `status` 查询参数。04 §3.6 的“按状态分组”是页面展示要求：接口按 02 §三返回分页列表，前端用 `$derived` 本地分组；服务端重复分组会与 02 的分页契约冲突。
+- 支持 `eventId` / `status` 筛选，先筛选再分页；**不做服务端状态分组**。04 §3.6 的“按状态分组”仍是页面展示要求：前端用 `$derived` 本地分组，筛选不等于分组。
 - 排序固定为 `createdAt DESC, id DESC`，保证同一时间创建的多条记录顺序稳定。
 - 返回 `Page<Booking>`：`{ items, total, page, pageSize }`。
 

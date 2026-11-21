@@ -37,7 +37,7 @@ executor.type = "virtualenv"
 [tool.poe.tasks]
 dev = "uvicorn main:app --reload"
 start = "uvicorn main:app"
-check = "mypy app scripts main.py"
+check = "mypy app scripts main.py tests"
 test = "pytest"
 migrate = "python -m scripts.migrate"
 seed = "python -m scripts.seed"

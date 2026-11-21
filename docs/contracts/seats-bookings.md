@@ -19,7 +19,7 @@
 - 已发布及关闭预约的活动应返回该场馆全部座位的状态，不能将缺失或未知状态默认为空闲。草稿尚未初始化动态座位，禁止预约。
 - 场馆或活动不存在为业务码 404；路径参数非法为 400。
 
-样例：[静态座位](samples/venue-seats.ok.json)、[活动动态座位](samples/event-seats.ok.json)、[不存在的活动](samples/seatmap-not-found.error.json)。静态和动态样例均包含完整 120 座。
+样例：[静态座位](samples/venue-seats.ok.json)、[不存在的场馆](samples/venue-not-found.error.json)、[活动动态座位](samples/event-seats.ok.json)、[不存在的活动](samples/seatmap-not-found.error.json)。静态和动态样例均包含完整 120 座。
 
 ## 提交预约
 
