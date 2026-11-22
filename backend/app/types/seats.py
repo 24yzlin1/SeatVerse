@@ -1,11 +1,11 @@
-"""座位与每场活动座位状态的类型定义。
+"""Type definitions for seats and per-event seat states.
 
-对应表：`seats`、`event_seats`（见 backend/app/repos/migrations/000_schema.sql）。
-对应枚举：docs/contracts/enums.md §2.3（EventSeatStatus）、§2.6（SeatType）。
+Corresponding tables: `seats`, `event_seats` (see backend/app/repos/migrations/000_schema.sql).
+Corresponding enums: docs/contracts/enums.md §2.3 (EventSeatStatus), §2.6 (SeatType).
 
-约定：
-- `*Row` 是 repos 层向外暴露的数据行，字段与表列一一对应；
-- `*Public` / `*Payload` 是 scope 层返回给前端的响应模型，JSON 键名按契约使用 camelCase。
+Conventions:
+- `*Row` is a data row exposed by the repos layer; fields map one-to-one to table columns;
+- `*Public` / `*Payload` are response models returned by the scope layer to the frontend; JSON keys use camelCase per the contract.
 """
 
 from dataclasses import dataclass
@@ -13,13 +13,15 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from app.types.events import EventPublic
+
 SeatType = Literal["standard"]
 EventSeatStatus = Literal["available", "locked", "sold"]
 
 
 @dataclass(frozen=True)
 class SeatRow:
-    """`seats` 表的一行：座位固定坐标，所有活动共用。"""
+    """A row of the `seats` table: fixed seat coordinates shared by all events."""
 
     id: int
     venue_id: int
@@ -33,7 +35,7 @@ class SeatRow:
 
 @dataclass(frozen=True)
 class EventSeatRow:
-    """`event_seats` 表的一行：某场活动中某个座位的动态状态。"""
+    """A row of the `event_seats` table: dynamic state of a seat within a specific event."""
 
     id: int
     event_id: int
@@ -44,14 +46,14 @@ class EventSeatRow:
 
 @dataclass(frozen=True)
 class EventSeatStateRow:
-    """`GET /events/{id}/seats` 的查询结果：只含动态状态，坐标由静态接口提供。"""
+    """Query result of `GET /events/{id}/seats`: dynamic states only; coordinates are provided by the static endpoint."""
 
     seat_id: int
     status: EventSeatStatus
 
 
 class SeatPublic(BaseModel):
-    """静态座位响应；字段与前端 `StaticSeat` 对齐。"""
+    """Static seat response; fields align with the frontend `StaticSeat`."""
 
     id: int
     row: int
@@ -68,7 +70,7 @@ class SeatListPayload(BaseModel):
 
 
 class EventSeatStatePublic(BaseModel):
-    """动态座位响应；字段与前端 `EventSeatState` 对齐。"""
+    """Dynamic seat response; fields align with the frontend `EventSeatState`."""
 
     seatId: int
     status: EventSeatStatus
@@ -76,6 +78,18 @@ class EventSeatStatePublic(BaseModel):
 
 class EventSeatListPayload(BaseModel):
     items: list[EventSeatStatePublic]
+
+
+class SeatMapPayload(BaseModel):
+    """Aggregated response of `GET /events/{id}/seat-map`: event + static seats + dynamic states.
+
+    Equivalent to a joined view of the three endpoints (event detail, venue seats, event seats),
+    so the frontend no longer needs to assemble three requests and cross-check associations.
+    """
+
+    event: EventPublic
+    seats: list[SeatPublic]
+    seatStates: list[EventSeatStatePublic]
 
 
 @dataclass(frozen=True)

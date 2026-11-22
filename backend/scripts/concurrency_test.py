@@ -1,4 +1,5 @@
-"""十个独立用户经真实 HTTP 抢同一座位，并以只读 SQL 核对结果。"""
+"""Ten independent users race for the same seat over real HTTP, then results
+are verified with read-only SQL."""
 
 import argparse
 import json

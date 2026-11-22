@@ -1,13 +1,14 @@
-"""预约创建、本人查询与取消的业务用例。
+"""Booking creation, own-booking queries, and cancellation use cases.
 
-一个预约请求要同时完成五件事，且必须在一个事务里：
-1. 校验活动可预约；
-2. 逐个座位做条件更新（只有仍空闲才改成已售）；
-3. 写 bookings；
-4. 写 booking_seats；
-5. 生成票号并写 tickets。
+A single booking request must complete five things, all within one transaction:
+1. validate that the event is bookable;
+2. perform conditional updates per seat (only flip to sold if still available);
+3. write bookings;
+4. write booking_seats;
+5. generate the ticket code and write tickets.
 
-任何一步失败，`immediate_transaction` 会整体回滚，不会出现“座位卖了但没有预约/票”。
+If any step fails, `immediate_transaction` rolls everything back, so a seat can
+never end up "sold without a booking/ticket".
 """
 
 import secrets
@@ -63,12 +64,14 @@ def list_my_bookings(
     event_id: int | None = None, status: str | None = None,
 ) -> BookingPage:
     if event_id is not None and event_id < 1:
-        raise AppError(400, "活动编号必须为正整数")
+        raise AppError(400, "Event ID must be a positive integer")
     allowed: dict[str, BookingStatus] = {"reserved": "reserved", "used": "used", "cancelled": "cancelled"}
     parts = [] if status is None else [part.strip() for part in status.split(",")]
     if any(part not in allowed for part in parts):
-        raise AppError(400, "预约状态仅支持 reserved、used、cancelled")
-    statuses = tuple(dict.fromkeys(allowed[part] for part in parts))
+        raise AppError(400, "Booking status only supports reserved, used, cancelled")
+    statuses: tuple[BookingStatus, ...] = tuple(
+        dict.fromkeys(allowed[part] for part in parts)
+    )
     rows, total = list_user_bookings(
         identity.user_id, page_size, (page - 1) * page_size, event_id, statuses,
     )
@@ -89,24 +92,24 @@ def cancel_booking(identity: Identity, booking_id: int) -> CancelBookingPayload:
             cancelled_at = now.isoformat()
             booking = find_booking_in_transaction(connection, booking_id)
             if booking is None:
-                raise AppError(404, "预约不存在")
+                raise AppError(404, "Booking not found")
             if booking.user_id != identity.user_id:
-                raise AppError(403, "只能取消自己的预约")
+                raise AppError(403, "You can only cancel your own bookings")
             if booking.status != "reserved":
-                raise AppError(409, "预约已取消或已签到，无法重复取消")
+                raise AppError(409, "Booking is already cancelled or checked in; it cannot be cancelled again")
             event = find_event_for_booking_in_transaction(connection, booking.event_id)
             if event is None:
-                raise AppError(404, "活动不存在")
+                raise AppError(404, "Event not found")
             if now >= _parse_event_time(event.start_time):
-                raise AppError(400, "活动已开始或已结束，不能取消预约")
+                raise AppError(400, "Event has already started or ended; the booking cannot be cancelled")
             if not mark_booking_cancelled(connection, booking.id, cancelled_at):
-                raise AppError(409, "预约状态已变化，不能取消")
+                raise AppError(409, "Booking status has changed; cancellation failed")
             seat_ids = active_booking_seat_ids(connection, booking.id)
             if not seat_ids:
-                raise AppError(500, "预约座位记录不完整")
+                raise AppError(500, "Booking seat records are incomplete")
             for seat_id in seat_ids:
                 if not release_event_seat(connection, booking.event_id, seat_id):
-                    raise AppError(409, "座位状态已变化，请刷新后重试")
+                    raise AppError(409, "Seat status has changed; please refresh and try again")
             deactivate_booking_seats(connection, booking.id)
     finally:
         connection.close()
@@ -125,26 +128,26 @@ def _parse_event_time(value: str) -> datetime:
     try:
         parsed = datetime.fromisoformat(value)
     except ValueError:
-        raise AppError(500, "活动时间格式错误") from None
+        raise AppError(500, "Event time format is invalid") from None
     if parsed.tzinfo is None:
-        raise AppError(500, "活动时间缺少时区信息")
+        raise AppError(500, "Event time is missing timezone information")
     return parsed
 
 
 def _ensure_event_bookable(event: BookingEventRow, now: datetime) -> None:
     if event.status == "draft":
-        raise AppError(400, "活动尚未发布，无法预约")
+        raise AppError(400, "Event is not published yet; booking is not allowed")
     if event.status == "closed":
-        raise AppError(400, "活动已停止预约")
+        raise AppError(400, "Event has stopped taking bookings")
     if event.status == "cancelled":
-        raise AppError(400, "活动已取消")
+        raise AppError(400, "Event is cancelled")
 
     start_time = _parse_event_time(event.start_time)
     end_time = _parse_event_time(event.end_time)
     if now >= end_time:
-        raise AppError(400, "活动已结束")
+        raise AppError(400, "Event has ended")
     if now >= start_time:
-        raise AppError(400, "活动已开始，无法预约")
+        raise AppError(400, "Event has already started; booking is not allowed")
 
 
 def _insert_ticket_with_retry(
@@ -159,7 +162,7 @@ def _insert_ticket_with_retry(
                 raise
             continue
         return
-    raise AppError(500, "票号生成失败，请稍后重试")
+    raise AppError(500, "Failed to generate ticket code; please try again later")
 
 
 def _to_public(
@@ -187,7 +190,7 @@ def _to_public(
                 id=row.seat_id,
                 row=row.row_number,
                 number=row.seat_number,
-                label=f"{row.row_number}排{row.seat_number}号",
+                label=f"Row {row.row_number} Seat {row.seat_number}",
                 seatType=row.seat_type,
             )
             for row in booking_seats
@@ -209,7 +212,7 @@ def create_booking(
                     connection, request.eventId
                 )
                 if event is None:
-                    raise AppError(404, "活动不存在")
+                    raise AppError(404, "Event not found")
                 _ensure_event_bookable(event, now)
 
                 for seat_id in request.seatIds:
@@ -219,11 +222,11 @@ def create_booking(
                         )
                         is None
                     ):
-                        raise AppError(404, "座位不存在")
+                        raise AppError(404, "Seat not found")
                     if not mark_event_seat_sold(
                         connection, event.event_id, seat_id
                     ):
-                        raise AppError(409, "座位刚刚被预约，请重新选择")
+                        raise AppError(409, "Seat was just booked; please choose again")
 
                 booking_id = insert_booking(
                     connection,
@@ -239,7 +242,7 @@ def create_booking(
                 _insert_ticket_with_retry(connection, booking_id)
         except sqlite3.IntegrityError as error:
             if "booking_seats" in str(error):
-                raise AppError(409, "座位刚刚被预约，请重新选择") from None
+                raise AppError(409, "Seat was just booked; please choose again") from None
             raise
     finally:
         connection.close()

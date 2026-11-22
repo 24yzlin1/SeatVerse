@@ -1,5 +1,6 @@
-"""数据库迁移 SQL 目录；当前只有第一版 000_schema.sql。
+"""SQL directory for database migrations; currently only the first version, 000_schema.sql.
 
-迁移执行入口是 `app.repos.database.run_migrations()`，它按文件名顺序执行本目录下的
-所有 `.sql` 文件；这里不直接放 Python 逻辑，避免和 repos 层职责重叠。
+Migrations are executed by `app.repos.database.run_migrations()`, which runs every
+`.sql` file in this directory in filename order; no Python logic lives here directly,
+to avoid overlapping responsibilities with the repos layer.
 """

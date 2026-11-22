@@ -6,7 +6,8 @@ import tseslint from "typescript-eslint";
 import svelteConfig from "./svelte.config.js";
 
 export default [
-  // shadcn 生成件沿用项目约定，不参与手写代码规则，也不手工修改。
+  // shadcn generated files follow the project convention: excluded from
+  // hand-written code rules and never edited manually.
   {
     ignores: [
       "node_modules/**",

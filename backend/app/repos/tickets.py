@@ -1,14 +1,17 @@
-"""电子票与核验的数据访问。
+"""Database access for e-tickets and verification.
 
-只写 SQL 与行映射：
-- 写操作接收调用方连接，不 commit、不 close；
-- 查询同样接收调用方连接，由 core 层负责连接的生命周期（核验必须在同一事务内重查）。
+Contains only SQL and row mapping:
+- Write operations take a caller-provided connection and neither commit nor close it;
+- Queries likewise take a caller-provided connection, with the core layer owning the
+  connection lifecycle (verification must re-read within the same transaction).
 
-`insert_ticket` 是 E 的预约事务调用 F 的唯一入口（05 号分工 §四“F → E”），
-其余函数供 F 的票务查询、名单与核验使用。
+`insert_ticket` is the only entry point through which E's booking transaction calls F
+(work-split doc 05, §4 "F → E"); the remaining functions serve F's ticket queries,
+rosters, and verification.
 """
 
 import sqlite3
+from collections.abc import Sequence
 
 from app.repos.database import (
     DatabaseConnection,
@@ -20,7 +23,12 @@ from app.repos.database import (
     read_text,
 )
 from app.types.bookings import BookingStatus, EventStatus
-from app.types.tickets import RosterRow, TicketDetailRow, TicketRow
+from app.types.tickets import (
+    RosterRow,
+    RosterSummaryRow,
+    TicketDetailRow,
+    TicketRow,
+)
 
 _TICKET_DETAIL_COLUMNS = (
     "t.id AS ticket_id, t.booking_id AS booking_id, "
@@ -107,13 +115,20 @@ def _row_to_roster(row: sqlite3.Row) -> RosterRow:
         user_email=read_text(row, "user_email"),
         verified_at=read_optional_text(row, "verified_at"),
         verified_by=read_optional_integer(row, "verified_by"),
+        event_id=read_integer(row, "event_id"),
+        event_title=read_text(row, "event_title"),
+        event_status=_read_event_status(read_text(row, "event_status")),
+        event_start_time=read_text(row, "event_start_time"),
+        event_end_time=read_text(row, "event_end_time"),
+        venue_id=read_integer(row, "venue_id"),
+        venue_name=read_text(row, "venue_name"),
     )
 
 
 def insert_ticket(
     connection: DatabaseConnection, booking_id: int, ticket_code: str
 ) -> TicketRow:
-    """在调用方的预约事务内写入一张电子票，不自行提交。"""
+    """Insert an e-ticket inside the caller's booking transaction without committing on its own."""
     cursor = connection.execute(
         "INSERT INTO tickets (booking_id, ticket_code) VALUES (?, ?)",
         (booking_id, ticket_code),
@@ -170,33 +185,78 @@ def list_event_roster(
     event_id: int,
     limit: int,
     offset: int,
+    statuses: Sequence[BookingStatus] = (),
 ) -> list[RosterRow]:
+    status_sql = ""
+    parameters: list[object] = [event_id]
+    if statuses:
+        status_sql = " AND b.status IN (" + ",".join("?" for _ in statuses) + ")"
+        parameters.extend(statuses)
     sql = (
         "SELECT b.id AS booking_id, b.status AS booking_status, "
         "b.created_at AS created_at, b.cancelled_at AS cancelled_at, "
         "t.ticket_code AS ticket_code, t.verified_at AS verified_at, "
         "t.verified_by AS verified_by, "
-        "u.id AS user_id, u.name AS user_name, u.email AS user_email "
+        "u.id AS user_id, u.name AS user_name, u.email AS user_email, "
+        "e.id AS event_id, e.title AS event_title, e.status AS event_status, "
+        "e.start_time AS event_start_time, e.end_time AS event_end_time, "
+        "v.id AS venue_id, v.name AS venue_name "
         "FROM bookings b "
         "JOIN users u ON u.id = b.user_id "
+        "JOIN events e ON e.id = b.event_id "
+        "JOIN venues v ON v.id = e.venue_id "
         "LEFT JOIN tickets t ON t.booking_id = b.id "
-        "WHERE b.event_id = ? "
+        "WHERE b.event_id = ?"
+        f"{status_sql} "
         "ORDER BY b.created_at ASC, b.id ASC "
         "LIMIT ? OFFSET ?"
     )
-    rows = fetch_all_rows(connection, sql, (event_id, limit, offset))
+    rows = fetch_all_rows(connection, sql, [*parameters, limit, offset])
     return [_row_to_roster(row) for row in rows]
 
 
-def count_event_roster(connection: DatabaseConnection, event_id: int) -> int:
+def count_event_roster(
+    connection: DatabaseConnection,
+    event_id: int,
+    statuses: Sequence[BookingStatus] = (),
+) -> int:
+    status_sql = ""
+    parameters: list[object] = [event_id]
+    if statuses:
+        status_sql = " AND b.status IN (" + ",".join("?" for _ in statuses) + ")"
+        parameters.extend(statuses)
     row = fetch_one_row(
         connection,
-        "SELECT COUNT(*) AS total FROM bookings WHERE event_id = ?",
-        (event_id,),
+        "SELECT COUNT(*) AS total FROM bookings b "
+        "WHERE b.event_id = ?" + status_sql,
+        parameters,
     )
     if row is None:
         return 0
     return read_integer(row, "total")
+
+
+def event_roster_summary(
+    connection: DatabaseConnection, event_id: int
+) -> RosterSummaryRow:
+    """Count this event's bookings by status; the roster page no longer tallies check-in progress item by item in the frontend."""
+    row = fetch_one_row(
+        connection,
+        "SELECT COUNT(*) AS total, "
+        "COALESCE(SUM(status='reserved'),0) AS reserved, "
+        "COALESCE(SUM(status='used'),0) AS checked_in, "
+        "COALESCE(SUM(status='cancelled'),0) AS cancelled "
+        "FROM bookings WHERE event_id = ?",
+        (event_id,),
+    )
+    if row is None:
+        raise RuntimeError("Roster summary query returned no row")
+    return RosterSummaryRow(
+        total=read_integer(row, "total"),
+        reserved=read_integer(row, "reserved"),
+        checked_in=read_integer(row, "checked_in"),
+        cancelled=read_integer(row, "cancelled"),
+    )
 
 
 def mark_ticket_verified(
@@ -205,7 +265,7 @@ def mark_ticket_verified(
     verified_at: str,
     verified_by: int,
 ) -> bool:
-    """条件更新：只有尚未核验的票才能写入核验信息（并发重复核验只会成功一次）。"""
+    """Conditional update: only tickets not yet verified can have verification info written (concurrent duplicate verifications succeed only once)."""
     cursor = connection.execute(
         "UPDATE tickets SET verified_at = ?, verified_by = ? "
         "WHERE id = ? AND verified_at IS NULL",
@@ -215,9 +275,135 @@ def mark_ticket_verified(
 
 
 def mark_booking_used(connection: DatabaseConnection, booking_id: int) -> bool:
-    """条件更新：只有 `reserved` 的预约才能核验为 `used`。"""
+    """Conditional update: only a `reserved` booking can be verified into `used`."""
     cursor = connection.execute(
         "UPDATE bookings SET status = 'used' WHERE id = ? AND status = 'reserved'",
         (booking_id,),
     )
     return cursor.rowcount == 1
+
+
+def _escape_like_pattern(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def list_verified_tickets(
+    connection: DatabaseConnection,
+    organizer_id: int,
+    event_id: int | None,
+    verified_from: str | None,
+    verified_to: str | None,
+    limit: int,
+    offset: int,
+) -> list[TicketDetailRow]:
+    """Verification history: verified tickets (an organizer sees only records for their own events).
+
+    The time range is given as optional ISO 8601 strings; the caller (core) is
+    responsible for normalizing the inputs to the same UTC ISO format as
+    `verified_at`, ensuring correct string comparison.
+    """
+    conditions = ["t.verified_at IS NOT NULL", "e.organizer_id = ?"]
+    parameters: list[object] = [organizer_id]
+    if event_id is not None:
+        conditions.append("b.event_id = ?")
+        parameters.append(event_id)
+    if verified_from is not None:
+        conditions.append("t.verified_at >= ?")
+        parameters.append(verified_from)
+    if verified_to is not None:
+        conditions.append("t.verified_at <= ?")
+        parameters.append(verified_to)
+    where = " WHERE " + " AND ".join(conditions)
+    sql = (
+        f"SELECT {_TICKET_DETAIL_COLUMNS}{_TICKET_DETAIL_FROM}"
+        f"{where} "
+        "ORDER BY t.verified_at DESC, b.id DESC "
+        "LIMIT ? OFFSET ?"
+    )
+    rows = fetch_all_rows(connection, sql, [*parameters, limit, offset])
+    return [_row_to_ticket_detail(row) for row in rows]
+
+
+def count_verified_tickets(
+    connection: DatabaseConnection,
+    organizer_id: int,
+    event_id: int | None,
+    verified_from: str | None,
+    verified_to: str | None,
+) -> int:
+    conditions = ["t.verified_at IS NOT NULL", "e.organizer_id = ?"]
+    parameters: list[object] = [organizer_id]
+    if event_id is not None:
+        conditions.append("b.event_id = ?")
+        parameters.append(event_id)
+    if verified_from is not None:
+        conditions.append("t.verified_at >= ?")
+        parameters.append(verified_from)
+    if verified_to is not None:
+        conditions.append("t.verified_at <= ?")
+        parameters.append(verified_to)
+    where = " WHERE " + " AND ".join(conditions)
+    sql = (
+        "SELECT COUNT(*) AS total "
+        "FROM tickets t "
+        "JOIN bookings b ON b.id = t.booking_id "
+        "JOIN events e ON e.id = b.event_id"
+        f"{where}"
+    )
+    row = fetch_one_row(connection, sql, parameters)
+    if row is None:
+        return 0
+    return read_integer(row, "total")
+
+
+def list_bookings_by_username(
+    connection: DatabaseConnection,
+    keyword: str,
+    limit: int,
+    offset: int,
+) -> list[RosterRow]:
+    """Fuzzy-match bookings by username (organizer view), newest first.
+
+    Like the roster query, returns booking + user + event + ticket verification
+    info, so the frontend can show "which events an attendee signed up for".
+    """
+    escaped = _escape_like_pattern(keyword)
+    pattern = f"%{escaped}%"
+    sql = (
+        "SELECT b.id AS booking_id, b.status AS booking_status, "
+        "b.created_at AS created_at, b.cancelled_at AS cancelled_at, "
+        "t.ticket_code AS ticket_code, t.verified_at AS verified_at, "
+        "t.verified_by AS verified_by, "
+        "u.id AS user_id, u.name AS user_name, u.email AS user_email, "
+        "e.id AS event_id, e.title AS event_title, e.status AS event_status, "
+        "e.start_time AS event_start_time, e.end_time AS event_end_time, "
+        "v.id AS venue_id, v.name AS venue_name "
+        "FROM bookings b "
+        "JOIN users u ON u.id = b.user_id "
+        "JOIN events e ON e.id = b.event_id "
+        "JOIN venues v ON v.id = e.venue_id "
+        "LEFT JOIN tickets t ON t.booking_id = b.id "
+        "WHERE u.name LIKE ? ESCAPE '\\' "
+        "ORDER BY b.created_at DESC, b.id DESC "
+        "LIMIT ? OFFSET ?"
+    )
+    rows = fetch_all_rows(connection, sql, (pattern, limit, offset))
+    return [_row_to_roster(row) for row in rows]
+
+
+def count_bookings_by_username(
+    connection: DatabaseConnection,
+    keyword: str,
+) -> int:
+    escaped = _escape_like_pattern(keyword)
+    pattern = f"%{escaped}%"
+    row = fetch_one_row(
+        connection,
+        "SELECT COUNT(*) AS total FROM bookings b "
+        "JOIN users u ON u.id = b.user_id "
+        "WHERE u.name LIKE ? ESCAPE '\\'",
+        (pattern,),
+    )
+    if row is None:
+        return 0
+    return read_integer(row, "total")

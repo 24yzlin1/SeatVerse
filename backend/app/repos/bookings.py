@@ -1,8 +1,8 @@
-"""预约与预约座位的数据库访问。
+"""Database access for bookings and booked seats.
 
-只写 SQL 与行映射：
-- 写操作接收调用方连接，不 commit、不 close；
-- 读操作自己开关连接，返回 typed 数据行。
+Contains only SQL and row mapping:
+- Write operations take a caller-provided connection and neither commit nor close it;
+- Read operations open and close their own connections and return typed rows.
 """
 
 import sqlite3

@@ -1,18 +1,21 @@
-"""导入 SeatVerse 的演示种子数据。
+"""Import SeatVerse demo seed data.
 
-用法：
+Usage:
     uv run python -m scripts.seed --reset
     uv run python -m scripts.seed
 
-数据来源（backend/scripts/data/）：
-- users.jsonl  ：10 个普通用户（并发验收用）
-- seats.jsonl  ：120 个固定座位，坐标与前端 mock-data.ts 一致
-- events.jsonl ：4 场活动，覆盖 published / closed / draft 与“已结束”时间
+Data sources (backend/scripts/data/):
+- users.jsonl  : 10 regular users (for concurrency acceptance tests)
+- seats.jsonl  : 120 fixed seats, coordinates matching the frontend mock-data.ts
+- events.jsonl : 4 events covering published / closed / draft and an "already ended" time
 
-行为：
-1. 先执行 migrate（建表 + 演示主办方 + 预置场馆），--reset 时重建数据库；
-2. 逐行读取 JSONL，已存在的用户/活动/座位跳过，可重复执行；
-3. 为 published / closed 的活动初始化 event_seats，draft 不初始化。
+Behavior:
+1. Run migrate first (schema + demo organizer + preset venue); --reset rebuilds
+   the database;
+2. Read the JSONL line by line, skipping existing users/events/seats, so it can
+   be run repeatedly;
+3. Initialize event_seats for published / closed events; draft events are not
+   initialized.
 """
 
 import argparse
@@ -113,7 +116,7 @@ def _seed_users() -> tuple[int, int]:
         if existing is not None:
             if existing.role != "user":
                 raise RuntimeError(
-                    f"用户 {item.email} 已存在且不是普通用户，请检查种子邮箱是否被占用"
+                    f"User {item.email} already exists and is not a regular user; check whether the seed email is already taken"
                 )
             continue
         insert_user(
@@ -197,11 +200,11 @@ def _seed_events(organizer_id: int, venue_id: int) -> tuple[int, int, int]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="导入 SeatVerse 演示种子数据")
+    parser = argparse.ArgumentParser(description="Import SeatVerse demo seed data")
     parser.add_argument(
         "--reset",
         action="store_true",
-        help="重置数据库（含 migrate 创建的主办方与场馆）后重新导入",
+        help="Reset the database (including the organizer and venue created by migrate) and re-import",
     )
     args = parser.parse_args()
 
@@ -209,10 +212,10 @@ def main() -> int:
         initialize_database(reset=bool(args.reset))
         organizer = find_organizer()
         if organizer is None:
-            raise RuntimeError("未找到主办方账号，请先运行 scripts.migrate")
+            raise RuntimeError("Organizer account not found; run scripts.migrate first")
         venue = find_only_venue()
         if venue is None:
-            raise RuntimeError("未找到预置场馆，请先运行 scripts.migrate")
+            raise RuntimeError("Preset venue not found; run scripts.migrate first")
 
         users_created, users_total = _seed_users()
         seats_created, seats_total = _seed_seats(venue.id)
@@ -231,7 +234,14 @@ def main() -> int:
 
     print(f"Users      : {users_created} created, {users_total} total")
     print(f"Seats      : {seats_created} created, {seats_total} total")
-    print(f"Events     : {events_created} created, {count_events(None, None)} total")
+    events_total = count_events(
+        keyword=None,
+        statuses=[],
+        ended=None,
+        organizer_id=None,
+        now_iso=datetime.now(timezone.utc).isoformat(),
+    )
+    print(f"Events     : {events_created} created, {events_total} total")
     print(
         f"Event seats: {event_seats_created} created, {event_seats_total} total"
     )

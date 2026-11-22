@@ -31,7 +31,6 @@
   import Home from "@/pages/Home.svelte";
   import Events from "@/pages/events/Events.svelte";
   import EventDetail from "@/pages/events/EventDetail.svelte";
-  import SeatMap from "@/pages/seatmap/SeatMap.svelte";
   import Bookings from "@/pages/bookings/Bookings.svelte";
   import Ticket from "@/pages/tickets/Ticket.svelte";
   import TicketByCode from "@/pages/tickets/TicketByCode.svelte";
@@ -123,7 +122,6 @@
       "/": Home,
       "/events": Events,
       "/events/:id": EventDetail,
-      "/events/:id/seats": SeatMap,
       "/bookings": wrapRequireAuthorize(Bookings),
       "/bookings/:id/ticket": wrapRequireAuthorize(Ticket),
       "/tickets/:code": wrapRequireAuthorize(TicketByCode),

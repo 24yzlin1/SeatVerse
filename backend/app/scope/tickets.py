@@ -1,26 +1,35 @@
-"""票务路由（F 负责）。
+"""Ticketing routes (owned by F).
 
-路径与 docs/contracts/api.md §3 #14—#17 一一对应；`@router` 内 path 不含 `/api`，
-由 main.py 的 `api_router` 统一挂载。
+Paths correspond one-to-one to docs/contracts/api.md §3 #14—#17; paths in `@router` do not include `/api`;
+mounting is handled uniformly by the `api_router` in main.py.
 
-本模块横跨 `/bookings`、`/tickets`、`/events` 三个资源前缀，因此 router 不设 prefix，
-避免与 E 的 bookings router、D 的 events router 争夺同一前缀。
+This module spans three resource prefixes (`/bookings`, `/tickets`, `/events`), so the router has no prefix,
+avoiding a clash with E's bookings router and D's events router over the same prefix.
 """
 
 from fastapi import APIRouter, Depends, Query
 
 from app.core.common import AppError
 from app.core.tickets import (
+    event_roster_summary as event_roster_summary_core,
     get_ticket_by_booking_id as get_ticket_by_booking_id_core,
     get_ticket_by_code as get_ticket_by_code_core,
     list_event_roster as list_event_roster_core,
+    list_verify_history as list_verify_history_core,
+    search_bookings_by_username as search_bookings_by_username_core,
     verify_ticket as verify_ticket_core,
 )
 from app.scope.authentication import require_identity
 from app.scope.common import ok
 from app.types.authentication import Identity
 from app.types.common import ResponsePayload
-from app.types.tickets import RosterPagePublic, TicketPublic, VerifyTicketRequest
+from app.types.tickets import (
+    RosterPagePublic,
+    RosterSummaryPublic,
+    TicketPagePublic,
+    TicketPublic,
+    VerifyTicketRequest,
+)
 
 router = APIRouter(tags=["tickets"])
 
@@ -28,17 +37,17 @@ _MAXIMUM_PAGE_SIZE = 100
 
 
 def _require_organizer(identity: Identity = Depends(require_identity)) -> Identity:
-    """角色不足返回 403；票与活动的归属校验在 core 层按 404 处理（ticket-qr.md §4.2）。"""
+    """Returns 403 when the role is insufficient; ticket and event ownership checks are handled as 404 in the core layer (ticket-qr.md §4.2)."""
     if identity.role != "organizer":
-        raise AppError(403, "只有主办方可以执行该操作")
+        raise AppError(403, "Only organizers can perform this action")
     return identity
 
 
 def _validate_pagination(page: int, page_size: int) -> None:
     if page < 1:
-        raise AppError(400, "page 必须大于等于 1")
+        raise AppError(400, "page must be at least 1")
     if page_size < 1 or page_size > _MAXIMUM_PAGE_SIZE:
-        raise AppError(400, f"pageSize 必须在 1—{_MAXIMUM_PAGE_SIZE} 之间")
+        raise AppError(400, f"pageSize must be between 1 and {_MAXIMUM_PAGE_SIZE}")
 
 
 @router.post("/tickets/verify")
@@ -48,7 +57,7 @@ def verify_ticket(
 ) -> ResponsePayload[TicketPublic]:
     return ok(
         verify_ticket_core(identity, body.ticketCode),
-        message="核验成功，签到已完成",
+        message="Verification succeeded; check-in completed",
     )
 
 
@@ -66,18 +75,61 @@ def get_booking_ticket(
     identity: Identity = Depends(require_identity),
 ) -> ResponsePayload[TicketPublic]:
     if booking_id < 1:
-        raise AppError(400, "预约编号必须是正整数")
+        raise AppError(400, "Booking id must be a positive integer")
     return ok(get_ticket_by_booking_id_core(identity, booking_id))
 
 
 @router.get("/events/{event_id}/bookings")
 def list_event_bookings(
     event_id: int,
+    status: str | None = None,
     page: int = 1,
     page_size: int = Query(default=20, alias="pageSize"),
     identity: Identity = Depends(_require_organizer),
 ) -> ResponsePayload[RosterPagePublic]:
     if event_id < 1:
-        raise AppError(400, "活动编号必须是正整数")
+        raise AppError(400, "Event id must be a positive integer")
     _validate_pagination(page, page_size)
-    return ok(list_event_roster_core(identity, event_id, page, page_size))
+    return ok(list_event_roster_core(identity, event_id, status, page, page_size))
+
+
+@router.get("/events/{event_id}/roster-summary")
+def event_roster_summary(
+    event_id: int,
+    identity: Identity = Depends(_require_organizer),
+) -> ResponsePayload[RosterSummaryPublic]:
+    if event_id < 1:
+        raise AppError(400, "Event id must be a positive integer")
+    return ok(event_roster_summary_core(identity, event_id))
+
+
+@router.get("/tickets/verify/history")
+def list_verify_history(
+    event_id: int | None = Query(default=None, alias="eventId"),
+    verified_from: str | None = Query(default=None, alias="verifiedFrom"),
+    verified_to: str | None = Query(default=None, alias="verifiedTo"),
+    page: int = 1,
+    page_size: int = Query(default=20, alias="pageSize"),
+    identity: Identity = Depends(_require_organizer),
+) -> ResponsePayload[TicketPagePublic]:
+    """Verification history persistence: records stay traceable after a page refresh, and only events owned by the requester are visible."""
+    _validate_pagination(page, page_size)
+    return ok(
+        list_verify_history_core(
+            identity, event_id, verified_from, verified_to, page, page_size
+        )
+    )
+
+
+@router.get("/bookings/search")
+def search_bookings_by_username(
+    username: str,
+    page: int = 1,
+    page_size: int = Query(default=20, alias="pageSize"),
+    identity: Identity = Depends(_require_organizer),
+) -> ResponsePayload[RosterPagePublic]:
+    """Fuzzy-search all bookings and ticket states of an attendee by username (used for on-site checks by organizers)."""
+    _validate_pagination(page, page_size)
+    return ok(
+        search_bookings_by_username_core(identity, username, page, page_size)
+    )

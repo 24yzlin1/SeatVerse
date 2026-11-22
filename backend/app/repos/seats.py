@@ -1,8 +1,9 @@
-"""座位与每场活动座位状态的数据库访问。
+"""Database access for seats and per-event seat states.
 
-只写 SQL 与行映射，不做业务判断：
-- `seats` 是场馆的固定座位与坐标，所有活动共用；
-- `event_seats` 是某场活动中的动态状态，由发布流程或种子脚本初始化。
+Contains only SQL and row mapping, with no business judgment:
+- `seats` holds a venue's fixed seats and coordinates, shared by all events;
+- `event_seats` holds the dynamic state within a specific event, initialized
+  by the publish flow or a seed script.
 """
 
 import sqlite3
@@ -141,7 +142,7 @@ def find_event_seat_in_transaction(
 def mark_event_seat_sold(
     connection: DatabaseConnection, event_id: int, seat_id: int
 ) -> bool:
-    """条件更新：只有当前仍是 available 才改成 sold，返回是否命中。"""
+    """Conditional update: change to sold only while the seat is still available; returns whether the update matched."""
     updated = execute_update(
         connection,
         "UPDATE event_seats SET status = 'sold', version = version + 1 "
@@ -154,7 +155,7 @@ def mark_event_seat_sold(
 def release_event_seat(
     connection: DatabaseConnection, event_id: int, seat_id: int
 ) -> bool:
-    """取消预约时把已售座位放回 available；条件更新防止释放错座位。"""
+    """On booking cancellation, put a sold seat back to available; the conditional update prevents releasing the wrong seat."""
     updated = execute_update(
         connection,
         "UPDATE event_seats SET status = 'available', version = version + 1 "
@@ -188,7 +189,7 @@ def insert_seat_if_missing(
     z: float,
     seat_type: SeatType,
 ) -> bool:
-    """插入固定座位；主键或 (venue,row,number) 已存在时跳过，返回是否真的插入。"""
+    """Insert a fixed seat; skipped when the primary key or (venue, row, number) already exists, and returns whether an insert actually happened."""
     cursor = connection.execute(
         "INSERT INTO seats (id, venue_id, row_number, seat_number, x, y, z, seat_type) "
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
@@ -201,9 +202,10 @@ def insert_seat_if_missing(
 def initialize_event_seats(
     connection: DatabaseConnection, event_id: int, venue_id: int
 ) -> int:
-    """按场馆固定座位生成本场活动的座位状态；已存在的行跳过。
+    """Generate this event's seat states from the venue's fixed seats; existing rows are skipped.
 
-    接收调用方连接，不 commit、不 close；供发布事务和种子脚本复用。
+    Takes a caller-provided connection and neither commits nor closes it; reused by
+    the publish transaction and seed scripts.
     """
     cursor = connection.execute(
         "INSERT INTO event_seats (event_id, seat_id, status, version) "

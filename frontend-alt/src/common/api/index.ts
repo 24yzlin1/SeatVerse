@@ -27,10 +27,24 @@ export {
 } from "./messages";
 export { ApiError } from "./types";
 export type { ResponseEnvelope } from "./responseEnvelope";
+export {
+  loadSeatMap,
+  loadSeatStatistics,
+  submitBooking,
+} from "./seatMap";
+export { loadBookingPage, loadBookingWindow } from "./bookings";
+export type { BookingQuery } from "./bookings";
+export {
+  SeatMapSession,
+  seatMapBlockReason,
+} from "./seatMapSession";
+export type { SeatMapApi, SeatMapState } from "./seatMapSession";
 export type {
   Booking,
   BookingStatus,
+  EventId,
   EventRecord,
+  EventSeatStatus,
   EventStatus,
   EventSummary,
   LoginPayload,
@@ -40,8 +54,13 @@ export type {
   RosterEntry,
   RosterUser,
   SeatBrief,
+  SeatId,
+  SeatMapData,
+  SeatSelectionEvent,
   SeatType,
   SeatStatistics,
+  SelectedSeatIds,
+  StaticSeat,
   Ticket,
   TicketStatus,
   User,

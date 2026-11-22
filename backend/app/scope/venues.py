@@ -1,6 +1,6 @@
-"""场馆相关的 HTTP 入口。
+"""HTTP entry points for venues.
 
-scope 只做参数校验、调用 core、包装统一响应；不写 SQL、不拼业务字段。
+The scope layer only validates parameters, calls core, and wraps the unified response; it writes no SQL and assembles no business fields.
 """
 
 from fastapi import APIRouter, Query
@@ -23,14 +23,14 @@ def list_venues(
     page_size: int = Query(20, alias="pageSize"),
 ) -> ResponsePayload[VenuePage]:
     if page < 1:
-        raise AppError(400, "页码必须大于等于 1")
+        raise AppError(400, "Page must be at least 1")
     if page_size < 1 or page_size > _MAXIMUM_PAGE_SIZE:
-        raise AppError(400, f"每页条数必须在 1 到 {_MAXIMUM_PAGE_SIZE} 之间")
+        raise AppError(400, f"Page size must be between 1 and {_MAXIMUM_PAGE_SIZE}")
     return ok(list_venues_core(page, page_size))
 
 
 @router.get("/{venue_id}/seats")
 def list_venue_seats(venue_id: int) -> ResponsePayload[SeatListPayload]:
     if venue_id < 1:
-        raise AppError(400, "场馆编号必须为正整数")
+        raise AppError(400, "Venue id must be a positive integer")
     return ok(list_venue_seats_core(venue_id))

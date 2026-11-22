@@ -36,14 +36,20 @@ class EventPublic(BaseModel):
     status: ActivityStatus
     venue: VenuePublic
     organizer_name: str = Field(..., alias="organizerName")
-    # 主办方前端按编号筛自己的活动；没有这个字段只能靠姓名猜（F 于 2026-11-17 补）。
+    # The organizer frontend filters its own events by id; without this field it could only guess by name (added by F on 2026-11-17).
     organizer_id: int = Field(..., alias="organizerId")
 
 
 class EventListQuery(BaseModel):
     model_config = ConfigDict(extra="forbid")
     keyword: str | None = None
-    status: ActivityStatus | None = None
+    # Multi-value status filter (expanded from comma-separated input); an empty tuple means no filtering.
+    statuses: list[ActivityStatus] = []
+    # None means no filtering; True shows only ended events (end_time <= now and status still published/closed),
+    # False shows only ongoing events (end_time > now).
+    ended: bool | None = None
+    # The organizer console fetches events by its own id, avoiding a full fetch followed by client-side filtering.
+    organizer_id: int | None = None
     page: int = 1
     page_size: int = 20
 

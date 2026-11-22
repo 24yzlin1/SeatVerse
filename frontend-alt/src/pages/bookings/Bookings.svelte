@@ -17,7 +17,7 @@
   import { ApiError, endpoints, request } from "@/common/api";
   import type { Booking, BookingStatus } from "@/common/api";
   import { authentication } from "@/common/stores/authentication.svelte";
-  import { loadBookingWindow } from "./api";
+  import { loadBookingWindow } from "@/common/api";
   import { BOOKING_STATUS_LABEL } from "@/common/utils/groupBookings";
 
   let error = $state("");

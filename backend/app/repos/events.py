@@ -60,13 +60,29 @@ def _escape_like_pattern(value: str) -> str:
 
 def _build_filters(
     keyword: str | None,
-    status: ActivityStatus | None,
+    statuses: list[ActivityStatus],
+    ended: bool | None,
+    organizer_id: int | None,
+    now_iso: str,
 ) -> tuple[str, list[object]]:
     conditions: list[str] = []
     parameters: list[object] = []
-    if status is not None:
-        conditions.append("e.status = ?")
-        parameters.append(status)
+    if statuses:
+        conditions.append("e.status IN (" + ",".join("?" for _ in statuses) + ")")
+        parameters.extend(statuses)
+    if ended is not None:
+        # "Ended" is a display-state filter: only events whose end time has
+        # passed and whose status is still published/closed count;
+        # cancelled/draft are excluded from this semantic.
+        if ended:
+            conditions.append("e.end_time <= ?")
+            conditions.append("e.status IN ('published','closed')")
+        else:
+            conditions.append("e.end_time > ?")
+        parameters.append(now_iso)
+    if organizer_id is not None:
+        conditions.append("e.organizer_id = ?")
+        parameters.append(organizer_id)
     if keyword:
         escaped_keyword = _escape_like_pattern(keyword)
         conditions.append(
@@ -81,11 +97,16 @@ def _build_filters(
 
 def find_events(
     keyword: str | None,
-    status: ActivityStatus | None,
+    statuses: list[ActivityStatus],
+    ended: bool | None,
+    organizer_id: int | None,
+    now_iso: str,
     limit: int,
     offset: int,
 ) -> list[EventWithVenueRow]:
-    where_clause, parameters = _build_filters(keyword, status)
+    where_clause, parameters = _build_filters(
+        keyword, statuses, ended, organizer_id, now_iso
+    )
     sql = (
         f"SELECT {_EVENT_SELECT_COLUMNS} FROM events e "
         "JOIN venues v ON v.id = e.venue_id "
@@ -105,9 +126,14 @@ def find_events(
 
 def count_events(
     keyword: str | None,
-    status: ActivityStatus | None,
+    statuses: list[ActivityStatus],
+    ended: bool | None,
+    organizer_id: int | None,
+    now_iso: str,
 ) -> int:
-    where_clause, parameters = _build_filters(keyword, status)
+    where_clause, parameters = _build_filters(
+        keyword, statuses, ended, organizer_id, now_iso
+    )
     sql = f"SELECT COUNT(*) AS total FROM events e{where_clause}"
     connection = get_connection()
     try:

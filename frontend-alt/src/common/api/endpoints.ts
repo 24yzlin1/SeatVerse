@@ -30,11 +30,16 @@ export const endpoints = {
     `/events/${encodePathSegment(id)}/status`,
   eventBookings: (id: string | number) =>
     `/events/${encodePathSegment(id)}/bookings`,
+  eventRosterSummary: (id: string | number) =>
+    `/events/${encodePathSegment(id)}/roster-summary`,
+  eventSeatMap: (id: string | number) => `/events/${encodePathSegment(id)}/seat-map`,
   bookingsMe: () => "/bookings/me",
+  bookingsSearch: () => "/bookings/search",
   bookingCancel: (id: string | number) =>
     `/bookings/${encodePathSegment(id)}/cancel`,
   bookingTicket: (id: string | number) =>
     `/bookings/${encodePathSegment(id)}/ticket`,
   ticketByCode: (code: string) => `/tickets/${encodePathSegment(code)}`,
   ticketVerify: () => "/tickets/verify",
+  ticketVerifyHistory: () => "/tickets/verify/history",
 } as const;

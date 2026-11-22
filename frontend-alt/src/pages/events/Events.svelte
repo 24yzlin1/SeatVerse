@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { untrack } from "svelte";
   import { push } from "svelte-spa-router";
   import { toast } from "svelte-sonner";
 
@@ -21,8 +21,12 @@
   let error = $state("");
 
   let events: EventSummary[] = $state([]);
+  let loaded = $state(false);
+  let requestVersion = 0;
 
-  // Status filter tabs; "all" shows every event as returned by the list API.
+  // Status filter tabs; filtering happens server-side via the `status` /
+  // `ended` query params (see backend-api-proposals.md §1). "ended" is a
+  // display-only state the API exposes through `ended=true`.
   let statusFilter = $state("all");
   const now = $state(Date.now());
 
@@ -34,31 +38,55 @@
     { value: "cancelled", label: "已取消" },
   ] as const;
 
-  // "ended" is a display-only state derived from the times, so it cannot be
-  // matched by the raw status; every other tab filters on the API status.
-  const visibleEvents = $derived(
-    statusFilter === "all"
-      ? events
-      : statusFilter === "ended"
-        ? events.filter((x) => deriveEventDisplayStatus(x, now) === "ended")
-        : events.filter((x) => x.status === statusFilter),
-  );
+  function filterQuery(filter: string): string {
+    switch (filter) {
+      case "published":
+        return "&status=published";
+      case "closed":
+        return "&status=closed";
+      case "ended":
+        return "&ended=true";
+      case "cancelled":
+        return "&status=cancelled";
+      default:
+        return "";
+    }
+  }
 
   async function loadEvents() {
+    const version = ++requestVersion;
     try {
       const page = await request<Page<EventSummary>>(
-        `${endpoints.events()}?page=1&pageSize=100`,
+        `${endpoints.events()}?page=1&pageSize=100${filterQuery(statusFilter)}`,
       );
+      if (version !== requestVersion) {
+        return;
+      }
       events = page.items;
+      loaded = true;
     } catch (requestError: unknown) {
+      if (version !== requestVersion) {
+        return;
+      }
       error =
         requestError instanceof ApiError
           ? requestError.message
           : "获取活动列表失败";
+      loaded = true;
     }
   }
 
-  onMount(loadEvents);
+  // Reload from the API whenever the status tab changes.
+  $effect(() => {
+    const filter = statusFilter;
+    untrack(() => {
+      void loadEvents();
+    });
+    void filter;
+    return () => {
+      requestVersion++;
+    };
+  });
 
   $effect(() => {
     if (error.length === 0) {
@@ -101,34 +129,41 @@
     </div>
   </div>
   <div class={["px-2", "flex", "flex-col"]}>
-    {#each visibleEvents as x (x.id)}
-      {@const displayStatus = deriveEventDisplayStatus(x, now)}
-      <Item.Root class={["click-link"]} onclick={() => push(`/events/${x.id}`)}>
-        <Item.Media class={["size-8"]}>
-          <Avatar.Root class={["rounded-lg"]}>
-            <Avatar.Fallback>
-              {x.title.charAt(0)}
-            </Avatar.Fallback>
-          </Avatar.Root>
-        </Item.Media>
-        <Item.Content class={["overflow-hidden"]}>
-          <Item.Title class={["line-clamp-1"]}>
-            {x.title}
-          </Item.Title>
-          <div class={["flex", "gap-2"]}>
-            <Badge
-              variant={displayStatus === "published"
-                ? "default"
-                : "destructive"}
-            >
-              {EVENT_SHORT_STATUS_LABEL[displayStatus]}
-            </Badge>
-            <Item.Description class={["line-clamp-1"]}>
-              {formatDateTime(x.startTime)} — {formatDateTime(x.endTime)}
-            </Item.Description>
-          </div>
-        </Item.Content>
-      </Item.Root>
-    {/each}
+    {#if !loaded}
+      <!-- Blank while the list loads; the rows replace this branch once ready. -->
+    {:else}
+      {#each events as x (x.id)}
+        {@const displayStatus = deriveEventDisplayStatus(x, now)}
+        <Item.Root
+          class={["click-link"]}
+          onclick={() => push(`/events/${x.id}`)}
+        >
+          <Item.Media class={["size-8"]}>
+            <Avatar.Root class={["rounded-lg"]}>
+              <Avatar.Fallback>
+                {x.title.charAt(0)}
+              </Avatar.Fallback>
+            </Avatar.Root>
+          </Item.Media>
+          <Item.Content class={["overflow-hidden"]}>
+            <Item.Title class={["line-clamp-1"]}>
+              {x.title}
+            </Item.Title>
+            <div class={["flex", "gap-2"]}>
+              <Badge
+                variant={displayStatus === "published"
+                  ? "default"
+                  : "destructive"}
+              >
+                {EVENT_SHORT_STATUS_LABEL[displayStatus]}
+              </Badge>
+              <Item.Description class={["line-clamp-1"]}>
+                {formatDateTime(x.startTime)} — {formatDateTime(x.endTime)}
+              </Item.Description>
+            </div>
+          </Item.Content>
+        </Item.Root>
+      {/each}
+    {/if}
   </div>
 {/snippet}

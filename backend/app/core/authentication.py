@@ -50,10 +50,11 @@ def login(
 
 
 def me(identity: Identity) -> UserPublic:
-    """`GET /authentication/me` 的 payload 就是 user 对象本身（auth.md §14.2 规则 4）。
+    """The payload of `GET /authentication/me` is the user object itself (auth.md §14.2 rule 4).
 
-    不能包一层 `{ "user": ... }`：前端 `bootstrap()` 直接用返回值覆盖 user 缓存，
-    多包一层会让 `role` 读不到，刷新后主办方会被当成普通用户。
+    Do not wrap it in `{ "user": ... }`: the frontend `bootstrap()` uses the returned
+    value to overwrite the user cache directly. An extra layer would make `role`
+    unreadable, and after a refresh an organizer would be treated as a regular user.
     """
     user = find_user_by_id(identity.user_id)
     if user is None:

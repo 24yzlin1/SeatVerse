@@ -1,6 +1,6 @@
-"""预约相关的 HTTP 入口。
+"""HTTP entry points for bookings.
 
-scope 只做参数校验、调用 core、包装统一响应；座位冲突、活动状态等业务判断都在 core。
+The scope layer only validates parameters, calls core, and wraps the unified response; business checks such as seat conflicts and event status all live in core.
 """
 
 from fastapi import APIRouter, Depends, Query
@@ -31,7 +31,7 @@ def my_bookings(
     identity: Identity = Depends(require_identity),
 ) -> ResponsePayload[BookingPage]:
     if page < 1 or page_size < 1 or page_size > 100:
-        raise AppError(400, "页码必须大于等于 1，每页条数必须在 1 到 100 之间")
+        raise AppError(400, "Page must be at least 1; page size must be between 1 and 100")
     return ok(list_my_bookings(identity, page, page_size, event_id, status))
 
 
@@ -40,7 +40,7 @@ def cancel_booking(
     booking_id: int, identity: Identity = Depends(require_identity)
 ) -> ResponsePayload[CancelBookingPayload]:
     if booking_id < 1:
-        raise AppError(400, "预约编号必须为正整数")
+        raise AppError(400, "Booking id must be a positive integer")
     return ok(cancel_booking_core(identity, booking_id))
 
 
@@ -50,14 +50,14 @@ def create_booking(
     identity: Identity = Depends(require_identity),
 ) -> ResponsePayload[BookingPublic]:
     if body.eventId < 1:
-        raise AppError(400, "活动编号必须为正整数")
+        raise AppError(400, "Event id must be a positive integer")
     if not body.seatIds:
-        raise AppError(400, "至少选择一个座位")
+        raise AppError(400, "At least one seat must be selected")
     if len(set(body.seatIds)) != len(body.seatIds):
-        raise AppError(400, "座位编号不能重复")
+        raise AppError(400, "Seat ids must not be duplicated")
     for seat_id in body.seatIds:
         if seat_id < 1:
-            raise AppError(400, "座位编号必须为正整数")
+            raise AppError(400, "Seat id must be a positive integer")
 
     request = CreateBookingRequest(
         eventId=body.eventId,

@@ -4,8 +4,10 @@
   import { toast } from "svelte-sonner";
   import {
     RiCalendarLine,
+    RiCloseCircleLine,
     RiFlagLine,
     RiGroupLine,
+    RiLoader4Line,
     RiMapPinLine,
     RiUserLine,
   } from "remixicon-svelte";
@@ -17,9 +19,9 @@
 
   import Error from "@/common/Error.svelte";
   import VisualCard from "@/common/VisualCard.svelte";
-  import SeatBooking from "@/pages/seatmap/SeatBooking.svelte";
-  import { loadSeatStatistics } from "@/pages/seatmap/api";
-  import { loadBookingWindow } from "@/pages/bookings/api";
+  import SeatBooking from "@/pages/events/components/SeatBooking.svelte";
+  import { loadSeatStatistics } from "@/common/api";
+  import { loadBookingWindow } from "@/common/api";
   import { Button } from "$lib/components/ui/button";
   import { ApiError, endpoints, request } from "@/common/api";
   import type { Booking, EventRecord } from "@/common/api";
@@ -46,6 +48,7 @@
   let bookingLoading = $state(false);
   let bookingError = $state("");
   let bookingErrorReported = false;
+  let cancellingBookingId = $state<number | null>(null);
   let bookingVersion = 0;
   let statisticsVersion = 0;
 
@@ -131,6 +134,36 @@
       if (version === bookingVersion) {
         bookingLoading = false;
       }
+    }
+  }
+
+  // Cancel a booking from the "My bookings" tab; the global event refreshes
+  // bookings, seat statistics and the seat map in one go.
+  async function cancelBooking(booking: Booking) {
+    if (cancellingBookingId !== null) {
+      return;
+    }
+    cancellingBookingId = booking.id;
+    try {
+      await request(endpoints.bookingCancel(booking.id), { method: "POST" });
+      window.dispatchEvent(
+        new CustomEvent("seatverse:booking-cancelled", {
+          detail: {
+            bookingId: booking.id,
+            eventId,
+            seatIds: booking.seats.map((seat) => seat.id),
+          },
+        }),
+      );
+      toast.success("预约已取消，座位已释放");
+    } catch (requestError: unknown) {
+      toast.error(
+        requestError instanceof ApiError
+          ? requestError.message
+          : "取消结果未能确认，请刷新预约核对",
+      );
+    } finally {
+      cancellingBookingId = null;
     }
   }
 
@@ -283,6 +316,27 @@
                 </Badge>
               </div>
             </Item.Content>
+            {#if booking.status === "reserved" &&
+              detail &&
+              now < Date.parse(detail.endTime)}
+              <Button
+                variant="secondary"
+                size="icon"
+                aria-label="取消预约"
+                title="取消预约"
+                disabled={cancellingBookingId !== null}
+                onclick={(event) => {
+                  event.stopPropagation();
+                  void cancelBooking(booking);
+                }}
+              >
+                {#if cancellingBookingId === booking.id}
+                  <RiLoader4Line class="animate-spin" />
+                {:else}
+                  <RiCloseCircleLine />
+                {/if}
+              </Button>
+            {/if}
           </Item.Root>
         {/each}
       {/if}

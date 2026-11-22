@@ -14,7 +14,7 @@
   import { getBarcodeDetectorConstructor } from "@/common/utils/barcode";
   import type { BarcodeDetectorInstance } from "@/common/utils/barcode";
   import { ApiError, endpoints, request } from "@/common/api";
-  import type { Ticket } from "@/common/api";
+  import type { Page, Ticket } from "@/common/api";
   import { formatDateTime } from "@/common/utils/datetime";
 
   // Canonical ticket code: 20-character Crockford Base32 (ticket-qr.md §2.1).
@@ -28,8 +28,13 @@
   let verifying = $state(false);
   let verifiedTicket: Ticket | null = $state(null);
 
-  // Session-local verification history (same behavior as the old page).
-  let verificationHistory = $state<Ticket[]>([]);
+  // Server-backed verification history (GET /tickets/verify/history);
+  // survives page refreshes instead of living in session memory.
+  let historyItems = $state<Ticket[]>([]);
+  let historyPage = $state(0);
+  let historyTotal = $state(0);
+  let historyLoading = $state(false);
+  let historyError = $state("");
 
   let cameraState = $state<CameraState>("idle");
   let videoElement = $state<HTMLVideoElement | null>(null);
@@ -46,9 +51,42 @@
   }
 
   onMount(() => {
+    // Load persisted verification history as soon as the page opens.
+    void loadHistory(true);
     // Release the camera when the page unmounts.
     return () => stopCamera();
   });
+
+  // Load (or append) a page of the organizer's verification history.
+  async function loadHistory(reset: boolean) {
+    if (historyLoading) {
+      return;
+    }
+    const targetPage = reset ? 1 : historyPage + 1;
+    historyLoading = true;
+    historyError = "";
+    try {
+      const page = await request<Page<Ticket>>(
+        `${endpoints.ticketVerifyHistory()}?page=${targetPage}&pageSize=20`,
+      );
+      historyPage = page.page;
+      historyTotal = page.total;
+      historyItems = reset
+        ? page.items
+        : [
+            ...new Map(
+              [...historyItems, ...page.items].map((x) => [x.id, x]),
+            ).values(),
+          ];
+    } catch (requestError: unknown) {
+      historyError =
+        requestError instanceof ApiError
+          ? requestError.message
+          : "获取核验记录失败";
+    } finally {
+      historyLoading = false;
+    }
+  }
 
   async function submitVerify() {
     const normalized = normalizeTicketCode(ticketCodeInput);
@@ -69,7 +107,8 @@
       });
       verifiedTicket = ticket;
       ticketCodeInput = normalized;
-      verificationHistory = [ticket, ...verificationHistory];
+      // Refresh the persisted history so the record tab stays in sync.
+      void loadHistory(true);
       stopCamera();
     } catch (requestError: unknown) {
       // Conflict 409 messages (repeat verification, cancelled booking, ...)
@@ -322,7 +361,7 @@
     {/if}
   {:else}
     <div class={["px-2", "py-4", "flex", "flex-col"]}>
-      {#each verificationHistory as ticket (ticket.id)}
+      {#each historyItems as ticket (ticket.id)}
         <Item.Root>
           <Item.Content class={["overflow-hidden"]}>
             <Item.Title class={["line-clamp-1"]}>
@@ -337,6 +376,17 @@
           </Item.Content>
         </Item.Root>
       {/each}
+      {#if historyItems.length < historyTotal}
+        <Button
+          variant="secondary"
+          disabled={historyLoading}
+          onclick={() => {
+            void loadHistory(false);
+          }}
+        >
+          加载更多核验记录
+        </Button>
+      {/if}
     </div>
   {/if}
 {/snippet}

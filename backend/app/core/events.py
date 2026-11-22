@@ -56,19 +56,29 @@ def _resolve_venue_id(requested_venue_id: int | None) -> int:
 
 def list_events(query: EventListQuery) -> PaginatedPayload[EventPublic]:
     offset = (query.page - 1) * query.page_size
+    now_iso = datetime.now(timezone.utc).isoformat()
     rows = find_events(
         keyword=query.keyword,
-        status=query.status,
+        statuses=query.statuses,
+        ended=query.ended,
+        organizer_id=query.organizer_id,
+        now_iso=now_iso,
         limit=query.page_size,
         offset=offset,
     )
-    total = count_events(keyword=query.keyword, status=query.status)
+    total = count_events(
+        keyword=query.keyword,
+        statuses=query.statuses,
+        ended=query.ended,
+        organizer_id=query.organizer_id,
+        now_iso=now_iso,
+    )
     items = [_to_public(row) for row in rows]
     return PaginatedPayload(
         items=items,
         total=total,
         page=query.page,
-        page_size=query.page_size,
+        pageSize=query.page_size,
     )
 
 

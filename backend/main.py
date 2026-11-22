@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 import dotenv
 from fastapi import APIRouter, FastAPI
@@ -17,7 +17,7 @@ from app.repos.database import run_migrations
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     run_migrations()
     yield
 

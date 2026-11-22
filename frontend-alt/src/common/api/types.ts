@@ -79,7 +79,7 @@ export interface SeatBrief {
   row: number;
   /** Seat number within the row, >= 1 */
   number: number;
-  /** Display label, always `{row}排{number}号` */
+  /** Display label, always `Row {row} Seat {number}` */
   label: string;
   seatType: SeatType;
 }
@@ -153,6 +153,8 @@ export interface RosterEntry {
   /** Ticket code of the booking; legacy rows may be null */
   ticketCode: string | null;
   user: RosterUser;
+  /** Event summary; lets cross-event queries show which event it belongs to */
+  event: EventSummary;
   seats: SeatBrief[];
   verifiedAt: string | null;
   verifiedBy: number | null;
@@ -176,6 +178,53 @@ export interface SeatStatistics {
   available: number;
   updatedAt: string;
 }
+
+// ===== Seat map (aggregate payload of GET /events/{id}/seat-map) =====
+
+export type SeatId = number;
+export type EventId = number;
+
+// docs/contracts/enums.md: the first version only has standard seats; the
+// `locked` value is reserved and never selectable.
+export type EventSeatStatus = "available" | "locked" | "sold";
+
+// Static venue coordinates are adopted verbatim from the backend: meters,
+// X points right, Y points up, Z points from the stage towards the rear.
+export interface StaticSeat {
+  readonly id: SeatId;
+  readonly row: number;
+  readonly number: number;
+  readonly label: string;
+  readonly seatType: SeatType;
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+}
+
+// Event summary rendered by the seat map; `venue` carries the capacity so the
+// client can cross-check the seat count.
+export interface SeatSelectionEvent {
+  id: EventId;
+  title: string;
+  status: EventStatus;
+  /** ISO 8601 */
+  startTime: string;
+  /** ISO 8601; must be later than startTime */
+  endTime: string;
+  description: string;
+  venue: VenueDetail;
+}
+
+// Validated aggregate payload handed to the seatmap components; frozen by the
+// request layer so views cannot mutate shared data.
+export interface SeatMapData {
+  readonly event: SeatSelectionEvent;
+  readonly seats: readonly StaticSeat[];
+  readonly seatStates: ReadonlyMap<SeatId, EventSeatStatus>;
+}
+
+// Local selection only; it is not server state and never means a seat hold.
+export type SelectedSeatIds = ReadonlySet<SeatId>;
 
 // ===== Errors =====
 

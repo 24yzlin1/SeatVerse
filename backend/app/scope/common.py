@@ -17,7 +17,7 @@ def error_handler(request: Request, exception: Exception) -> JSONResponse:
         return JSONResponse(
             status_code=200,
             content=ResponsePayload[None](
-                code=400, message="请求参数格式错误", payload=None
+                code=400, message="Invalid request parameters", payload=None
             ).model_dump(mode="json"),
         )
     if isinstance(exception, AppError):

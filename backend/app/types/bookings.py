@@ -1,12 +1,12 @@
-"""预约、预约座位与“我的预约”的类型定义。
+"""Type definitions for bookings, booking seats, and "My Bookings".
 
-对应表：`bookings`、`booking_seats`（见 backend/app/repos/migrations/000_schema.sql）。
-对应契约：docs/contracts/api.md §4.1 / §4.2、docs/contracts/enums.md §2.2 / §2.4。
+Corresponding tables: `bookings`, `booking_seats` (see backend/app/repos/migrations/000_schema.sql).
+Corresponding contracts: docs/contracts/api.md §4.1 / §4.2, docs/contracts/enums.md §2.2 / §2.4.
 
-约定：
-- `*Row` 是 repos 层向外暴露的数据行，字段与查询列一一对应；
-- `*Public` / `*Payload` 是响应模型，JSON 键名按钉死的样例使用 camelCase；
-- 时间字段一律是带时区偏移的 ISO 8601 字符串，类型层不做解析。
+Conventions:
+- `*Row` is a data row exposed by the repos layer; fields map one-to-one to query columns;
+- `*Public` / `*Payload` are response models; JSON keys use camelCase to match the pinned samples;
+- Time fields are always ISO 8601 strings with timezone offsets; no parsing happens at the types layer.
 """
 
 from dataclasses import dataclass
@@ -22,7 +22,7 @@ BookingStatus = Literal["reserved", "cancelled", "used"]
 
 @dataclass(frozen=True)
 class BookingRow:
-    """`bookings` 表的一行。"""
+    """A row of the `bookings` table."""
 
     id: int
     event_id: int
@@ -34,10 +34,10 @@ class BookingRow:
 
 @dataclass(frozen=True)
 class BookingSeatRow:
-    """`booking_seats` 表的一行。
+    """A row of the `booking_seats` table.
 
-    `is_active` 在数据库里是 INTEGER 0/1，repos 行映射时显式转成 bool；
-    只有 `is_active = 1` 的记录参与占座与唯一约束。
+    `is_active` is stored as INTEGER 0/1 in the database; the repos row mapping converts it to bool explicitly;
+    only records with `is_active = 1` participate in seat holding and the uniqueness constraint.
     """
 
     id: int
@@ -49,7 +49,7 @@ class BookingSeatRow:
 
 @dataclass(frozen=True)
 class BookingEventRow:
-    """预约事务内读取的活动信息（同一连接，不经过 D 的 events repo）。"""
+    """Event info read within the booking transaction (same connection, bypassing D's events repo)."""
 
     event_id: int
     status: EventStatus
@@ -60,7 +60,7 @@ class BookingEventRow:
 
 @dataclass(frozen=True)
 class BookingListRow:
-    """“我的预约”列表的 JOIN 行：bookings + events + venues + tickets。"""
+    """JOIN row for the "My Bookings" list: bookings + events + venues + tickets."""
 
     id: int
     status: BookingStatus
@@ -78,7 +78,7 @@ class BookingListRow:
 
 @dataclass(frozen=True)
 class BookingSeatBriefRow:
-    """预约列表里的座位摘要行；`booking_id` 用于把座位分回各预约。"""
+    """Seat summary row in the booking list; `booking_id` is used to group seats back into their bookings."""
 
     booking_id: int
     seat_id: int
@@ -93,7 +93,7 @@ class VenueBrief(BaseModel):
 
 
 class EventSummary(BaseModel):
-    """预约内联的活动摘要；字段与 api.md §4.1 的 EventSummary 对齐。"""
+    """Event summary inlined in a booking; fields align with the EventSummary in api.md §4.1."""
 
     id: int
     title: str

@@ -1,16 +1,16 @@
-"""电子票与核验的类型定义。
+"""Type definitions for e-tickets and verification.
 
-对应表：`tickets`（见 backend/app/repos/migrations/000_schema.sql）。
-对应契约：docs/contracts/api.md §4.3、docs/contracts/enums.md §2.5、
-         docs/contracts/ticket-qr.md §2 / §4。
+Corresponding table: `tickets` (see backend/app/repos/migrations/000_schema.sql).
+Corresponding contracts: docs/contracts/api.md §4.3, docs/contracts/enums.md §2.5,
+         docs/contracts/ticket-qr.md §2 / §4.
 
-说明：
-- `tickets` 表没有 status 列；票状态由预约状态与 `verified_at` 派生，
-  因此这里只定义 `TicketStatus` 字面量，不新增存储列；
-- `TicketRow` 与表列一一对应，repos 层负责行映射；
-- `TicketDetailRow` 是电子票查询的 JOIN 行（tickets + bookings + events + venues），
-  座位摘要复用 `app.types.bookings.BookingSeatBriefRow`；
-- 响应模型使用 camelCase，字段与 `samples/ticket.ok.json` 逐字对齐。
+Notes:
+- The `tickets` table has no status column; ticket status is derived from the booking status and `verified_at`,
+  so only the `TicketStatus` literal is defined here, with no new storage column;
+- `TicketRow` maps one-to-one to table columns; the repos layer handles row mapping;
+- `TicketDetailRow` is the JOIN row for e-ticket queries (tickets + bookings + events + venues);
+  seat summaries reuse `app.types.bookings.BookingSeatBriefRow`;
+- Response models use camelCase; fields match `samples/ticket.ok.json` verbatim.
 """
 
 from dataclasses import dataclass
@@ -25,13 +25,13 @@ from app.types.bookings import (
     SeatBrief,
 )
 
-# 与 BookingStatus 使用同一套字面量（enums.md §2.5）；票状态是派生值，不落库。
+# Uses the same set of literals as BookingStatus (enums.md §2.5); ticket status is a derived value, not persisted.
 TicketStatus = Literal["reserved", "cancelled", "used"]
 
 
 @dataclass(frozen=True)
 class TicketRow:
-    """`tickets` 表的一行；列顺序与 000_schema.sql 一致。"""
+    """A row of the `tickets` table; column order matches 000_schema.sql."""
 
     id: int
     booking_id: int
@@ -42,10 +42,11 @@ class TicketRow:
 
 @dataclass(frozen=True)
 class TicketDetailRow:
-    """电子票查询的 JOIN 行：tickets + bookings + events + venues。
+    """JOIN row for e-ticket queries: tickets + bookings + events + venues.
 
-    `booking_user_id` 与 `event_organizer_id` 是 F 补充的归属校验字段：
-    票号查询要判断“是不是本人的票”，核验要判断“是不是本主办方活动的票”。
+    `booking_user_id` and `event_organizer_id` are ownership-check fields added by F:
+    ticket-code queries need to tell "whether the ticket belongs to the requester", and verification needs to tell
+    "whether the ticket belongs to an event run by this organizer".
     """
 
     ticket_id: int
@@ -68,7 +69,7 @@ class TicketDetailRow:
 
 @dataclass(frozen=True)
 class RosterRow:
-    """主办方名单的一行：预约 + 用户 + 票面核验信息（F 补充，见 tickets-roster.md）。"""
+    """A row of the organizer roster: booking + user + ticket verification info (added by F, see tickets-roster.md)."""
 
     booking_id: int
     booking_status: BookingStatus
@@ -80,10 +81,18 @@ class RosterRow:
     user_email: str
     verified_at: str | None
     verified_by: int | None
+    # Event summary (shows "which event was booked" when querying across events)
+    event_id: int
+    event_title: str
+    event_status: EventStatus
+    event_start_time: str
+    event_end_time: str
+    venue_id: int
+    venue_name: str
 
 
 class TicketPublic(BaseModel):
-    """电子票响应；字段与 api.md §4.3 的 `Ticket` 对齐。"""
+    """E-ticket response; fields align with the `Ticket` in api.md §4.3."""
 
     id: int
     bookingId: int
@@ -97,7 +106,7 @@ class TicketPublic(BaseModel):
 
 
 class VerifyTicketRequest(BaseModel):
-    """`POST /api/tickets/verify` 请求体（ticket-qr.md §4.2）。"""
+    """Request body of `POST /api/tickets/verify` (ticket-qr.md §4.2)."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -105,7 +114,7 @@ class VerifyTicketRequest(BaseModel):
 
 
 class RosterUserPublic(BaseModel):
-    """名单里的用户摘要；主办方现场核对用。"""
+    """User summary in the roster; used for on-site checks by organizers."""
 
     id: int
     name: str
@@ -113,7 +122,7 @@ class RosterUserPublic(BaseModel):
 
 
 class RosterEntryPublic(BaseModel):
-    """本场名单的一行；字段见 docs/contracts/tickets-roster.md §1.3。"""
+    """A row of the event roster; fields are documented in docs/contracts/tickets-roster.md §1.3."""
 
     id: int
     status: BookingStatus
@@ -121,15 +130,45 @@ class RosterEntryPublic(BaseModel):
     cancelledAt: str | None
     ticketCode: str | None
     user: RosterUserPublic
+    # Event summary: cross-event queries (username search beyond verify history) need to show the owning event
+    event: EventSummary
     seats: list[SeatBrief]
     verifiedAt: str | None
     verifiedBy: int | None
 
 
+@dataclass(frozen=True)
+class RosterSummaryRow:
+    """Statistics row of `GET /events/{id}/roster-summary` (repos layer)."""
+
+    total: int
+    reserved: int
+    checked_in: int
+    cancelled: int
+
+
+class RosterSummaryPublic(BaseModel):
+    """Roster statistics response: total bookings and counts per status."""
+
+    total: int
+    reserved: int
+    checkedIn: int
+    cancelled: int
+
+
 class RosterPagePublic(BaseModel):
-    """名单分页信封内的结构，与 api.md §2 的 `{items,total,page,pageSize}` 一致。"""
+    """Structure inside the roster pagination envelope, matching `{items,total,page,pageSize}` in api.md §2."""
 
     items: list[RosterEntryPublic]
+    total: int
+    page: int
+    pageSize: int
+
+
+class TicketPagePublic(BaseModel):
+    """Verification history pagination: ticket view (with event summary and verification info)."""
+
+    items: list[TicketPublic]
     total: int
     page: int
     pageSize: int

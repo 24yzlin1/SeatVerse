@@ -1,19 +1,21 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { untrack } from "svelte";
   import { push } from "svelte-spa-router";
   import { toast } from "svelte-sonner";
-  import { RiAddLine, RiLoader4Line } from "remixicon-svelte";
+  import { RiAddLine, RiLoader4Line, RiMoreLine } from "remixicon-svelte";
 
   import * as Avatar from "$lib/components/ui/avatar";
   import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
   import * as Drawer from "$lib/components/ui/drawer";
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Input } from "$lib/components/ui/input";
   import * as Item from "$lib/components/ui/item";
   import { Label } from "$lib/components/ui/label";
   import * as Tabs from "$lib/components/ui/tabs";
 
   import Description from "@/pages/organizer/components/Description.svelte";
+  import DateTimePicker from "@/common/DateTimePicker.svelte";
   import NavigationLayout from "@/layout/NavigationLayout.svelte";
   import { ApiError, endpoints, request } from "@/common/api";
   import type { EventRecord, Page } from "@/common/api";
@@ -32,6 +34,7 @@
   let loaded = $state(false);
   let events: EventRecord[] = $state([]);
   let busyEventId = $state<number | null>(null);
+  let requestVersion = 0;
 
   let isCreateDrawerOpen = $state(false);
   let creating = $state(false);
@@ -44,7 +47,9 @@
 
   const now = $state(Date.now());
 
-  // Status filter tabs; "all" shows every event owned by the organizer.
+  // Status filter tabs; filtering happens server-side via the `status`
+  // query param (backend-api-proposals.md §1). "all" shows every event
+  // owned by the current organizer (`organizerId`).
   let statusFilter = $state("all");
 
   const statusFilters = [
@@ -55,11 +60,9 @@
     { value: "cancelled", label: "已取消" },
   ] as const;
 
-  const visibleEvents = $derived(
-    statusFilter === "all"
-      ? events
-      : events.filter((item) => item.status === statusFilter),
-  );
+  function filterQuery(filter: string): string {
+    return filter === "all" ? "" : `&status=${filter}`;
+  }
 
   function describeError(operationError: unknown, fallback: string): string {
     return operationError instanceof ApiError
@@ -68,24 +71,42 @@
   }
 
   async function loadEvents() {
+    const version = ++requestVersion;
+    const organizerId = authentication.user?.id;
+    if (organizerId === undefined) {
+      events = [];
+      loaded = true;
+      return;
+    }
     try {
       const page = await request<Page<EventRecord>>(
-        `${endpoints.events()}?page=1&pageSize=100`,
+        `${endpoints.events()}?page=1&pageSize=100&organizerId=${organizerId}${filterQuery(statusFilter)}`,
       );
-      // The list endpoint is public and contains other organizers' events;
-      // the console only shows events owned by the current organizer.
-      const organizerId = authentication.user?.id;
-      events = page.items.filter(
-        (item) => organizerId !== undefined && item.organizerId === organizerId,
-      );
+      if (version !== requestVersion) {
+        return;
+      }
+      events = page.items;
+      loaded = true;
     } catch (requestError: unknown) {
+      if (version !== requestVersion) {
+        return;
+      }
       error = describeError(requestError, "获取活动列表失败");
-    } finally {
       loaded = true;
     }
   }
 
-  onMount(loadEvents);
+  // Reload from the API whenever the status tab changes.
+  $effect(() => {
+    const filter = statusFilter;
+    untrack(() => {
+      void loadEvents();
+    });
+    void filter;
+    return () => {
+      requestVersion++;
+    };
+  });
 
   $effect(() => {
     if (error.length === 0) {
@@ -203,7 +224,7 @@
     {#if !loaded}
       <!-- TODO: show a skeleton placeholder while the organizer events are loading. -->
     {:else}
-      {#each visibleEvents as event (event.id)}
+      {#each events as event (event.id)}
         {@const displayStatus = deriveEventDisplayStatus(event, now)}
         <Item.Root>
           <Item.Media class={["size-8"]}>
@@ -230,51 +251,62 @@
                 {formatDateTime(event.endTime)}
               </Item.Description>
             </div>
-            <div class={["flex", "flex-wrap", "gap-2"]}>
-              {#if event.status === "draft"}
+          </Item.Content>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+              {#snippet child({ props })}
                 <Button
-                  size="sm"
+                  {...props}
+                  variant="secondary"
+                  size="icon"
+                  aria-label="活动操作"
+                  title="活动操作"
                   disabled={busyEventId === event.id}
+                >
+                  {#if busyEventId === event.id}
+                    <RiLoader4Line class={["animate-spin"]} />
+                  {:else}
+                    <RiMoreLine />
+                  {/if}
+                </Button>
+              {/snippet}
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content align="end" class={["w-36"]}>
+              {#if event.status === "draft"}
+                <DropdownMenu.Item
                   onclick={() => {
                     void changeStatus(event, "published");
                   }}
                 >
                   发布
-                </Button>
+                </DropdownMenu.Item>
               {/if}
               {#if event.status === "published"}
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={busyEventId === event.id}
+                <DropdownMenu.Item
                   onclick={() => {
                     void changeStatus(event, "closed");
                   }}
                 >
                   停止预约
-                </Button>
+                </DropdownMenu.Item>
               {/if}
               {#if event.status === "draft" || event.status === "published"}
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={busyEventId === event.id}
+                <DropdownMenu.Item
+                  variant="destructive"
                   onclick={() => {
                     void changeStatus(event, "cancelled");
                   }}
                 >
                   取消活动
-                </Button>
+                </DropdownMenu.Item>
               {/if}
-              <Button
-                size="sm"
-                variant="secondary"
+              <DropdownMenu.Item
                 onclick={() => push(`/organizer/events/${event.id}/bookings`)}
               >
                 查看名单
-              </Button>
-            </div>
-          </Item.Content>
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
         </Item.Root>
       {/each}
     {/if}
@@ -321,18 +353,16 @@
         </div>
         <div class={["flex", "flex-col", "gap-3"]}>
           <Label for="organizer-event-start-time">开始时间</Label>
-          <Input
+          <DateTimePicker
             id="organizer-event-start-time"
-            type="datetime-local"
             bind:value={createForm.startTime}
             disabled={creating}
           />
         </div>
         <div class={["flex", "flex-col", "gap-3"]}>
           <Label for="organizer-event-end-time">结束时间</Label>
-          <Input
+          <DateTimePicker
             id="organizer-event-end-time"
-            type="datetime-local"
             bind:value={createForm.endTime}
             disabled={creating}
           />

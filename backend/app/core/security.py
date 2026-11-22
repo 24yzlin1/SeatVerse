@@ -76,12 +76,12 @@ def issue_token(
         "iat": issued_at,
         "exp": issued_at + time_to_live_seconds,
     }
-    return jwt.encode(payload, _get_jwt_secret_key(), _JWT_ALGORITHM)
+    return jwt.encode(payload, _get_jwt_secret_key(), _JWT_ALGORITHM)  # pyright: ignore[reportUnknownMemberType]
 
 
 def parse_token(token: str) -> TokenClaims | None:
     try:
-        claims = jwt.decode(
+        claims = jwt.decode(  # pyright: ignore[reportUnknownMemberType]
             token,
             _get_jwt_secret_key(),
             algorithms=[_JWT_ALGORITHM],
