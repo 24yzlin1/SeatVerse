@@ -193,10 +193,32 @@ def _seed_events(organizer_id: int, venue_id: int) -> tuple[int, int, int]:
     finally:
         connection.close()
 
-    total_event_seats = sum(
-        count_event_seats(event_id) for event_id, _ in targets
-    )
+    total_event_seats = sum(count_event_seats(event_id) for event_id, _ in targets)
     return created, inserted_event_seats, total_event_seats
+
+
+def seed_all(reset: bool = False) -> None:
+    """初始化数据库并导入全部演示数据；CLI 与 pytest 共用。"""
+    initialize_database(reset=reset)
+    organizer = find_organizer()
+    if organizer is None:
+        raise RuntimeError("未找到主办方账号，请先运行 scripts.migrate")
+    venue = find_only_venue()
+    if venue is None:
+        raise RuntimeError("未找到预置场馆，请先运行 scripts.migrate")
+
+    users_created, users_total = _seed_users()
+    seats_created, seats_total = _seed_seats(venue.id)
+    events_created, event_seats_created, event_seats_total = _seed_events(
+        organizer.id, venue.id
+    )
+
+    print(f"Users      : {users_created} created, {users_total} total")
+    print(f"Seats      : {seats_created} created, {seats_total} total")
+    print(f"Events     : {events_created} created, {count_events(None, None)} total")
+    print(f"Event seats: {event_seats_created} created, {event_seats_total} total")
+    print("Demo users : user01@seatverse.local ... user10@seatverse.local")
+    print("Demo password: User12345!")
 
 
 def main() -> int:
@@ -209,19 +231,7 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        initialize_database(reset=bool(args.reset))
-        organizer = find_organizer()
-        if organizer is None:
-            raise RuntimeError("Organizer account not found; run scripts.migrate first")
-        venue = find_only_venue()
-        if venue is None:
-            raise RuntimeError("Preset venue not found; run scripts.migrate first")
-
-        users_created, users_total = _seed_users()
-        seats_created, seats_total = _seed_seats(venue.id)
-        events_created, event_seats_created, event_seats_total = _seed_events(
-            organizer.id, venue.id
-        )
+        seed_all(reset=bool(args.reset))
     except (
         RuntimeError,
         OSError,
@@ -231,22 +241,6 @@ def main() -> int:
     ) as error:
         print(f"Seed failed: {error}")
         return 1
-
-    print(f"Users      : {users_created} created, {users_total} total")
-    print(f"Seats      : {seats_created} created, {seats_total} total")
-    events_total = count_events(
-        keyword=None,
-        statuses=[],
-        ended=None,
-        organizer_id=None,
-        now_iso=datetime.now(timezone.utc).isoformat(),
-    )
-    print(f"Events     : {events_created} created, {events_total} total")
-    print(
-        f"Event seats: {event_seats_created} created, {event_seats_total} total"
-    )
-    print("Demo users : user01@seatverse.local ... user10@seatverse.local")
-    print("Demo password: User12345!")
     return 0
 
 

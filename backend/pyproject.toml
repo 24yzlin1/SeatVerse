@@ -17,7 +17,12 @@ url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 default = true
 
 [dependency-groups]
-dev = ["httpx>=0.28.1", "poethepoet>=0.49.0", "pyright>=1.1.407", "pytest>=9.2.0"]
+dev = [
+    "httpx>=0.28.1",
+    "poethepoet>=0.49.0",
+    "pyright>=1.1.407",
+    "pytest>=9.2.0",
+]
 
 [tool.pyright]
 include = ["app", "scripts", "main.py"]
