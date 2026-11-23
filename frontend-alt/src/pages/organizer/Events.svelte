@@ -2,13 +2,18 @@
   import { untrack } from "svelte";
   import { push } from "svelte-spa-router";
   import { toast } from "svelte-sonner";
-  import { RiAddLine, RiLoader4Line, RiMoreLine } from "remixicon-svelte";
+  import {
+    RiAddLine,
+    RiCloseCircleLine,
+    RiLoader4Line,
+    RiSendPlaneLine,
+    RiStopLine,
+  } from "remixicon-svelte";
 
   import * as Avatar from "$lib/components/ui/avatar";
   import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
   import * as Drawer from "$lib/components/ui/drawer";
-  import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import { Input } from "$lib/components/ui/input";
   import * as Item from "$lib/components/ui/item";
   import { Label } from "$lib/components/ui/label";
@@ -226,7 +231,12 @@
     {:else}
       {#each events as event (event.id)}
         {@const displayStatus = deriveEventDisplayStatus(event, now)}
-        <Item.Root>
+        <!-- Tapping the row opens the roster; status actions stay as icons so
+        they never block the click target. -->
+        <Item.Root
+          class={["click-link"]}
+          onclick={() => push(`/organizer/events/${event.id}/bookings`)}
+        >
           <Item.Media class={["size-8"]}>
             <Avatar.Root class={["rounded-lg"]}>
               <Avatar.Fallback>
@@ -252,61 +262,64 @@
               </Item.Description>
             </div>
           </Item.Content>
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger>
-              {#snippet child({ props })}
-                <Button
-                  {...props}
-                  variant="secondary"
-                  size="icon"
-                  aria-label="活动操作"
-                  title="活动操作"
-                  disabled={busyEventId === event.id}
-                >
-                  {#if busyEventId === event.id}
-                    <RiLoader4Line class={["animate-spin"]} />
-                  {:else}
-                    <RiMoreLine />
-                  {/if}
-                </Button>
-              {/snippet}
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content align="end" class={["w-36"]}>
-              {#if event.status === "draft"}
-                <DropdownMenu.Item
-                  onclick={() => {
-                    void changeStatus(event, "published");
-                  }}
-                >
-                  发布
-                </DropdownMenu.Item>
-              {/if}
-              {#if event.status === "published"}
-                <DropdownMenu.Item
-                  onclick={() => {
-                    void changeStatus(event, "closed");
-                  }}
-                >
-                  停止预约
-                </DropdownMenu.Item>
-              {/if}
-              {#if event.status === "draft" || event.status === "published"}
-                <DropdownMenu.Item
-                  variant="destructive"
-                  onclick={() => {
-                    void changeStatus(event, "cancelled");
-                  }}
-                >
-                  取消活动
-                </DropdownMenu.Item>
-              {/if}
-              <DropdownMenu.Item
-                onclick={() => push(`/organizer/events/${event.id}/bookings`)}
+          <div class={["flex", "gap-2", "shrink-0"]}>
+            {#if event.status === "draft"}
+              <Button
+                variant="secondary"
+                size="icon"
+                aria-label="发布"
+                title="发布"
+                disabled={busyEventId === event.id}
+                onclick={(clickEvent) => {
+                  clickEvent.stopPropagation();
+                  void changeStatus(event, "published");
+                }}
               >
-                查看名单
-              </DropdownMenu.Item>
-            </DropdownMenu.Content>
-          </DropdownMenu.Root>
+                {#if busyEventId === event.id}
+                  <RiLoader4Line class={["animate-spin"]} />
+                {:else}
+                  <RiSendPlaneLine />
+                {/if}
+              </Button>
+            {:else if event.status === "published"}
+              <Button
+                variant="secondary"
+                size="icon"
+                aria-label="停止预约"
+                title="停止预约"
+                disabled={busyEventId === event.id}
+                onclick={(clickEvent) => {
+                  clickEvent.stopPropagation();
+                  void changeStatus(event, "closed");
+                }}
+              >
+                {#if busyEventId === event.id}
+                  <RiLoader4Line class={["animate-spin"]} />
+                {:else}
+                  <RiStopLine />
+                {/if}
+              </Button>
+            {/if}
+            {#if event.status === "draft" || event.status === "published"}
+              <Button
+                variant="secondary"
+                size="icon"
+                aria-label="取消活动"
+                title="取消活动"
+                disabled={busyEventId === event.id}
+                onclick={(clickEvent) => {
+                  clickEvent.stopPropagation();
+                  void changeStatus(event, "cancelled");
+                }}
+              >
+                {#if busyEventId === event.id}
+                  <RiLoader4Line class={["animate-spin"]} />
+                {:else}
+                  <RiCloseCircleLine />
+                {/if}
+              </Button>
+            {/if}
+          </div>
         </Item.Root>
       {/each}
     {/if}

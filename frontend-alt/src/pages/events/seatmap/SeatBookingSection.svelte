@@ -2,14 +2,17 @@
   import {
     RiBox3Line,
     RiCheckLine,
+    RiCloseCircleLine,
     RiEraserLine,
     RiLoader4Line,
   } from "remixicon-svelte";
 
+  import * as Item from "$lib/components/ui/item";
   import { Button } from "$lib/components/ui/button";
 
   import SeatPlan from "./SeatPlan.svelte";
   import SeatScene from "./SeatScene.svelte";
+  import SeatViewDrawer from "./SeatViewDrawer.svelte";
   import {
     SEAT_VISUAL_LABEL,
     seatVisualState,
@@ -18,6 +21,7 @@
     SeatId,
     SeatMapData,
     SelectedSeatIds,
+    StaticSeat,
   } from "@/common/api";
 
   // Presentation-only seat booking view. All requests and selection state
@@ -46,9 +50,13 @@
   } = $props();
 
   // Pure view state; switching modes never touches the shared selection.
-  let immersive = $state(false);
+  let immersive = $state(true);
   let resetVersion = $state(0);
   let hoveredSeatId = $state<SeatId | null>(null);
+  let seatViewOpen = $state(false);
+  // The seat whose perspective the drawer previews; `null` keeps the 3D
+  // scene unmounted while the drawer is closed.
+  let seatViewSeat = $state<StaticSeat | null>(null);
   const selectedSeats = $derived(
     data.seats
       .filter((seat) => selectedSeatIds.has(seat.id))
@@ -85,6 +93,37 @@
     />
   {/if}
 </div>
+<!-- Selected seat list; tapping a row previews the seat, the trailing icon
+removes it from the selection. -->
+<div class={["px-2", "flex", "flex-col"]}>
+  {#each selectedSeats as seat (seat.id)}
+    <Item.Root
+      class={["click-link"]}
+      onclick={() => {
+        seatViewSeat = seat;
+        seatViewOpen = true;
+      }}
+    >
+      <Item.Content class={["overflow-hidden"]}>
+        <Item.Title class={["line-clamp-1"]}>{seat.label}</Item.Title>
+      </Item.Content>
+      <Button
+        variant="secondary"
+        size="icon"
+        aria-label={`删除${seat.label}`}
+        title={`删除${seat.label}`}
+        disabled={submitting || refreshing}
+        onclick={(event) => {
+          event.stopPropagation();
+          onSeatToggle(seat.id);
+        }}
+      >
+        <RiCloseCircleLine />
+      </Button>
+    </Item.Root>
+  {/each}
+</div>
+<SeatViewDrawer bind:open={seatViewOpen} focusSeat={seatViewSeat} seats={data.seats} />
 <p class="sr-only" role="status">
   {#if hoveredSeat}
     {hoveredSeat.label} · {SEAT_VISUAL_LABEL[

@@ -9,6 +9,7 @@
     RiGroupLine,
     RiLoader4Line,
     RiMapPinLine,
+    RiReceiptLine,
     RiUserLine,
   } from "remixicon-svelte";
 
@@ -20,11 +21,17 @@
   import Error from "@/common/Error.svelte";
   import VisualCard from "@/common/VisualCard.svelte";
   import SeatBooking from "@/pages/events/components/SeatBooking.svelte";
-  import { loadSeatStatistics } from "@/common/api";
+  import SeatViewDrawer from "@/pages/events/seatmap/SeatViewDrawer.svelte";
+  import { loadSeatMap, loadSeatStatistics } from "@/common/api";
   import { loadBookingWindow } from "@/common/api";
   import { Button } from "$lib/components/ui/button";
   import { ApiError, endpoints, request } from "@/common/api";
-  import type { Booking, EventRecord } from "@/common/api";
+  import type {
+    Booking,
+    EventRecord,
+    SeatMapData,
+    StaticSeat,
+  } from "@/common/api";
   import { authentication } from "@/common/stores/authentication.svelte";
   import { BOOKING_STATUS_LABEL } from "@/common/utils/groupBookings";
   import {
@@ -58,6 +65,40 @@
     $state(null);
 
   let selectedOption = $state("0");
+
+  // Seat perspective preview for bookings. Booking seats carry no
+  // coordinates, so the aggregate seat map is fetched once per event and
+  // cached; the drawer previews the booking's first seat.
+  let seatMapData: SeatMapData | null = $state(null);
+  let previewSeat: StaticSeat | null = $state(null);
+  let previewOpen = $state(false);
+  let seatMapVersion = 0;
+
+  async function openSeatPreview(booking: Booking) {
+    const currentId = eventId;
+    if (!Number.isSafeInteger(currentId)) {
+      return;
+    }
+    const version = ++seatMapVersion;
+    try {
+      const data = seatMapData ?? (await loadSeatMap(currentId));
+      if (version !== seatMapVersion || currentId !== eventId) {
+        return;
+      }
+      seatMapData = data;
+      previewSeat =
+        data.seats.find((seat) => seat.id === booking.seats[0]?.id) ?? null;
+      if (previewSeat) {
+        previewOpen = true;
+      } else {
+        toast.error("没有找到这个预约的座位，请刷新后再试");
+      }
+    } catch {
+      if (version === seatMapVersion && currentId === eventId) {
+        toast.error("座位视角暂时进不去，稍后再试试");
+      }
+    }
+  }
 
   let now = $state(Date.now());
 
@@ -174,6 +215,9 @@
     detail = null;
     error = "";
     seatStats = null;
+    seatMapData = null;
+    previewSeat = null;
+    previewOpen = false;
     if (!Number.isSafeInteger(currentId)) {
       error = "无效的活动 ID";
       return;
@@ -185,6 +229,7 @@
     return () => {
       controller.abort();
       statisticsVersion++;
+      seatMapVersion++;
     };
   });
 
@@ -295,12 +340,19 @@
   {#if selectedOption === "1"}
     <div class={["px-2", "flex", "flex-col"]}>
       {#if !authentication.isLoggedIn}
-        <p class="px-4 py-6">请通过右上角账户入口登录后查看本场预约。</p>
+        <Error
+          title="请先登录"
+          description="登录后才能查看你的预约"
+        />
       {:else if eventBookings}
         {#each eventBookings as booking (booking.id)}
+          <!-- Tapping the row previews the seat perspective; the ticket and
+          cancel actions stay as icons so they never block the click target. -->
           <Item.Root
             class={["click-link"]}
-            onclick={() => push(`/bookings/${booking.id}/ticket`)}
+            onclick={() => {
+              void openSeatPreview(booking);
+            }}
           >
             <Item.Content class={["overflow-hidden"]}>
               <Item.Title class={["line-clamp-1"]}>
@@ -316,27 +368,41 @@
                 </Badge>
               </div>
             </Item.Content>
-            {#if booking.status === "reserved" &&
-              detail &&
-              now < Date.parse(detail.endTime)}
+            <div class={["flex", "gap-2", "shrink-0"]}>
               <Button
                 variant="secondary"
                 size="icon"
-                aria-label="取消预约"
-                title="取消预约"
-                disabled={cancellingBookingId !== null}
+                aria-label="查看票"
+                title="查看票"
                 onclick={(event) => {
                   event.stopPropagation();
-                  void cancelBooking(booking);
+                  push(`/bookings/${booking.id}/ticket`);
                 }}
               >
-                {#if cancellingBookingId === booking.id}
-                  <RiLoader4Line class="animate-spin" />
-                {:else}
-                  <RiCloseCircleLine />
-                {/if}
+                <RiReceiptLine />
               </Button>
-            {/if}
+              {#if booking.status === "reserved" &&
+                detail &&
+                now < Date.parse(detail.endTime)}
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  aria-label="取消预约"
+                  title="取消预约"
+                  disabled={cancellingBookingId !== null}
+                  onclick={(event) => {
+                    event.stopPropagation();
+                    void cancelBooking(booking);
+                  }}
+                >
+                  {#if cancellingBookingId === booking.id}
+                    <RiLoader4Line class="animate-spin" />
+                  {:else}
+                    <RiCloseCircleLine />
+                  {/if}
+                </Button>
+              {/if}
+            </div>
           </Item.Root>
         {/each}
       {/if}
@@ -423,3 +489,9 @@
     </div>
   </div>
 {/snippet}
+
+<SeatViewDrawer
+  bind:open={previewOpen}
+  focusSeat={previewSeat}
+  seats={seatMapData?.seats ?? []}
+/>

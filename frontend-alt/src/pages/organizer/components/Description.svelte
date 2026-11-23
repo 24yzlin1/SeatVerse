@@ -22,7 +22,7 @@
       icon: RiCalendarEventLine,
     },
     bookings: {
-      title: "活动名单",
+      title: "活动管理",
       description: "谁约了哪座、来没来，一目了然。现场签到请到签到核验页处理。",
       icon: RiFileList2Line,
     },
