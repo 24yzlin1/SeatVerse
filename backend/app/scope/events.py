@@ -81,6 +81,8 @@ def create_event(
             start_time=start_time,
             end_time=end_time,
             requested_venue_id=body.venue_id,
+            cover_url=body.cover_url,   # 新增
+            logo_url=body.logo_url,
         )
     )
 
