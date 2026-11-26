@@ -41,6 +41,8 @@ def _to_public(row: EventWithVenueRow) -> EventPublic:
             capacity=row.venue_capacity,
         ),
         organizerName=row.organizer_name,
+        coverUrl=row.event.cover_url,
+        logoUrl=row.event.logo_url,
     )
 
 
@@ -85,7 +87,16 @@ def create_event(
     start_time: str,
     end_time: str,
     requested_venue_id: int | None,
+    cover_url: str,
+    logo_url: str,
 ) -> EventPublic:
+    if cover_url:
+        if not cover_url.startswith("/api/uploads/") or len(cover_url) > 300:
+            raise AppError(400, "Invalid cover URL")
+    if logo_url:
+        if not logo_url.startswith("/api/uploads/") or len(logo_url) > 300:
+            raise AppError(400, "Invalid logo URL")
+            
     venue_id = _resolve_venue_id(requested_venue_id)
     created_at = datetime.now(timezone.utc).isoformat()
     event_id = insert_event(
@@ -97,6 +108,8 @@ def create_event(
         venue_id=venue_id,
         status="draft",
         created_at=created_at,
+        cover_url=cover_url,
+        logo_url=logo_url,
     )
     row = find_event_by_id(event_id)
     if row is None:

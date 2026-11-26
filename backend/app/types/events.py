@@ -17,6 +17,8 @@ class EventRow:
     venue_id: int
     status: ActivityStatus
     created_at: str
+    cover_url: str  # 新增
+    logo_url: str   # 新增
 
 
 @dataclass(frozen=True)
@@ -36,6 +38,8 @@ class EventPublic(BaseModel):
     status: ActivityStatus
     venue: VenuePublic
     organizer_name: str = Field(..., alias="organizerName")
+    cover_url: str = Field(default="", alias="coverUrl")  # 新增
+    logo_url: str = Field(default="", alias="logoUrl")    # 新增
 
 
 class EventListQuery(BaseModel):
@@ -53,6 +57,8 @@ class CreateEventRequest(BaseModel):
     start_time: str
     end_time: str
     venue_id: int | None = None
+    cover_url: str = Field(default="", alias="coverUrl")  # 新增
+    logo_url: str = Field(default="", alias="logoUrl")    # 新增
 
 
 class UpdateEventStatusRequest(BaseModel):

@@ -11,6 +11,7 @@ from app.types.events import ActivityStatus, EventRow, EventWithVenueRow
 _EVENT_SELECT_COLUMNS = (
     "e.id, e.title, e.description, e.start_time, e.end_time, "
     "e.organizer_id, e.venue_id, e.status, e.created_at, "
+    "e.cover_url, e.logo_url, "
     "v.name AS venue_name, v.capacity AS venue_capacity, "
     "u.name AS organizer_name"
 )
@@ -40,6 +41,8 @@ def _row_to_event(row: sqlite3.Row) -> EventRow:
         venue_id=read_integer(row, "venue_id"),
         status=_read_status(row),
         created_at=read_text(row, "created_at"),
+        cover_url=read_text(row, "cover_url"),
+        logo_url=read_text(row, "logo_url"),
     )
 
 
@@ -138,7 +141,7 @@ def find_event_by_title(title: str) -> EventRow | None:
         row = fetch_one_row(
             connection,
             "SELECT id, title, description, start_time, end_time, organizer_id, "
-            "venue_id, status, created_at FROM events "
+            "venue_id, status, created_at, cover_url, logo_url FROM events "
             "WHERE title = ? ORDER BY id ASC LIMIT 1",
             (title,),
         )
@@ -156,13 +159,15 @@ def insert_event(
     venue_id: int,
     status: ActivityStatus,
     created_at: str,
+    cover_url: str,
+    logo_url: str,
 ) -> int:
     connection = get_connection()
     try:
         cursor = connection.execute(
             "INSERT INTO events (title, description, start_time, end_time, "
-            "organizer_id, venue_id, status, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "organizer_id, venue_id, status, created_at, cover_url, logo_url) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 title,
                 description,
@@ -172,6 +177,8 @@ def insert_event(
                 venue_id,
                 status,
                 created_at,
+                cover_url,
+                logo_url,
             ),
         )
         connection.commit()
