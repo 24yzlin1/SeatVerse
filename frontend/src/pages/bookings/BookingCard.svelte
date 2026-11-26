@@ -2,7 +2,22 @@
   import type { Booking, BookingStatus } from "@/common/api";
   import { STATUS_LABEL } from "@/common/utils/groupBookings";
 
-  const { booking }: { booking: Booking } = $props();
+  const {
+    booking,
+    onCancel,
+    cancelling,
+    actionDisabled,
+  }: {
+    booking: Booking;
+    onCancel: (id: number) => void;
+    cancelling: boolean;
+    actionDisabled: boolean;
+  } = $props();
+  let confirming = $state(false);
+  const canCancel = $derived(
+    booking.status === "reserved" &&
+      Date.parse(booking.event.startTime) > Date.now(),
+  );
 
   const STATUS_CLASS: Record<BookingStatus, string> = {
     reserved: "bg-primary/10 text-primary",
@@ -35,7 +50,14 @@
   ]}
 >
   <header class={["flex", "items-start", "justify-between", "gap-4"]}>
-    <h2 class={["break-words", "text-lg", "font-semibold", "text-card-foreground"]}>
+    <h2
+      class={[
+        "break-words",
+        "text-lg",
+        "font-semibold",
+        "text-card-foreground",
+      ]}
+    >
       {booking.event.title}
     </h2>
     <span
@@ -53,7 +75,9 @@
     </span>
   </header>
 
-  <dl class={["grid", "grid-cols-1", "gap-2", "text-sm", "text-muted-foreground"]}>
+  <dl
+    class={["grid", "grid-cols-1", "gap-2", "text-sm", "text-muted-foreground"]}
+  >
     <div class={["flex", "gap-2"]}>
       <dt class={["shrink-0", "font-medium", "text-foreground"]}>场馆</dt>
       <dd>{booking.event.venue.name}</dd>
@@ -71,4 +95,41 @@
       <dd>{formatDate(booking.createdAt)}</dd>
     </div>
   </dl>
+  <p class="text-xs text-muted-foreground break-all">
+    预约编号：{booking.id} · 票号：{booking.ticketCode}
+  </p>
+  <div class="flex flex-wrap items-center gap-3 text-sm">
+    <a
+      class="underline underline-offset-4"
+      href={`#/events/${booking.event.id}/seats`}>查看本场座位</a
+    >
+    {#if canCancel}
+      {#if confirming}
+        <span>确认取消并释放座位？</span>
+        <button
+          type="button"
+          class="rounded-md border px-3 py-2"
+          disabled={actionDisabled}
+          onclick={() => {
+            confirming = false;
+            onCancel(booking.id);
+          }}>确认取消</button
+        >
+        <button
+          type="button"
+          class="rounded-md border px-3 py-2"
+          disabled={actionDisabled}
+          onclick={() => (confirming = false)}>返回</button
+        >
+      {:else}
+        <button
+          type="button"
+          class="rounded-md border px-3 py-2"
+          disabled={actionDisabled}
+          onclick={() => (confirming = true)}
+          >{cancelling ? "正在取消…" : "取消预约"}</button
+        >
+      {/if}
+    {/if}
+  </div>
 </article>

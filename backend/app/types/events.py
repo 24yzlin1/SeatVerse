@@ -45,13 +45,20 @@ class EventPublic(BaseModel):
 class EventListQuery(BaseModel):
     model_config = ConfigDict(extra="forbid")
     keyword: str | None = None
-    status: ActivityStatus | None = None
+    # Multi-value status filter (expanded from comma-separated input); an empty tuple means no filtering.
+    statuses: list[ActivityStatus] = []
+    # None means no filtering; True shows only ended events (end_time <= now and status still published/closed),
+    # False shows only ongoing events (end_time > now).
+    ended: bool | None = None
+    # The organizer console fetches events by its own id, avoiding a full fetch followed by client-side filtering.
+    organizer_id: int | None = None
     page: int = 1
     page_size: int = 20
 
 
 class CreateEventRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
     title: str
     description: str
     start_time: str

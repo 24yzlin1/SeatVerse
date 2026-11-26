@@ -4,13 +4,19 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 echo "==> frontend check"
-(cd frontend && npm run check)
+(cd frontend-alt && npm run check)
 
 echo "==> frontend lint"
-(cd frontend && npm run lint)
+(cd frontend-alt && npm run lint)
 
 echo "==> frontend build"
-(cd frontend && npm run build)
+(cd frontend-alt && npm run build)
+
+echo "==> banned-item scan"
+bash scripts/scan_banned.sh
+
+echo "==> sync endpoint scan"
+(cd backend && uv run python ../scripts/scan_sync_endpoints.py)
 
 echo "==> backend mypy"
 (cd backend && uv run poe check)

@@ -1,1 +1,2 @@
-"""SeatVerse 后端的维护脚本包（建库种子、并发验收等）。"""
+"""Maintenance script package for the SeatVerse backend (database seeding,
+concurrency acceptance tests, etc.)."""

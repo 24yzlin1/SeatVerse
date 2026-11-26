@@ -5,7 +5,6 @@ from app.repos.authentication import find_user_by_email, find_user_by_id, insert
 from app.types.authentication import (
     AuthenticationPayload,
     Identity,
-    MePayload,
     UserPublic,
     UserRole,
     UserRow,
@@ -50,8 +49,14 @@ def login(
     return AuthenticationPayload(token=token, user=_to_public(user))
 
 
-def me(identity: Identity) -> MePayload:
+def me(identity: Identity) -> UserPublic:
+    """The payload of `GET /authentication/me` is the user object itself (auth.md §14.2 rule 4).
+
+    Do not wrap it in `{ "user": ... }`: the frontend `bootstrap()` uses the returned
+    value to overwrite the user cache directly. An extra layer would make `role`
+    unreadable, and after a refresh an organizer would be treated as a regular user.
+    """
     user = find_user_by_id(identity.user_id)
     if user is None:
         raise AppError(401, "Session expired, please log in again")
-    return MePayload(user=_to_public(user))
+    return _to_public(user)

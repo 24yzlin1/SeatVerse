@@ -2,11 +2,9 @@
   import { Canvas } from "@threlte/core";
   import { AgXToneMapping, PCFShadowMap } from "three";
   import VenueScene from "./VenueScene.svelte";
-  import type { VenueView } from "./scene-model";
   import type { SeatSceneProps } from "./types";
 
   const props: SeatSceneProps = $props();
-  let view = $state<VenueView>("interior");
   let ready = $state(false);
   let sceneFailed = $state(false);
   let command = $state({
@@ -20,18 +18,7 @@
 </script>
 
 <div class="scene-toolbar" aria-label="场馆视角控制">
-  <div class="view-modes" role="group" aria-label="场馆视图">
-    <button
-      type="button"
-      aria-pressed={view === "interior"}
-      onclick={() => (view = "interior")}>馆内视角</button
-    >
-    <button
-      type="button"
-      aria-pressed={view === "overview"}
-      onclick={() => (view = "overview")}>全馆俯瞰</button
-    >
-  </div>
+  <span class="view-label">全馆俯瞰</span>
   <div class="view-buttons">
     <button
       type="button"
@@ -82,9 +69,9 @@
         seats={props.seats}
         seatStates={props.seatStates}
         selectedSeatIds={props.selectedSeatIds}
+        disabled={props.disabled}
         onSeatToggle={props.onSeatToggle}
         onSeatHover={props.onSeatHover}
-        {view}
         {command}
         onReady={() => {
           ready = true;
@@ -131,22 +118,9 @@
     padding: 14px 20px;
     border-bottom: 1px solid var(--border);
   }
-  .view-modes {
-    display: flex;
-    gap: 2px;
-    padding: 3px;
-    border-radius: var(--radius-sm);
-    background: var(--secondary);
-  }
-  .view-modes button {
+  .view-label {
     font-size: 13px;
-    padding: 0 12px;
-    border: none;
-    background: transparent;
-  }
-  .view-modes button[aria-pressed="true"] {
-    background: var(--primary);
-    color: var(--primary-foreground);
+    color: var(--muted-foreground);
   }
   button {
     min-width: 36px;

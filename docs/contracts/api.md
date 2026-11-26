@@ -1,7 +1,7 @@
 # SeatVerse · 接口契约（API）
 
 > 状态：已冻结 ｜ 负责人：A ｜ 日期：2026-11-08
-> 覆盖：通路前缀、统一响应信封、17 个接口的路径与归属、关键接口响应形态与样例
+> 覆盖：通路前缀、统一响应信封、18 个接口的路径与归属、关键接口响应形态与样例；2026-11-21 补 E 的预约筛选与座位统计
 > 依据：02 号《后端开发规范》§三 / §八、04 号《开发路线图》§3.1—3.7、05 号《六人分工方案》接口分工
 
 ---
@@ -131,13 +131,13 @@ curl -s http://localhost:5173/api/   # 同上，证明代理原样转发生效
 | 404 | 资源不存在 | 显示 `message`；票号场景统一"不存在或无权查看" |
 | 409 | 状态冲突 | 显示后端 `message`；选座提交的 409 刷新座位状态并提示重选（02 §三、03 §六）；重复签到 409 按 03 §8 展示首次签到时间 |
 
-**前端兜底**：后端目前尚未接管 `HTTPException` 与 `RequestValidationError`，非 2xx 响应体是 `{"detail": ...}`。请求客户端必须先尝试按信封解析；解析失败一律抛 `ApiError(-1, MALFORMED_RESPONSE_MESSAGE)`，**不得读取 HTTP 状态码、不得按 404/422/5xx 分支**，页面展示固定中文文案、不得白屏（02 §三、03 §六、04 §3.1）。
+**前端兜底**：请求参数的 `RequestValidationError` 已统一为 HTTP 200、业务码 `400` 的信封。框架级 `HTTPException`（例如不存在的路由）仍可能返回 `{"detail": ...}`。请求客户端必须先尝试按信封解析；解析失败一律抛 `ApiError(-1, MALFORMED_RESPONSE_MESSAGE)`，**不得读取 HTTP 状态码、不得按 404/422/5xx 分支**，页面展示固定中文文案、不得白屏（02 §三、03 §六、04 §3.1）。
 
 **分页**：列表统一 `{ items, total, page, pageSize }`，`page` 从 1 开始，`pageSize` 默认 20、上限 100；单对象接口直接返回对象，不包分页。`total` 是满足条件的总条数，不是当前页条数。具体排序与查询参数见 §4.1。
 
 ---
 
-## 3. 接口索引（17 个）
+## 3. 接口索引（18 个）
 
 表中"路由内 path"是后端 `@router` 里应写的值（**不含** `/api`）；最终挂载路径 = `/api` + 本列，由 `APIRouter(prefix="/api")` 统一加前缀。对外路径与最终挂载路径相同，不得出现第三种写法。
 
@@ -160,6 +160,7 @@ curl -s http://localhost:5173/api/   # 同上，证明代理原样转发生效
 | 15 | GET | `/api/tickets/{ticket_code}` | `/tickets/{ticket_code}` | 登录 | F | 票号直查；非本人/不存在统一 404 |
 | 16 | GET | `/api/events/{id}/bookings` | `/events/{id}/bookings` | 归属主办方 | F | 本场预约名单 |
 | 17 | POST | `/api/tickets/verify` | `/tickets/verify` | 主办方 | F | 请求体 `{ticketCode}`，返回 Ticket；重复核验 409 |
+| 18 | GET | `/api/events/{id}/seat-statistics` | `/events/{id}/seat-statistics` | 公开 | E | 本场座位聚合统计，见 [座位与预约契约](seats-bookings.md) |
 
 约定：
 
@@ -175,16 +176,20 @@ curl -s http://localhost:5173/api/   # 同上，证明代理原样转发生效
 
 ### 4.1 `GET /api/bookings/me`
 
+支持组合 `eventId`（正整数）与 `status`（`reserved/used/cancelled`，逗号分隔多值），先筛选本人数据再分页，`total` 同样应用筛选。无参数保持原行为；无效筛选返回业务码 400。座位查询、创建预约、统计及具体样例见 [E → C 交接契约](seats-bookings.md)。
+
 **查询参数**
 
 | 参数 | 类型 | 必填 | 默认 | 约束 |
 |---|---|---|---|---|
 | `page` | integer | 否 | `1` | `>= 1`，越界返回 `400` |
 | `pageSize` | integer | 否 | `20` | `1—100`，越界返回 `400` |
+| `eventId` | integer | 否 | — | 正整数；只返回该活动的预约，非法返回 `400` |
+| `status` | string | 否 | — | `reserved` / `used` / `cancelled`，逗号分隔多值；非法返回 `400` |
 
 - 只返回当前登录用户的预约，包含 `reserved` / `cancelled` / `used` 三种状态。
 - `Booking.status` 只返回这三个存储值；“已完成 / 已签到”是展示态，按 `enums.md` §2.7 由前端从时间与状态派生，不写入接口。
-- **不做服务端状态分组**，也不接受 `status` 查询参数。04 §3.6 的“按状态分组”是页面展示要求：接口按 02 §三返回分页列表，前端用 `$derived` 本地分组；服务端重复分组会与 02 的分页契约冲突。
+- 支持 `eventId` / `status` 筛选，先筛选再分页；**不做服务端状态分组**。04 §3.6 的“按状态分组”仍是页面展示要求：前端用 `$derived` 本地分组，筛选不等于分组。
 - 排序固定为 `createdAt DESC, id DESC`，保证同一时间创建的多条记录顺序稳定。
 - 返回 `Page<Booking>`：`{ items, total, page, pageSize }`。
 

@@ -1,9 +1,10 @@
 <script lang="ts">
   import NotFound from "@/common/components/NotFound.svelte";
   import { router } from "./router.svelte";
+  import { routeComponents } from "./routeComponents";
 
   /** `*` 兜底路由不带组件，404 由下面单独分支渲染，以便把失败路径传给页面。 */
-  const page = $derived(router.matched?.component ?? null);
+  const page = $derived(routeComponents[router.matched?.name ?? ""] ?? null);
 </script>
 
 {#if router.isNotFound}

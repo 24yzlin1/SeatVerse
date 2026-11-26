@@ -34,7 +34,6 @@ npm.cmd run dev
 npm.cmd run check        # svelte-check
 npm.cmd run lint         # eslint
 npm.cmd run build        # 生产构建
-npm.cmd run test:seatmap # 选座数据与 3D 模型测试
 ```
 
 仓库根还提供一键检查入口（见根 README「检查入口」）；脚本未就绪时以以上命令为准，全绿再合并。

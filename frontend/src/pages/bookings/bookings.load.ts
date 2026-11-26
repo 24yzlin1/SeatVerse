@@ -1,20 +1,32 @@
-/**
- * 我的预约数据加载。
- *
- * 真实接口 `GET /bookings/me` 尚未就绪，当前返回本地演示数据；
- * 接口上线后把 USE_MOCK_BOOKINGS 改为 false，并删除 `__mock__` 目录。
- */
-import { endpoints, request } from "@/common/api";
-import { mockBookingsPage } from "@/common/api/__mock__/bookings";
-import type { Booking, Page } from "@/common/api/types";
+import { ApiError, endpoints, request } from "@/common/api";
+import type { Booking, Page } from "@/common/api";
 
-/** 临时开关：演示数据与真实接口之间切换。 */
-export const USE_MOCK_BOOKINGS = true;
-
-/** 读取“我的预约”列表；当前只取第 1 页。 */
-export async function loadBookings(): Promise<Page<Booking>> {
-  if (USE_MOCK_BOOKINGS) {
-    return mockBookingsPage();
+/** 只读取真实接口；合并分页后再交给页面按状态分组。 */
+export async function loadBookings(
+  signal?: AbortSignal,
+): Promise<{ items: Booking[]; total: number }> {
+  const pageSize = 100;
+  const first = await request<Page<Booking>>(
+    `${endpoints.bookingsMe()}?page=1&pageSize=${pageSize}`,
+    { signal },
+  );
+  if (
+    !first ||
+    !Array.isArray(first.items) ||
+    !Number.isSafeInteger(first.total) ||
+    first.total < 0
+  )
+    throw new ApiError(-1, "预约列表格式异常，请刷新后重试");
+  const items = [...first.items];
+  for (let page = 2; page <= Math.ceil(first.total / pageSize); page++) {
+    const next = await request<Page<Booking>>(
+      `${endpoints.bookingsMe()}?page=${page}&pageSize=${pageSize}`,
+      { signal },
+    );
+    if (!next || !Array.isArray(next.items))
+      throw new ApiError(-1, "预约列表格式异常，请刷新后重试");
+    items.push(...next.items);
   }
-  return request<Page<Booking>>(endpoints.bookingsMe());
+  const unique = new Map(items.map((booking) => [booking.id, booking]));
+  return { items: [...unique.values()], total: first.total };
 }

@@ -1,8 +1,8 @@
-"""预约与预约座位的数据库访问。
+"""Database access for bookings and booked seats.
 
-只写 SQL 与行映射：
-- 写操作接收调用方连接，不 commit、不 close；
-- 读操作自己开关连接，返回 typed 数据行。
+Contains only SQL and row mapping:
+- Write operations take a caller-provided connection and neither commit nor close it;
+- Read operations open and close their own connections and return typed rows.
 """
 
 import sqlite3
@@ -16,15 +16,112 @@ from app.repos.database import (
     read_integer,
     read_optional_text,
     read_text,
+    execute_update,
 )
 from app.types.bookings import (
     BookingEventRow,
     BookingListRow,
     BookingSeatBriefRow,
     BookingStatus,
+    BookingRow,
     EventStatus,
 )
 from app.types.seats import SeatType
+
+_PUBLIC_QUERY = (
+    "SELECT b.id, b.status, b.created_at, b.cancelled_at, t.ticket_code, "
+    "e.id AS event_id, e.title AS event_title, e.status AS event_status, "
+    "e.start_time AS event_start_time, e.end_time AS event_end_time, "
+    "v.id AS venue_id, v.name AS venue_name FROM bookings b "
+    "JOIN events e ON e.id = b.event_id "
+    "JOIN venues v ON v.id = e.venue_id "
+    "JOIN tickets t ON t.booking_id = b.id "
+)
+
+
+def list_user_bookings(
+    user_id: int, limit: int, offset: int,
+    event_id: int | None = None, statuses: Sequence[BookingStatus] = (),
+) -> tuple[list[BookingListRow], int]:
+    conditions = ["b.user_id = ?"]
+    parameters: list[object] = [user_id]
+    if event_id is not None:
+        conditions.append("b.event_id = ?")
+        parameters.append(event_id)
+    if statuses:
+        conditions.append("b.status IN (" + ",".join("?" for _ in statuses) + ")")
+        parameters.extend(statuses)
+    where = "WHERE " + " AND ".join(conditions)
+    connection = get_connection()
+    try:
+        total_row = fetch_one_row(
+            connection,
+            "SELECT COUNT(*) AS total FROM bookings b " + where,
+            parameters,
+        )
+        rows = fetch_all_rows(
+            connection,
+            _PUBLIC_QUERY
+            + where + " ORDER BY b.created_at DESC, b.id DESC LIMIT ? OFFSET ?",
+            [*parameters, limit, offset],
+        )
+        total = 0 if total_row is None else read_integer(total_row, "total")
+        return [_row_to_booking_list(row) for row in rows], total
+    finally:
+        connection.close()
+
+
+def find_booking_in_transaction(
+    connection: DatabaseConnection, booking_id: int
+) -> BookingRow | None:
+    row = fetch_one_row(
+        connection,
+        "SELECT id, event_id, user_id, status, created_at, cancelled_at "
+        "FROM bookings WHERE id = ?",
+        (booking_id,),
+    )
+    if row is None:
+        return None
+    return BookingRow(
+        id=read_integer(row, "id"),
+        event_id=read_integer(row, "event_id"),
+        user_id=read_integer(row, "user_id"),
+        status=_read_booking_status(read_text(row, "status")),
+        created_at=read_text(row, "created_at"),
+        cancelled_at=read_optional_text(row, "cancelled_at"),
+    )
+
+
+def active_booking_seat_ids(connection: DatabaseConnection, booking_id: int) -> list[int]:
+    rows = fetch_all_rows(
+        connection,
+        "SELECT seat_id FROM booking_seats WHERE booking_id = ? "
+        "AND is_active = 1 ORDER BY seat_id",
+        (booking_id,),
+    )
+    return [read_integer(row, "seat_id") for row in rows]
+
+
+def mark_booking_cancelled(
+    connection: DatabaseConnection, booking_id: int, cancelled_at: str
+) -> bool:
+    updated = execute_update(
+        connection,
+        "UPDATE bookings SET status = 'cancelled', cancelled_at = ? "
+        "WHERE id = ? AND status = 'reserved' AND NOT EXISTS "
+        "(SELECT 1 FROM tickets WHERE booking_id = ? AND verified_at IS NOT NULL)",
+        (cancelled_at, booking_id, booking_id),
+    )
+    return updated == 1
+
+
+def deactivate_booking_seats(connection: DatabaseConnection, booking_id: int) -> None:
+    execute_update(
+        connection,
+        "UPDATE booking_seats SET is_active = 0 "
+        "WHERE booking_id = ? AND is_active = 1",
+        (booking_id,),
+    )
 
 
 def _read_booking_status(value: str) -> BookingStatus:

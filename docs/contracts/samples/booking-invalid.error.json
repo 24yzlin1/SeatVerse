@@ -1,0 +1,5 @@
+{
+  "code": 400,
+  "message": "座位编号不能重复",
+  "payload": null
+}

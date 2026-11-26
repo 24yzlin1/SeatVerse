@@ -8,7 +8,7 @@ export type SeatType = "standard";
 export type EventSeatStatus = "available" | "locked" | "sold";
 export type EventStatus = "draft" | "published" | "closed" | "cancelled";
 
-/** 静态场馆坐标。模拟约定：米，X 向右、Y 向上、Z 从舞台指向后排。 */
+/** 静态场馆坐标原样采用后端值：米，X 向右、Y 向上、Z 从舞台指向后排。 */
 export interface StaticSeat {
   readonly id: SeatId;
   readonly row: number;
@@ -61,4 +61,14 @@ export interface SeatSceneProps extends SeatInteractionCallbacks {
   readonly seats: readonly StaticSeat[];
   readonly seatStates: ReadonlyMap<SeatId, EventSeatStatus>;
   readonly selectedSeatIds: SelectedSeatIds;
+  readonly disabled?: boolean;
+}
+
+export interface SeatMapData {
+  readonly event: SeatSelectionEvent & {
+    readonly description: string;
+    readonly venue: VenueSummary & { readonly capacity: number };
+  };
+  readonly seats: readonly StaticSeat[];
+  readonly seatStates: ReadonlyMap<SeatId, EventSeatStatus>;
 }

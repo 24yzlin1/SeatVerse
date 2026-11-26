@@ -19,7 +19,8 @@ SeatVerse/
 │   ├── app/                 四层：types / repos / core / scope
 │   ├── main.py              应用入口
 │   └── pyproject.toml       uv 依赖与 poe 任务
-├── frontend/                Svelte 5 + Vite 前端
+├── frontend-alt/            当前主前端（Svelte 5 + Vite）
+├── frontend/                历史前端，保留作参考
 │   └── src/                 App.svelte、app.css、common/、pages/、lib/
 ├── docs/
 │   ├── collaboration.md     分支、提交信息与锁文件规范
@@ -28,6 +29,8 @@ SeatVerse/
 ├── .github/                 PR 与 Issue 模板
 └── README.md
 ```
+
+当前主前端为 `frontend-alt/`，后续开发、启动与统一检查均使用该目录。座位与预约接口交接见 [E → C 契约](docs/contracts/seats-bookings.md)，选座运行与验收说明见 [新版选座模块](frontend-alt/src/pages/seatmap/README.md)。
 
 ## 启动三步
 
@@ -41,7 +44,7 @@ SeatVerse/
 cd backend && uv sync && uv run poe dev
 
 # 2) 前端（终端 2，另开一个）
-cd frontend && npm ci && npm run dev
+cd frontend-alt && npm ci && npm run dev
 
 # 3) 浏览器打开
 # http://localhost:5173
@@ -52,6 +55,8 @@ cd frontend && npm ci && npm run dev
 - 前端：<http://localhost:5173>
 - 后端：<http://localhost:8000>
 - 前端通过 Vite 代理访问后端，浏览器请求统一走 `/api/...`；后端源码路由统一挂载在 `/api` 下（`APIRouter(prefix="/api")`），代理原样转发、不 rewrite。
+
+首次使用空数据库时，在 `backend/` 执行 `uv run poe seed`，从仓库提供的后端数据初始化活动、场馆和座位。该命令跳过已有记录，不要通过 `--reset` 覆盖业务数据。选座应从活动列表进入实际活动；选座页和“我的预约”均请求后端，不再使用 1001 / 1002 的前端演示活动。
 
 > 若 `npm ci` 因锁文件与 `package.json` 不同步而失败，先执行一次 `npm install` 重新生成锁文件，再按上面的命令启动。
 
@@ -71,7 +76,9 @@ macOS / Linux / Git Bash：
 bash scripts/check.sh
 ```
 
-脚本依次执行前端 `check` / `lint` / `build`、后端 `mypy`、`pytest`（没有测试时容忍退出码 5），全部通过后输出 `ALL GREEN`。
+脚本依次执行前端 `check` / `lint` / `build`、禁用项扫描、同步端点扫描、后端 `mypy`、`pytest`（没有测试时容忍退出码 5），全部通过后输出 `ALL GREEN`。
+
+检查链路包含禁用项扫描与同步端点扫描；接口文档快照归档在 [docs/api/openapi.json](docs/api/openapi.json)。
 
 检查未通过不得合并；前端类型检查、后端 mypy 均要求零错误。
 

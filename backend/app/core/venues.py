@@ -1,9 +1,9 @@
-"""场馆与场馆固定座位的业务用例。
+"""Business use cases for venues and their fixed seats.
 
-座位坐标来自 repos，core 只负责：
-- 校验场馆是否存在；
-- 把数据库行转成前端需要的 `SeatPublic`；
-- 拼出 `label`（如 3排12号）。
+Seat coordinates come from the repos; this core module only:
+- validates that the venue exists;
+- converts database rows into `SeatPublic` for the frontend;
+- builds the `label` (e.g. "Row 3 Seat 12").
 """
 
 from app.core.common import AppError
@@ -27,7 +27,7 @@ def list_venues(page: int, page_size: int) -> VenuePage:
 def list_venue_seats(venue_id: int) -> SeatListPayload:
     venue = find_venue_by_id(venue_id)
     if venue is None:
-        raise AppError(404, "场馆不存在")
+        raise AppError(404, "Venue not found")
 
     rows = list_seats_by_venue(venue_id)
     items = [
@@ -35,7 +35,7 @@ def list_venue_seats(venue_id: int) -> SeatListPayload:
             id=row.id,
             row=row.row_number,
             number=row.seat_number,
-            label=f"{row.row_number}排{row.seat_number}号",
+            label=f"Row {row.row_number} Seat {row.seat_number}",
             seatType=row.seat_type,
             x=row.x,
             y=row.y,

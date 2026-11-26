@@ -35,6 +35,33 @@ export interface VenueBrief {
   name: string;
 }
 
+/** 活动详情里的场馆；比 `VenueBrief` 多一个容量字段。 */
+export interface VenueDetail {
+  id: number;
+  name: string;
+  capacity: number;
+}
+
+/**
+ * `GET /events` / `GET /events/{id}` / `POST /events` / `PATCH /events/{id}/status`
+ * 返回的活动对象。
+ *
+ * `organizerId` 用于主办方后台筛自己的活动；没有它只能按姓名猜。
+ */
+export interface EventRecord {
+  id: number;
+  title: string;
+  description: string;
+  /** ISO 8601 */
+  startTime: string;
+  /** ISO 8601 */
+  endTime: string;
+  status: EventStatus;
+  venue: VenueDetail;
+  organizerName: string;
+  organizerId: number;
+}
+
 export interface EventSummary {
   id: number;
   title: string;
@@ -109,6 +136,28 @@ export interface Ticket {
   verifiedBy: number | null;
   event: EventSummary;
   seats: SeatBrief[];
+}
+
+// ===== 主办方名单（docs/contracts/tickets-roster.md） =====
+
+export interface RosterUser {
+  id: number;
+  name: string;
+  email: string;
+}
+
+export interface RosterEntry {
+  /** 预约编号 */
+  id: number;
+  status: BookingStatus;
+  createdAt: string;
+  cancelledAt: string | null;
+  /** 对应电子票票号；历史脏数据可能为 null */
+  ticketCode: string | null;
+  user: RosterUser;
+  seats: SeatBrief[];
+  verifiedAt: string | null;
+  verifiedBy: number | null;
 }
 
 // ===== 信封与分页（api.md §2） =====

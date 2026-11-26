@@ -9,7 +9,7 @@
 ## 自检
 
 - [ ] 本地已跑 `scripts\check.cmd`（Windows）或 `bash scripts/check.sh`
-- [ ] 未手改 `frontend/src/lib/components/ui/`
+- [ ] 未手改 `frontend-alt/src/lib/components/ui/`
 - [ ] 未单独修改锁文件（如需改，已在下方说明中标注）
 
 ## 影响范围

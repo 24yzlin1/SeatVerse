@@ -17,20 +17,32 @@ url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 default = true
 
 [dependency-groups]
-dev = ["httpx>=0.28.1", "mypy>=2.4.1", "poethepoet>=0.49.0", "pytest>=9.2.0"]
+dev = [
+    "httpx>=0.28.1",
+    "poethepoet>=0.49.0",
+    "pyright>=1.1.407",
+    "pytest>=9.2.0",
+]
 
-[tool.mypy]
-strict = true
-disallow_any_explicit = true
-disallow_any_generics = true
-warn_return_any = true
-warn_unused_ignores = true
-plugins = ["pydantic.mypy"]
+[tool.pyright]
+include = ["app", "scripts", "main.py"]
+typeCheckingMode = "strict"
+venvPath = "."
+venv = ".venv"
+reportMissingTypeStubs = false
+
+# The `auto` executor of poe 0.49 re-runs tasks via `uv run` inside uv projects;
+# when the outer layer is already `uv run poe ...`, the inner uv cannot acquire
+# the uv cache lock and fails with `Could not acquire lock ... uv\cache\.lock:
+# access is denied`. Pin the virtualenv executor to call the executables inside
+# .venv directly, avoiding nested uv.
+[tool.poe]
+executor.type = "virtualenv"
 
 [tool.poe.tasks]
 dev = "uvicorn main:app --reload"
 start = "uvicorn main:app"
-check = "mypy app scripts main.py"
+check = "pyright app scripts main.py"
 test = "pytest"
 migrate = "python -m scripts.migrate"
 seed = "python -m scripts.seed"

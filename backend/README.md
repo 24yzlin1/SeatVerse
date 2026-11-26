@@ -59,7 +59,20 @@ uv run poe dev
 ## 种子数据
 
 ```powershell
-uv run python -m scripts.seed --reset
+uv run poe seed
 ```
 
-运行后终端会打印演示账号；数据写入 `.db/`，不会进入仓库。
+此命令先迁移数据库，再从仓库的 `scripts/data/` 导入活动、固定场馆座位和开发账号；已存在的记录跳过，可以重复执行。运行后终端会打印账号；数据写入 `.db/`，不会进入仓库。只有明确需要清空全部本地数据时才使用 `--reset`。
+
+前端选座与“我的预约”均读取上述数据库的真实接口，不再显示独立的前端模拟活动。已有业务数据的环境按现有数据库启动即可，无需重新导入种子数据。
+
+## 预约通路
+
+当前主前端为 `frontend-alt/`。座位、预约、筛选、统计、成功／失败样例及十用户真实 HTTP 并发命令见 [E → C 交接契约](../docs/contracts/seats-bookings.md)。
+
+- `POST /api/bookings` 创建预约，座位占用、预约、座位明细和票号在同一事务中提交；抢座冲突返回业务码 `409`。
+- `GET /api/bookings/me?page=1&pageSize=20` 只查询当前用户，包含取消记录，按创建时间及编号倒序排列。
+- 上述查询支持可组合的 `eventId` 与逗号分隔 `status=reserved,used,cancelled`，先按本人筛选再分页；`GET /api/events/{id}/seat-statistics` 返回本场初始化座位的聚合计数。
+- `POST /api/bookings/{id}/cancel` 校验本人、预约状态和活动开始时间；在一个事务中取消预约、释放座位并解除有效占用，不物理删除历史记录。
+- 草稿发布时同步初始化场馆的活动座位；已有座位状态不会被重置。
+- 参数校验失败返回 HTTP 200 的统一信封，业务码为 `400`；鉴权、资源和冲突语义见 `docs/contracts/`。

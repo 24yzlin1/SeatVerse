@@ -5,8 +5,10 @@ from app.repos.database import (
     get_connection,
     read_integer,
     read_text,
+    immediate_transaction,
 )
 from app.types.events import ActivityStatus, EventRow, EventWithVenueRow
+from app.repos.seats import initialize_event_seats
 
 _EVENT_SELECT_COLUMNS = (
     "e.id, e.title, e.description, e.start_time, e.end_time, "
@@ -61,13 +63,29 @@ def _escape_like_pattern(value: str) -> str:
 
 def _build_filters(
     keyword: str | None,
-    status: ActivityStatus | None,
+    statuses: list[ActivityStatus],
+    ended: bool | None,
+    organizer_id: int | None,
+    now_iso: str,
 ) -> tuple[str, list[object]]:
     conditions: list[str] = []
     parameters: list[object] = []
-    if status is not None:
-        conditions.append("e.status = ?")
-        parameters.append(status)
+    if statuses:
+        conditions.append("e.status IN (" + ",".join("?" for _ in statuses) + ")")
+        parameters.extend(statuses)
+    if ended is not None:
+        # "Ended" is a display-state filter: only events whose end time has
+        # passed and whose status is still published/closed count;
+        # cancelled/draft are excluded from this semantic.
+        if ended:
+            conditions.append("e.end_time <= ?")
+            conditions.append("e.status IN ('published','closed')")
+        else:
+            conditions.append("e.end_time > ?")
+        parameters.append(now_iso)
+    if organizer_id is not None:
+        conditions.append("e.organizer_id = ?")
+        parameters.append(organizer_id)
     if keyword:
         escaped_keyword = _escape_like_pattern(keyword)
         conditions.append(
@@ -82,11 +100,16 @@ def _build_filters(
 
 def find_events(
     keyword: str | None,
-    status: ActivityStatus | None,
+    statuses: list[ActivityStatus],
+    ended: bool | None,
+    organizer_id: int | None,
+    now_iso: str,
     limit: int,
     offset: int,
 ) -> list[EventWithVenueRow]:
-    where_clause, parameters = _build_filters(keyword, status)
+    where_clause, parameters = _build_filters(
+        keyword, statuses, ended, organizer_id, now_iso
+    )
     sql = (
         f"SELECT {_EVENT_SELECT_COLUMNS} FROM events e "
         "JOIN venues v ON v.id = e.venue_id "
@@ -106,9 +129,14 @@ def find_events(
 
 def count_events(
     keyword: str | None,
-    status: ActivityStatus | None,
+    statuses: list[ActivityStatus],
+    ended: bool | None,
+    organizer_id: int | None,
+    now_iso: str,
 ) -> int:
-    where_clause, parameters = _build_filters(keyword, status)
+    where_clause, parameters = _build_filters(
+        keyword, statuses, ended, organizer_id, now_iso
+    )
     sql = f"SELECT COUNT(*) AS total FROM events e{where_clause}"
     connection = get_connection()
     try:
@@ -198,13 +226,24 @@ def update_event_status(
 ) -> bool:
     connection = get_connection()
     try:
-        cursor = connection.execute(
-            "UPDATE events SET status = ? "
-            "WHERE id = ? AND organizer_id = ? AND status = ?",
-            (target_status, event_id, organizer_id, expected_status),
-        )
-        connection.commit()
-        updated_row_count = cursor.rowcount
+        with immediate_transaction(connection):
+            cursor = connection.execute(
+                "UPDATE events SET status = ? "
+                "WHERE id = ? AND organizer_id = ? AND status = ?",
+                (target_status, event_id, organizer_id, expected_status),
+            )
+            updated_row_count = cursor.rowcount
+            if updated_row_count == 1 and target_status == "published":
+                row = fetch_one_row(
+                    connection,
+                    "SELECT venue_id FROM events WHERE id = ?",
+                    (event_id,),
+                )
+                if row is None:
+                    raise RuntimeError("Published event is missing")
+                initialize_event_seats(
+                    connection, event_id, read_integer(row, "venue_id")
+                )
     finally:
         connection.close()
     return updated_row_count == 1

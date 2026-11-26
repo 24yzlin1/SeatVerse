@@ -65,7 +65,8 @@ CREATE TABLE IF NOT EXISTS booking_seats (
   is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0,1))
 );
 
--- 关键：只对“有效”的预约座位做唯一约束，取消后（is_active=0）才能重订
+-- Key point: the unique constraint only applies to "active" booked seats;
+-- rebooking becomes possible only after cancellation (is_active=0)
 CREATE UNIQUE INDEX IF NOT EXISTS ux_booking_seats_active
   ON booking_seats (event_id, seat_id) WHERE is_active = 1;
 

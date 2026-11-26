@@ -1,0 +1,1208 @@
+{
+  "code": 200,
+  "message": "ok",
+  "payload": {
+    "items": [
+      {
+        "id": 1,
+        "row": 1,
+        "number": 1,
+        "label": "1排1号",
+        "seatType": "standard",
+        "x": -7.1,
+        "y": 0.0,
+        "z": 1.8
+      },
+      {
+        "id": 2,
+        "row": 1,
+        "number": 2,
+        "label": "1排2号",
+        "seatType": "standard",
+        "x": -6.0,
+        "y": 0.0,
+        "z": 1.8
+      },
+      {
+        "id": 3,
+        "row": 1,
+        "number": 3,
+        "label": "1排3号",
+        "seatType": "standard",
+        "x": -4.9,
+        "y": 0.0,
+        "z": 1.8
+      },
+      {
+        "id": 4,
+        "row": 1,
+        "number": 4,
+        "label": "1排4号",
+        "seatType": "standard",
+        "x": -3.8,
+        "y": 0.0,
+        "z": 1.8
+      },
+      {
+        "id": 5,
+        "row": 1,
+        "number": 5,
+        "label": "1排5号",
+        "seatType": "standard",
+        "x": -2.7,
+        "y": 0.0,
+        "z": 1.8
+      },
+      {
+        "id": 6,
+        "row": 1,
+        "number": 6,
+        "label": "1排6号",
+        "seatType": "standard",
+        "x": -1.6,
+        "y": 0.0,
+        "z": 1.8
+      },
+      {
+        "id": 7,
+        "row": 1,
+        "number": 7,
+        "label": "1排7号",
+        "seatType": "standard",
+        "x": 1.6,
+        "y": 0.0,
+        "z": 1.8
+      },
+      {
+        "id": 8,
+        "row": 1,
+        "number": 8,
+        "label": "1排8号",
+        "seatType": "standard",
+        "x": 2.7,
+        "y": 0.0,
+        "z": 1.8
+      },
+      {
+        "id": 9,
+        "row": 1,
+        "number": 9,
+        "label": "1排9号",
+        "seatType": "standard",
+        "x": 3.8,
+        "y": 0.0,
+        "z": 1.8
+      },
+      {
+        "id": 10,
+        "row": 1,
+        "number": 10,
+        "label": "1排10号",
+        "seatType": "standard",
+        "x": 4.9,
+        "y": 0.0,
+        "z": 1.8
+      },
+      {
+        "id": 11,
+        "row": 1,
+        "number": 11,
+        "label": "1排11号",
+        "seatType": "standard",
+        "x": 6.0,
+        "y": 0.0,
+        "z": 1.8
+      },
+      {
+        "id": 12,
+        "row": 1,
+        "number": 12,
+        "label": "1排12号",
+        "seatType": "standard",
+        "x": 7.1,
+        "y": 0.0,
+        "z": 1.8
+      },
+      {
+        "id": 13,
+        "row": 2,
+        "number": 1,
+        "label": "2排1号",
+        "seatType": "standard",
+        "x": -7.1,
+        "y": 0.0,
+        "z": 3.0
+      },
+      {
+        "id": 14,
+        "row": 2,
+        "number": 2,
+        "label": "2排2号",
+        "seatType": "standard",
+        "x": -6.0,
+        "y": 0.0,
+        "z": 3.0
+      },
+      {
+        "id": 15,
+        "row": 2,
+        "number": 3,
+        "label": "2排3号",
+        "seatType": "standard",
+        "x": -4.9,
+        "y": 0.0,
+        "z": 3.0
+      },
+      {
+        "id": 16,
+        "row": 2,
+        "number": 4,
+        "label": "2排4号",
+        "seatType": "standard",
+        "x": -3.8,
+        "y": 0.0,
+        "z": 3.0
+      },
+      {
+        "id": 17,
+        "row": 2,
+        "number": 5,
+        "label": "2排5号",
+        "seatType": "standard",
+        "x": -2.7,
+        "y": 0.0,
+        "z": 3.0
+      },
+      {
+        "id": 18,
+        "row": 2,
+        "number": 6,
+        "label": "2排6号",
+        "seatType": "standard",
+        "x": -1.6,
+        "y": 0.0,
+        "z": 3.0
+      },
+      {
+        "id": 19,
+        "row": 2,
+        "number": 7,
+        "label": "2排7号",
+        "seatType": "standard",
+        "x": 1.6,
+        "y": 0.0,
+        "z": 3.0
+      },
+      {
+        "id": 20,
+        "row": 2,
+        "number": 8,
+        "label": "2排8号",
+        "seatType": "standard",
+        "x": 2.7,
+        "y": 0.0,
+        "z": 3.0
+      },
+      {
+        "id": 21,
+        "row": 2,
+        "number": 9,
+        "label": "2排9号",
+        "seatType": "standard",
+        "x": 3.8,
+        "y": 0.0,
+        "z": 3.0
+      },
+      {
+        "id": 22,
+        "row": 2,
+        "number": 10,
+        "label": "2排10号",
+        "seatType": "standard",
+        "x": 4.9,
+        "y": 0.0,
+        "z": 3.0
+      },
+      {
+        "id": 23,
+        "row": 2,
+        "number": 11,
+        "label": "2排11号",
+        "seatType": "standard",
+        "x": 6.0,
+        "y": 0.0,
+        "z": 3.0
+      },
+      {
+        "id": 24,
+        "row": 2,
+        "number": 12,
+        "label": "2排12号",
+        "seatType": "standard",
+        "x": 7.1,
+        "y": 0.0,
+        "z": 3.0
+      },
+      {
+        "id": 25,
+        "row": 3,
+        "number": 1,
+        "label": "3排1号",
+        "seatType": "standard",
+        "x": -7.1,
+        "y": 0.0,
+        "z": 4.2
+      },
+      {
+        "id": 26,
+        "row": 3,
+        "number": 2,
+        "label": "3排2号",
+        "seatType": "standard",
+        "x": -6.0,
+        "y": 0.0,
+        "z": 4.2
+      },
+      {
+        "id": 27,
+        "row": 3,
+        "number": 3,
+        "label": "3排3号",
+        "seatType": "standard",
+        "x": -4.9,
+        "y": 0.0,
+        "z": 4.2
+      },
+      {
+        "id": 28,
+        "row": 3,
+        "number": 4,
+        "label": "3排4号",
+        "seatType": "standard",
+        "x": -3.8,
+        "y": 0.0,
+        "z": 4.2
+      },
+      {
+        "id": 29,
+        "row": 3,
+        "number": 5,
+        "label": "3排5号",
+        "seatType": "standard",
+        "x": -2.7,
+        "y": 0.0,
+        "z": 4.2
+      },
+      {
+        "id": 30,
+        "row": 3,
+        "number": 6,
+        "label": "3排6号",
+        "seatType": "standard",
+        "x": -1.6,
+        "y": 0.0,
+        "z": 4.2
+      },
+      {
+        "id": 31,
+        "row": 3,
+        "number": 7,
+        "label": "3排7号",
+        "seatType": "standard",
+        "x": 1.6,
+        "y": 0.0,
+        "z": 4.2
+      },
+      {
+        "id": 32,
+        "row": 3,
+        "number": 8,
+        "label": "3排8号",
+        "seatType": "standard",
+        "x": 2.7,
+        "y": 0.0,
+        "z": 4.2
+      },
+      {
+        "id": 33,
+        "row": 3,
+        "number": 9,
+        "label": "3排9号",
+        "seatType": "standard",
+        "x": 3.8,
+        "y": 0.0,
+        "z": 4.2
+      },
+      {
+        "id": 34,
+        "row": 3,
+        "number": 10,
+        "label": "3排10号",
+        "seatType": "standard",
+        "x": 4.9,
+        "y": 0.0,
+        "z": 4.2
+      },
+      {
+        "id": 35,
+        "row": 3,
+        "number": 11,
+        "label": "3排11号",
+        "seatType": "standard",
+        "x": 6.0,
+        "y": 0.0,
+        "z": 4.2
+      },
+      {
+        "id": 36,
+        "row": 3,
+        "number": 12,
+        "label": "3排12号",
+        "seatType": "standard",
+        "x": 7.1,
+        "y": 0.0,
+        "z": 4.2
+      },
+      {
+        "id": 37,
+        "row": 4,
+        "number": 1,
+        "label": "4排1号",
+        "seatType": "standard",
+        "x": -7.1,
+        "y": 0.0,
+        "z": 5.4
+      },
+      {
+        "id": 38,
+        "row": 4,
+        "number": 2,
+        "label": "4排2号",
+        "seatType": "standard",
+        "x": -6.0,
+        "y": 0.0,
+        "z": 5.4
+      },
+      {
+        "id": 39,
+        "row": 4,
+        "number": 3,
+        "label": "4排3号",
+        "seatType": "standard",
+        "x": -4.9,
+        "y": 0.0,
+        "z": 5.4
+      },
+      {
+        "id": 40,
+        "row": 4,
+        "number": 4,
+        "label": "4排4号",
+        "seatType": "standard",
+        "x": -3.8,
+        "y": 0.0,
+        "z": 5.4
+      },
+      {
+        "id": 41,
+        "row": 4,
+        "number": 5,
+        "label": "4排5号",
+        "seatType": "standard",
+        "x": -2.7,
+        "y": 0.0,
+        "z": 5.4
+      },
+      {
+        "id": 42,
+        "row": 4,
+        "number": 6,
+        "label": "4排6号",
+        "seatType": "standard",
+        "x": -1.6,
+        "y": 0.0,
+        "z": 5.4
+      },
+      {
+        "id": 43,
+        "row": 4,
+        "number": 7,
+        "label": "4排7号",
+        "seatType": "standard",
+        "x": 1.6,
+        "y": 0.0,
+        "z": 5.4
+      },
+      {
+        "id": 44,
+        "row": 4,
+        "number": 8,
+        "label": "4排8号",
+        "seatType": "standard",
+        "x": 2.7,
+        "y": 0.0,
+        "z": 5.4
+      },
+      {
+        "id": 45,
+        "row": 4,
+        "number": 9,
+        "label": "4排9号",
+        "seatType": "standard",
+        "x": 3.8,
+        "y": 0.0,
+        "z": 5.4
+      },
+      {
+        "id": 46,
+        "row": 4,
+        "number": 10,
+        "label": "4排10号",
+        "seatType": "standard",
+        "x": 4.9,
+        "y": 0.0,
+        "z": 5.4
+      },
+      {
+        "id": 47,
+        "row": 4,
+        "number": 11,
+        "label": "4排11号",
+        "seatType": "standard",
+        "x": 6.0,
+        "y": 0.0,
+        "z": 5.4
+      },
+      {
+        "id": 48,
+        "row": 4,
+        "number": 12,
+        "label": "4排12号",
+        "seatType": "standard",
+        "x": 7.1,
+        "y": 0.0,
+        "z": 5.4
+      },
+      {
+        "id": 49,
+        "row": 5,
+        "number": 1,
+        "label": "5排1号",
+        "seatType": "standard",
+        "x": -7.1,
+        "y": 0.0,
+        "z": 6.6
+      },
+      {
+        "id": 50,
+        "row": 5,
+        "number": 2,
+        "label": "5排2号",
+        "seatType": "standard",
+        "x": -6.0,
+        "y": 0.0,
+        "z": 6.6
+      },
+      {
+        "id": 51,
+        "row": 5,
+        "number": 3,
+        "label": "5排3号",
+        "seatType": "standard",
+        "x": -4.9,
+        "y": 0.0,
+        "z": 6.6
+      },
+      {
+        "id": 52,
+        "row": 5,
+        "number": 4,
+        "label": "5排4号",
+        "seatType": "standard",
+        "x": -3.8,
+        "y": 0.0,
+        "z": 6.6
+      },
+      {
+        "id": 53,
+        "row": 5,
+        "number": 5,
+        "label": "5排5号",
+        "seatType": "standard",
+        "x": -2.7,
+        "y": 0.0,
+        "z": 6.6
+      },
+      {
+        "id": 54,
+        "row": 5,
+        "number": 6,
+        "label": "5排6号",
+        "seatType": "standard",
+        "x": -1.6,
+        "y": 0.0,
+        "z": 6.6
+      },
+      {
+        "id": 55,
+        "row": 5,
+        "number": 7,
+        "label": "5排7号",
+        "seatType": "standard",
+        "x": 1.6,
+        "y": 0.0,
+        "z": 6.6
+      },
+      {
+        "id": 56,
+        "row": 5,
+        "number": 8,
+        "label": "5排8号",
+        "seatType": "standard",
+        "x": 2.7,
+        "y": 0.0,
+        "z": 6.6
+      },
+      {
+        "id": 57,
+        "row": 5,
+        "number": 9,
+        "label": "5排9号",
+        "seatType": "standard",
+        "x": 3.8,
+        "y": 0.0,
+        "z": 6.6
+      },
+      {
+        "id": 58,
+        "row": 5,
+        "number": 10,
+        "label": "5排10号",
+        "seatType": "standard",
+        "x": 4.9,
+        "y": 0.0,
+        "z": 6.6
+      },
+      {
+        "id": 59,
+        "row": 5,
+        "number": 11,
+        "label": "5排11号",
+        "seatType": "standard",
+        "x": 6.0,
+        "y": 0.0,
+        "z": 6.6
+      },
+      {
+        "id": 60,
+        "row": 5,
+        "number": 12,
+        "label": "5排12号",
+        "seatType": "standard",
+        "x": 7.1,
+        "y": 0.0,
+        "z": 6.6
+      },
+      {
+        "id": 61,
+        "row": 6,
+        "number": 1,
+        "label": "6排1号",
+        "seatType": "standard",
+        "x": -7.1,
+        "y": 0.0,
+        "z": 7.8
+      },
+      {
+        "id": 62,
+        "row": 6,
+        "number": 2,
+        "label": "6排2号",
+        "seatType": "standard",
+        "x": -6.0,
+        "y": 0.0,
+        "z": 7.8
+      },
+      {
+        "id": 63,
+        "row": 6,
+        "number": 3,
+        "label": "6排3号",
+        "seatType": "standard",
+        "x": -4.9,
+        "y": 0.0,
+        "z": 7.8
+      },
+      {
+        "id": 64,
+        "row": 6,
+        "number": 4,
+        "label": "6排4号",
+        "seatType": "standard",
+        "x": -3.8,
+        "y": 0.0,
+        "z": 7.8
+      },
+      {
+        "id": 65,
+        "row": 6,
+        "number": 5,
+        "label": "6排5号",
+        "seatType": "standard",
+        "x": -2.7,
+        "y": 0.0,
+        "z": 7.8
+      },
+      {
+        "id": 66,
+        "row": 6,
+        "number": 6,
+        "label": "6排6号",
+        "seatType": "standard",
+        "x": -1.6,
+        "y": 0.0,
+        "z": 7.8
+      },
+      {
+        "id": 67,
+        "row": 6,
+        "number": 7,
+        "label": "6排7号",
+        "seatType": "standard",
+        "x": 1.6,
+        "y": 0.0,
+        "z": 7.8
+      },
+      {
+        "id": 68,
+        "row": 6,
+        "number": 8,
+        "label": "6排8号",
+        "seatType": "standard",
+        "x": 2.7,
+        "y": 0.0,
+        "z": 7.8
+      },
+      {
+        "id": 69,
+        "row": 6,
+        "number": 9,
+        "label": "6排9号",
+        "seatType": "standard",
+        "x": 3.8,
+        "y": 0.0,
+        "z": 7.8
+      },
+      {
+        "id": 70,
+        "row": 6,
+        "number": 10,
+        "label": "6排10号",
+        "seatType": "standard",
+        "x": 4.9,
+        "y": 0.0,
+        "z": 7.8
+      },
+      {
+        "id": 71,
+        "row": 6,
+        "number": 11,
+        "label": "6排11号",
+        "seatType": "standard",
+        "x": 6.0,
+        "y": 0.0,
+        "z": 7.8
+      },
+      {
+        "id": 72,
+        "row": 6,
+        "number": 12,
+        "label": "6排12号",
+        "seatType": "standard",
+        "x": 7.1,
+        "y": 0.0,
+        "z": 7.8
+      },
+      {
+        "id": 73,
+        "row": 7,
+        "number": 1,
+        "label": "7排1号",
+        "seatType": "standard",
+        "x": -7.1,
+        "y": 0.0,
+        "z": 9.0
+      },
+      {
+        "id": 74,
+        "row": 7,
+        "number": 2,
+        "label": "7排2号",
+        "seatType": "standard",
+        "x": -6.0,
+        "y": 0.0,
+        "z": 9.0
+      },
+      {
+        "id": 75,
+        "row": 7,
+        "number": 3,
+        "label": "7排3号",
+        "seatType": "standard",
+        "x": -4.9,
+        "y": 0.0,
+        "z": 9.0
+      },
+      {
+        "id": 76,
+        "row": 7,
+        "number": 4,
+        "label": "7排4号",
+        "seatType": "standard",
+        "x": -3.8,
+        "y": 0.0,
+        "z": 9.0
+      },
+      {
+        "id": 77,
+        "row": 7,
+        "number": 5,
+        "label": "7排5号",
+        "seatType": "standard",
+        "x": -2.7,
+        "y": 0.0,
+        "z": 9.0
+      },
+      {
+        "id": 78,
+        "row": 7,
+        "number": 6,
+        "label": "7排6号",
+        "seatType": "standard",
+        "x": -1.6,
+        "y": 0.0,
+        "z": 9.0
+      },
+      {
+        "id": 79,
+        "row": 7,
+        "number": 7,
+        "label": "7排7号",
+        "seatType": "standard",
+        "x": 1.6,
+        "y": 0.0,
+        "z": 9.0
+      },
+      {
+        "id": 80,
+        "row": 7,
+        "number": 8,
+        "label": "7排8号",
+        "seatType": "standard",
+        "x": 2.7,
+        "y": 0.0,
+        "z": 9.0
+      },
+      {
+        "id": 81,
+        "row": 7,
+        "number": 9,
+        "label": "7排9号",
+        "seatType": "standard",
+        "x": 3.8,
+        "y": 0.0,
+        "z": 9.0
+      },
+      {
+        "id": 82,
+        "row": 7,
+        "number": 10,
+        "label": "7排10号",
+        "seatType": "standard",
+        "x": 4.9,
+        "y": 0.0,
+        "z": 9.0
+      },
+      {
+        "id": 83,
+        "row": 7,
+        "number": 11,
+        "label": "7排11号",
+        "seatType": "standard",
+        "x": 6.0,
+        "y": 0.0,
+        "z": 9.0
+      },
+      {
+        "id": 84,
+        "row": 7,
+        "number": 12,
+        "label": "7排12号",
+        "seatType": "standard",
+        "x": 7.1,
+        "y": 0.0,
+        "z": 9.0
+      },
+      {
+        "id": 85,
+        "row": 8,
+        "number": 1,
+        "label": "8排1号",
+        "seatType": "standard",
+        "x": -7.1,
+        "y": 0.0,
+        "z": 10.2
+      },
+      {
+        "id": 86,
+        "row": 8,
+        "number": 2,
+        "label": "8排2号",
+        "seatType": "standard",
+        "x": -6.0,
+        "y": 0.0,
+        "z": 10.2
+      },
+      {
+        "id": 87,
+        "row": 8,
+        "number": 3,
+        "label": "8排3号",
+        "seatType": "standard",
+        "x": -4.9,
+        "y": 0.0,
+        "z": 10.2
+      },
+      {
+        "id": 88,
+        "row": 8,
+        "number": 4,
+        "label": "8排4号",
+        "seatType": "standard",
+        "x": -3.8,
+        "y": 0.0,
+        "z": 10.2
+      },
+      {
+        "id": 89,
+        "row": 8,
+        "number": 5,
+        "label": "8排5号",
+        "seatType": "standard",
+        "x": -2.7,
+        "y": 0.0,
+        "z": 10.2
+      },
+      {
+        "id": 90,
+        "row": 8,
+        "number": 6,
+        "label": "8排6号",
+        "seatType": "standard",
+        "x": -1.6,
+        "y": 0.0,
+        "z": 10.2
+      },
+      {
+        "id": 91,
+        "row": 8,
+        "number": 7,
+        "label": "8排7号",
+        "seatType": "standard",
+        "x": 1.6,
+        "y": 0.0,
+        "z": 10.2
+      },
+      {
+        "id": 92,
+        "row": 8,
+        "number": 8,
+        "label": "8排8号",
+        "seatType": "standard",
+        "x": 2.7,
+        "y": 0.0,
+        "z": 10.2
+      },
+      {
+        "id": 93,
+        "row": 8,
+        "number": 9,
+        "label": "8排9号",
+        "seatType": "standard",
+        "x": 3.8,
+        "y": 0.0,
+        "z": 10.2
+      },
+      {
+        "id": 94,
+        "row": 8,
+        "number": 10,
+        "label": "8排10号",
+        "seatType": "standard",
+        "x": 4.9,
+        "y": 0.0,
+        "z": 10.2
+      },
+      {
+        "id": 95,
+        "row": 8,
+        "number": 11,
+        "label": "8排11号",
+        "seatType": "standard",
+        "x": 6.0,
+        "y": 0.0,
+        "z": 10.2
+      },
+      {
+        "id": 96,
+        "row": 8,
+        "number": 12,
+        "label": "8排12号",
+        "seatType": "standard",
+        "x": 7.1,
+        "y": 0.0,
+        "z": 10.2
+      },
+      {
+        "id": 97,
+        "row": 9,
+        "number": 1,
+        "label": "9排1号",
+        "seatType": "standard",
+        "x": -7.1,
+        "y": 0.0,
+        "z": 11.4
+      },
+      {
+        "id": 98,
+        "row": 9,
+        "number": 2,
+        "label": "9排2号",
+        "seatType": "standard",
+        "x": -6.0,
+        "y": 0.0,
+        "z": 11.4
+      },
+      {
+        "id": 99,
+        "row": 9,
+        "number": 3,
+        "label": "9排3号",
+        "seatType": "standard",
+        "x": -4.9,
+        "y": 0.0,
+        "z": 11.4
+      },
+      {
+        "id": 100,
+        "row": 9,
+        "number": 4,
+        "label": "9排4号",
+        "seatType": "standard",
+        "x": -3.8,
+        "y": 0.0,
+        "z": 11.4
+      },
+      {
+        "id": 101,
+        "row": 9,
+        "number": 5,
+        "label": "9排5号",
+        "seatType": "standard",
+        "x": -2.7,
+        "y": 0.0,
+        "z": 11.4
+      },
+      {
+        "id": 102,
+        "row": 9,
+        "number": 6,
+        "label": "9排6号",
+        "seatType": "standard",
+        "x": -1.6,
+        "y": 0.0,
+        "z": 11.4
+      },
+      {
+        "id": 103,
+        "row": 9,
+        "number": 7,
+        "label": "9排7号",
+        "seatType": "standard",
+        "x": 1.6,
+        "y": 0.0,
+        "z": 11.4
+      },
+      {
+        "id": 104,
+        "row": 9,
+        "number": 8,
+        "label": "9排8号",
+        "seatType": "standard",
+        "x": 2.7,
+        "y": 0.0,
+        "z": 11.4
+      },
+      {
+        "id": 105,
+        "row": 9,
+        "number": 9,
+        "label": "9排9号",
+        "seatType": "standard",
+        "x": 3.8,
+        "y": 0.0,
+        "z": 11.4
+      },
+      {
+        "id": 106,
+        "row": 9,
+        "number": 10,
+        "label": "9排10号",
+        "seatType": "standard",
+        "x": 4.9,
+        "y": 0.0,
+        "z": 11.4
+      },
+      {
+        "id": 107,
+        "row": 9,
+        "number": 11,
+        "label": "9排11号",
+        "seatType": "standard",
+        "x": 6.0,
+        "y": 0.0,
+        "z": 11.4
+      },
+      {
+        "id": 108,
+        "row": 9,
+        "number": 12,
+        "label": "9排12号",
+        "seatType": "standard",
+        "x": 7.1,
+        "y": 0.0,
+        "z": 11.4
+      },
+      {
+        "id": 109,
+        "row": 10,
+        "number": 1,
+        "label": "10排1号",
+        "seatType": "standard",
+        "x": -7.1,
+        "y": 0.0,
+        "z": 12.6
+      },
+      {
+        "id": 110,
+        "row": 10,
+        "number": 2,
+        "label": "10排2号",
+        "seatType": "standard",
+        "x": -6.0,
+        "y": 0.0,
+        "z": 12.6
+      },
+      {
+        "id": 111,
+        "row": 10,
+        "number": 3,
+        "label": "10排3号",
+        "seatType": "standard",
+        "x": -4.9,
+        "y": 0.0,
+        "z": 12.6
+      },
+      {
+        "id": 112,
+        "row": 10,
+        "number": 4,
+        "label": "10排4号",
+        "seatType": "standard",
+        "x": -3.8,
+        "y": 0.0,
+        "z": 12.6
+      },
+      {
+        "id": 113,
+        "row": 10,
+        "number": 5,
+        "label": "10排5号",
+        "seatType": "standard",
+        "x": -2.7,
+        "y": 0.0,
+        "z": 12.6
+      },
+      {
+        "id": 114,
+        "row": 10,
+        "number": 6,
+        "label": "10排6号",
+        "seatType": "standard",
+        "x": -1.6,
+        "y": 0.0,
+        "z": 12.6
+      },
+      {
+        "id": 115,
+        "row": 10,
+        "number": 7,
+        "label": "10排7号",
+        "seatType": "standard",
+        "x": 1.6,
+        "y": 0.0,
+        "z": 12.6
+      },
+      {
+        "id": 116,
+        "row": 10,
+        "number": 8,
+        "label": "10排8号",
+        "seatType": "standard",
+        "x": 2.7,
+        "y": 0.0,
+        "z": 12.6
+      },
+      {
+        "id": 117,
+        "row": 10,
+        "number": 9,
+        "label": "10排9号",
+        "seatType": "standard",
+        "x": 3.8,
+        "y": 0.0,
+        "z": 12.6
+      },
+      {
+        "id": 118,
+        "row": 10,
+        "number": 10,
+        "label": "10排10号",
+        "seatType": "standard",
+        "x": 4.9,
+        "y": 0.0,
+        "z": 12.6
+      },
+      {
+        "id": 119,
+        "row": 10,
+        "number": 11,
+        "label": "10排11号",
+        "seatType": "standard",
+        "x": 6.0,
+        "y": 0.0,
+        "z": 12.6
+      },
+      {
+        "id": 120,
+        "row": 10,
+        "number": 12,
+        "label": "10排12号",
+        "seatType": "standard",
+        "x": 7.1,
+        "y": 0.0,
+        "z": 12.6
+      }
+    ]
+  }
+}

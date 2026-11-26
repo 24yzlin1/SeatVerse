@@ -72,7 +72,7 @@
         aria-label={`${seat.label}，${labels[state]}`}
         aria-pressed={state === "selected"}
         title={`${seat.label} · ${labels[state]}`}
-        disabled={state === "sold" || state === "unavailable"}
+        disabled={props.disabled || state === "sold" || state === "unavailable"}
         onclick={() => props.onSeatToggle(seat.id)}
         onpointerenter={() => props.onSeatHover?.(seat.id)}
         onpointerleave={() => props.onSeatHover?.(null)}
