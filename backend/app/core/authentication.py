@@ -1,7 +1,12 @@
 from datetime import datetime, timezone
 from app.core.common import AppError
 from app.core.security import hash_password, issue_token, verify_password
-from app.repos.authentication import find_user_by_email, find_user_by_id, insert_user
+from app.repos.authentication import (
+    find_user_by_email, 
+    find_user_by_id, 
+    insert_user,
+    update_user_avatar,
+)
 from app.types.authentication import (
     AuthenticationPayload,
     Identity,
@@ -13,7 +18,13 @@ from app.repos.database import UniqueConstraintViolationError
 
 
 def _to_public(row: UserRow) -> UserPublic:
-    return UserPublic(id=row.id, name=row.name, email=row.email, role=row.role)
+    return UserPublic(
+        id=row.id, 
+        name=row.name, 
+        email=row.email, 
+        role=row.role,
+        avatarUrl=row.avatar_url,  # 新增
+    )
 
 
 def register(
@@ -50,12 +61,19 @@ def login(
 
 
 def me(identity: Identity) -> UserPublic:
-    """The payload of `GET /authentication/me` is the user object itself (auth.md §14.2 rule 4).
+    user = find_user_by_id(identity.user_id)
+    if user is None:
+        raise AppError(401, "Session expired, please log in again")
+    return _to_public(user)
 
-    Do not wrap it in `{ "user": ... }`: the frontend `bootstrap()` uses the returned
-    value to overwrite the user cache directly. An extra layer would make `role`
-    unreadable, and after a refresh an organizer would be treated as a regular user.
-    """
+
+def update_avatar(identity: Identity, avatar_url: str) -> UserPublic:
+    if avatar_url:
+        if not avatar_url.startswith("/api/uploads/") or len(avatar_url) > 300:
+            raise AppError(400, "Invalid avatar URL")
+    
+    update_user_avatar(identity.user_id, avatar_url)
+    
     user = find_user_by_id(identity.user_id)
     if user is None:
         raise AppError(401, "Session expired, please log in again")

@@ -26,6 +26,7 @@ def _row_to_user(row: sqlite3.Row) -> UserRow:
         password_hash=read_text(row, "password_hash"),
         role=_read_role(row),
         created_at=read_text(row, "created_at"),
+        avatar_url=read_text(row, "avatar_url"),  # 新增
     )
 
 
@@ -34,7 +35,7 @@ def find_user_by_email(email: str) -> UserRow | None:
     try:
         row = fetch_one_row(
             connection,
-            "SELECT id, name, email, password_hash, role, created_at "
+            "SELECT id, name, email, password_hash, role, created_at, avatar_url "
             "FROM users WHERE email = ?",
             (email,),
         )
@@ -48,7 +49,7 @@ def find_user_by_id(user_id: int) -> UserRow | None:
     try:
         row = fetch_one_row(
             connection,
-            "SELECT id, name, email, password_hash, role, created_at "
+            "SELECT id, name, email, password_hash, role, created_at, avatar_url "
             "FROM users WHERE id = ?",
             (user_id,),
         )
@@ -62,7 +63,7 @@ def find_organizer() -> UserRow | None:
     try:
         row = fetch_one_row(
             connection,
-            "SELECT id, name, email, password_hash, role, created_at "
+            "SELECT id, name, email, password_hash, role, created_at, avatar_url "
             "FROM users WHERE role = 'organizer' ORDER BY id ASC LIMIT 1",
         )
     finally:
@@ -100,7 +101,7 @@ def insert_user(
             raise RuntimeError("Failed to obtain inserted user id")
         row = fetch_one_row(
             connection,
-            "SELECT id, name, email, password_hash, role, created_at "
+            "SELECT id, name, email, password_hash, role, created_at, avatar_url "
             "FROM users WHERE id = ?",
             (last_row_id,),
         )
@@ -109,3 +110,15 @@ def insert_user(
     if row is None:
         raise RuntimeError("Inserted user row not found")
     return _row_to_user(row)
+
+
+def update_user_avatar(user_id: int, avatar_url: str) -> None:
+    connection = get_connection()
+    try:
+        connection.execute(
+            "UPDATE users SET avatar_url = ? WHERE id = ?",
+            (avatar_url, user_id),
+        )
+        connection.commit()
+    finally:
+        connection.close()

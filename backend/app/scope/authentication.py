@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Header
 from app.core.authentication import register as register_core
 from app.core.authentication import login as login_core
 from app.core.authentication import me as me_core
+from app.core.authentication import update_avatar as update_avatar_core
 from app.core.common import AppError
 from app.core.security import parse_token
 from app.scope.common import ok
@@ -12,6 +13,7 @@ from app.types.authentication import (
     RegisterRequest,
     UserPublic,
     UserRole,
+    UserAvatarRequest,
 )
 from app.types.common import ResponsePayload
 
@@ -85,3 +87,11 @@ def login(body: LoginRequest) -> ResponsePayload[AuthenticationPayload]:
 @router.get("/me")
 def me(identity: Identity = Depends(require_identity)) -> ResponsePayload[UserPublic]:
     return ok(me_core(identity))
+
+
+@router.patch("/me")
+def update_avatar(
+    body: UserAvatarRequest,
+    identity: Identity = Depends(require_identity),
+) -> ResponsePayload[UserPublic]:
+    return ok(update_avatar_core(identity, body.avatar_url))

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Literal
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 UserRole = Literal["user", "organizer"]
 
@@ -13,6 +13,7 @@ class UserRow:
     password_hash: str
     role: UserRole
     created_at: str
+    avatar_url: str  # 新增
 
 
 class UserPublic(BaseModel):
@@ -20,6 +21,7 @@ class UserPublic(BaseModel):
     name: str
     email: str
     role: UserRole = "user"
+    avatar_url: str = Field(default="", alias="avatarUrl")  # 新增
 
 
 class LoginRequest(BaseModel):
@@ -32,7 +34,6 @@ class RegisterRequest(BaseModel):
     name: str
     email: str
     password: str
-    # role: UserRole
 
 
 class AuthenticationPayload(BaseModel):
@@ -43,3 +44,8 @@ class AuthenticationPayload(BaseModel):
 class Identity(BaseModel):
     user_id: int
     role: UserRole
+
+
+class UserAvatarRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    avatar_url: str = Field(default="", alias="avatarUrl")  
