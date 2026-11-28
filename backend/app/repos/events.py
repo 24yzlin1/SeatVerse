@@ -15,7 +15,9 @@ _EVENT_SELECT_COLUMNS = (
     "e.organizer_id, e.venue_id, e.status, e.created_at, "
     "e.cover_url, e.logo_url, "
     "v.name AS venue_name, v.capacity AS venue_capacity, "
-    "u.name AS organizer_name"
+    "u.name AS organizer_name, "
+    "(SELECT ROUND(AVG(score), 1) FROM event_ratings r WHERE r.event_id = e.id) AS rating_average, "
+    "(SELECT COUNT(*) FROM event_ratings r WHERE r.event_id = e.id) AS rating_count"
 )
 
 
@@ -33,6 +35,7 @@ def _read_status(row: sqlite3.Row) -> ActivityStatus:
 
 
 def _row_to_event(row: sqlite3.Row) -> EventRow:
+    avg_val = row["rating_average"]
     return EventRow(
         id=read_integer(row, "id"),
         title=read_text(row, "title"),
@@ -45,6 +48,8 @@ def _row_to_event(row: sqlite3.Row) -> EventRow:
         created_at=read_text(row, "created_at"),
         cover_url=read_text(row, "cover_url"),
         logo_url=read_text(row, "logo_url"),
+        rating_average=float(avg_val) if avg_val is not None else None,
+        rating_count=read_integer(row, "rating_count"),
     )
 
 
@@ -74,9 +79,6 @@ def _build_filters(
         conditions.append("e.status IN (" + ",".join("?" for _ in statuses) + ")")
         parameters.extend(statuses)
     if ended is not None:
-        # "Ended" is a display-state filter: only events whose end time has
-        # passed and whose status is still published/closed count;
-        # cancelled/draft are excluded from this semantic.
         if ended:
             conditions.append("e.end_time <= ?")
             conditions.append("e.status IN ('published','closed')")
@@ -169,13 +171,29 @@ def find_event_by_title(title: str) -> EventRow | None:
         row = fetch_one_row(
             connection,
             "SELECT id, title, description, start_time, end_time, organizer_id, "
-            "venue_id, status, created_at, cover_url, logo_url FROM events "
-            "WHERE title = ? ORDER BY id ASC LIMIT 1",
+            "venue_id, status, created_at, cover_url, logo_url "
+            "FROM events WHERE title = ? ORDER BY id ASC LIMIT 1",
             (title,),
         )
     finally:
         connection.close()
-    return None if row is None else _row_to_event(row)
+    if row is None:
+        return None
+    return EventRow(
+        id=read_integer(row, "id"),
+        title=read_text(row, "title"),
+        description=read_text(row, "description"),
+        start_time=read_text(row, "start_time"),
+        end_time=read_text(row, "end_time"),
+        organizer_id=read_integer(row, "organizer_id"),
+        venue_id=read_integer(row, "venue_id"),
+        status=_read_status(row),
+        created_at=read_text(row, "created_at"),
+        cover_url=read_text(row, "cover_url"),
+        logo_url=read_text(row, "logo_url"),
+        rating_average=None,
+        rating_count=0,
+    )
 
 
 def insert_event(

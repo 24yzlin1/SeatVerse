@@ -43,6 +43,8 @@ def _to_public(row: EventWithVenueRow) -> EventPublic:
         organizerName=row.organizer_name,
         coverUrl=row.event.cover_url,
         logoUrl=row.event.logo_url,
+        ratingAverage=row.event.rating_average,
+        ratingCount=row.event.rating_count, 
     )
 
 

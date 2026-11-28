@@ -17,8 +17,10 @@ class EventRow:
     venue_id: int
     status: ActivityStatus
     created_at: str
-    cover_url: str  # 新增
-    logo_url: str   # 新增
+    cover_url: str
+    logo_url: str
+    rating_average: float | None  # 新增：平均分
+    rating_count: int             # 新增：评分人数
 
 
 @dataclass(frozen=True)
@@ -38,19 +40,17 @@ class EventPublic(BaseModel):
     status: ActivityStatus
     venue: VenuePublic
     organizer_name: str = Field(..., alias="organizerName")
-    cover_url: str = Field(default="", alias="coverUrl")  # 新增
-    logo_url: str = Field(default="", alias="logoUrl")    # 新增
+    cover_url: str = Field(default="", alias="coverUrl")
+    logo_url: str = Field(default="", alias="logoUrl")
+    rating_average: float | None = Field(default=None, alias="ratingAverage")  # 新增
+    rating_count: int = Field(default=0, alias="ratingCount")                  # 新增
 
 
 class EventListQuery(BaseModel):
     model_config = ConfigDict(extra="forbid")
     keyword: str | None = None
-    # Multi-value status filter (expanded from comma-separated input); an empty tuple means no filtering.
     statuses: list[ActivityStatus] = []
-    # None means no filtering; True shows only ended events (end_time <= now and status still published/closed),
-    # False shows only ongoing events (end_time > now).
     ended: bool | None = None
-    # The organizer console fetches events by its own id, avoiding a full fetch followed by client-side filtering.
     organizer_id: int | None = None
     page: int = 1
     page_size: int = 20
@@ -64,8 +64,8 @@ class CreateEventRequest(BaseModel):
     start_time: str
     end_time: str
     venue_id: int | None = None
-    cover_url: str = Field(default="", alias="coverUrl")  # 新增
-    logo_url: str = Field(default="", alias="logoUrl")    # 新增
+    cover_url: str = Field(default="", alias="coverUrl")
+    logo_url: str = Field(default="", alias="logoUrl")
 
 
 class UpdateEventStatusRequest(BaseModel):

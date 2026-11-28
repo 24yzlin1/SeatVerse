@@ -14,6 +14,7 @@ from app.scope.seats import router as seats_router
 from app.scope.tickets import router as tickets_router
 from app.scope.venues import router as venues_router
 from app.repos.database import run_migrations
+from app.scope.ratings import router as ratings_router
 
 
 @asynccontextmanager
@@ -51,7 +52,7 @@ api_router.include_router(seats_router, tags=["seats"])
 api_router.include_router(venues_router, tags=["venues"])
 api_router.include_router(tickets_router, tags=["tickets"])
 app.include_router(api_router)
-
+api_router.include_router(ratings_router, tags=["ratings"])
 
 def main() -> None:
     print("Hello from seat-verse!")
